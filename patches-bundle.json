@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-07-06T07:08:46",
-  "description": "Morphe patches by franticg33k",
-  "download_url": "",
+  "created_at": "2026-07-06T13:20:22",
+  "description": "## 1.0.0 (2026-07-06)\n\n### 🐛 Bug Fixes\n\n* add PATCHES_START/PATCHES_END markers to README ([ed78b27](https://github.com/franticg33k/morphe-patches/commit/ed78b27af6244a1384f1fc8472a82964793aa419))\n* make gradlew executable ([0a41a85](https://github.com/franticg33k/morphe-patches/commit/0a41a8570b02f51b006d39ab5ac37930f93a2e9b))\n* update repo URLs to franticg33k ([6e0abc8](https://github.com/franticg33k/morphe-patches/commit/6e0abc8b2f71b1c586200b8fddc9654073aaac80))\n\n### 🚀 Updated App Support\n\n* release v1.0.0 ([5b27653](https://github.com/franticg33k/morphe-patches/commit/5b27653f993010c204edb9f1bee465f24865681d))",
+  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.0.0/patches-1.0.0.mpp",
   "signature_download_url": "",
-  "version": "1.0.5"
+  "version": "1.0.0"
 }
