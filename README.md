@@ -7,10 +7,10 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 Add this repo as a patch source in Morphe:
 
 ```
-https://github.com/paynemax14/morphe-patches
+https://github.com/franticg33k/morphe-patches
 ```
 
-Or click: https://morphe.software/add-source?github=paynemax14/morphe-patches
+Or click: https://morphe.software/add-source?github=franticg33k/morphe-patches
 
 ## Credits
 
