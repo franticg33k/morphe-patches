@@ -2,6 +2,11 @@
 
 A collection of [Morphe](https://morphe.software) patches for apps I use.
 
+## Patches
+
+<!-- PATCHES_START EXPANDED -->
+<!-- PATCHES_END -->
+
 ## Usage
 
 Add this repo as a patch source in Morphe:
