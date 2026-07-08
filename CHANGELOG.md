@@ -1,3 +1,9 @@
+## [1.1.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.1.0-dev.1...v1.1.0-dev.2) (2026-07-08)
+
+### 🐛 Bug Fixes
+
+* remove DateActive.isActive() patch, add SubscriptionInfo.isActive() instead ([4901538](https://github.com/franticg33k/morphe-patches/commit/490153879576d7b187dff0d9febee75d13a922d4))
+
 ## [1.1.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.0.1...v1.1.0-dev.1) (2026-07-08)
 
 ### ✨ New Features
