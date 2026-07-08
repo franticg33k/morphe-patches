@@ -1,3 +1,9 @@
+## [1.1.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.1.0-dev.2...v1.1.0-dev.3) (2026-07-08)
+
+### ✨ New Features
+
+* add CustomerInfo activeSubscriptions/allPurchasedProductIds patches ([de8ccd3](https://github.com/franticg33k/morphe-patches/commit/de8ccd3bd6bb85903e4092e0e4779abd3763ab49))
+
 ## [1.1.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.1.0-dev.1...v1.1.0-dev.2) (2026-07-08)
 
 ### 🐛 Bug Fixes

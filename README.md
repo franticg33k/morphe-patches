@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.1.0-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.1.0-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;10 patches total
+> **[v1.1.0-dev.3](https://github.com/franticg33k/morphe-patches/releases/tag/v1.1.0-dev.3)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;10 patches total
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -66,7 +66,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Unlock Premium](#unlock-premium) | Unlocks all premium features in MoneyMitra by forcing RevenueCat's EntitlementInfo.isActive() to always return true. This removes paywalls and enables premium course access without a subscription. |  |
+| [Unlock Premium](#unlock-premium) | Unlocks all premium features in MoneyMitra by forcing RevenueCat's EntitlementInfo.isActive(), willRenew(), CustomerInfo.activeSubscriptions and allPurchasedProductIdentifiers to return premium status. This removes paywalls and enables premium course access without a subscription. |  |
 
 </details>
 

@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.1.0-dev.2",
+  "version": "1.1.0-dev.3",
   "patches": [
     {
       "name": "Enable Online Pro",
@@ -240,7 +240,7 @@
     },
     {
       "name": "Unlock Premium",
-      "description": "Unlocks all premium features in MoneyMitra by forcing RevenueCat's EntitlementInfo.isActive() to always return true. This removes paywalls and enables premium course access without a subscription.",
+      "description": "Unlocks all premium features in MoneyMitra by forcing RevenueCat's EntitlementInfo.isActive(), willRenew(), CustomerInfo.activeSubscriptions and allPurchasedProductIdentifiers to return premium status. This removes paywalls and enables premium course access without a subscription.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [
