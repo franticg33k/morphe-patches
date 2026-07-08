@@ -1,3 +1,9 @@
+## [1.1.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.0.1...v1.1.0-dev.1) (2026-07-08)
+
+### ✨ New Features
+
+* add MoneyMitra Unlock Premium patch ([3a92eb7](https://github.com/franticg33k/morphe-patches/commit/3a92eb7ff75f338eab62d836e8462f5d96a43032))
+
 ## [1.0.1](https://github.com/franticg33k/morphe-patches/compare/v1.0.0...v1.0.1) (2026-07-06)
 
 ### 🚀 Updated App Support

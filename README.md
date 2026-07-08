@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.0.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.0.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;9 patches total
+> **[v1.1.0-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.1.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;10 patches total
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -57,6 +57,16 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Unlock Premium](#unlock-premium) | Patches Dart AOT-compiled libapp.so to unlock all premium features. Forces hasPremiumAccess and isPaidUser to always return true by NOPing their ARM64 conditional branch instructions. |  |
+
+</details>
+
+<details open>
+<summary>📦 MoneyMitra&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<br>
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Unlock Premium](#unlock-premium) | Unlocks all premium features in MoneyMitra by forcing RevenueCat's EntitlementInfo.isActive() and DateActive.isActive() to always return true. This removes paywalls and enables premium course access without a subscription. |  |
 
 </details>
 
