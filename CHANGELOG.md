@@ -1,3 +1,9 @@
+## [1.1.2](https://github.com/franticg33k/morphe-patches/compare/v1.1.1...v1.1.2) (2026-07-09)
+
+### 🐛 Bug Fixes
+
+* remove MoneyMitra Unlock Premium patch entirely ([c87dcb0](https://github.com/franticg33k/morphe-patches/commit/c87dcb00a936cffaa8240a828d035ec4061be734))
+
 ## [1.1.1](https://github.com/franticg33k/morphe-patches/compare/v1.1.0...v1.1.1) (2026-07-09)
 
 ## [1.1.0](https://github.com/franticg33k/morphe-patches/compare/v1.0.1...v1.1.0) (2026-07-09)
