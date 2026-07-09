@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.1.0",
+  "version": "1.1.1-dev.1",
   "patches": [
     {
       "name": "Enable Online Pro",
@@ -42,32 +42,6 @@
           "description": null,
           "apkFileType": null,
           "appIconColor": "#1F6FEB",
-          "signatures": null,
-          "targets": [
-            {
-              "version": null,
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "Force Active Subscription",
-      "description": "Patches Dart AOT-compiled libapp.so to force the active_subscription field in the /profile response deserializer to always be true. Replaces `ldur x1, [x29, -8]` (load parsed JSON active value) with `add x1, x22, #0x20` (load Dart `true` object) at the StoreField instruction in ActiveSubscription.fromJson.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.ideapreneurnepal.moneymitra",
-          "name": "MoneyMitra",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#E53935",
           "signatures": null,
           "targets": [
             {
