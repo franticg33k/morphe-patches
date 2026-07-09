@@ -20,7 +20,7 @@ private const val SINGLETON_SET_RETURN = """
 val unlockMoneyMitraPremiumPatch = bytecodePatch(
     name = "Unlock Premium",
     description = "Unlocks all premium features in MoneyMitra by forcing RevenueCat's " +
-        "EntitlementInfo.isActive(), willRenew(), CustomerInfo.activeSubscriptions " +
+        "EntitlementInfo.isActive(), CustomerInfo.activeSubscriptions " +
         "and allPurchasedProductIdentifiers to return premium status. " +
         "This removes paywalls and enables premium course access without a subscription.",
     default = true
@@ -29,7 +29,6 @@ val unlockMoneyMitraPremiumPatch = bytecodePatch(
 
     execute {
         EntitlementInfoIsActiveFingerprint.method.addInstructions(0, TRUE_RETURN)
-        EntitlementInfoWillRenewFingerprint.method.addInstructions(0, TRUE_RETURN)
         SubscriptionInfoIsActiveFingerprint.method.addInstructions(0, TRUE_RETURN)
         ActiveSubscriptionsFingerprint.method.addInstructions(0, SINGLETON_SET_RETURN)
         AllPurchasedProductIdsFingerprint.method.addInstructions(0, SINGLETON_SET_RETURN)

@@ -40,19 +40,3 @@ object ActiveSubscriptionsFingerprint : Fingerprint(
  * product IDs. Patching this ensures allPurchasedProductIdentifiers is non-empty.
  */
 object AllPurchasedProductIdsFingerprint : Fingerprint(
-    definingClass = "Lcom/revenuecat/purchases/CustomerInfo;",
-    name = "getAllPurchasedProductIds",
-    returnType = "Ljava/util/Set;",
-    parameters = listOf()
-)
-
-/**
- * EntitlementInfo.willRenew() — indicates whether the entitlement will auto-renew.
- * Patching this to true prevents the app from treating trial as non-renewing.
- */
-object EntitlementInfoWillRenewFingerprint : Fingerprint(
-    definingClass = "Lcom/revenuecat/purchases/EntitlementInfo;",
-    name = "willRenew",
-    returnType = "Z",
-    parameters = listOf()
-)
