@@ -1,3 +1,15 @@
+## [1.2.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.2.0-dev.1...v1.2.0-dev.2) (2026-07-10)
+
+### 🚀 Updated App Support
+
+* add Provide Lite v1.4.0 app support ([c287260](https://github.com/franticg33k/morphe-patches/commit/c287260d5318ec0507c6c2bca9d028b450e64cc9))
+
+## [1.2.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.1.2...v1.2.0-dev.1) (2026-07-10)
+
+### ✨ New Features
+
+* add Provide Lite premium and license patches ([dd5d8d1](https://github.com/franticg33k/morphe-patches/commit/dd5d8d128195659fee962bb0e0ed6b8b8ca3cbc2))
+
 ## [1.1.2](https://github.com/franticg33k/morphe-patches/compare/v1.1.1...v1.1.2) (2026-07-09)
 
 ### 🐛 Bug Fixes
