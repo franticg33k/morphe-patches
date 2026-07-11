@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-07-11T06:13:23",
-  "description": "## [1.2.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.2.0...v1.2.1-dev.1) (2026-07-11)\n\n### 🚀 Updated App Support\n\n* add Provide Lite v1.4.6 support (Unlock Premium + Remove Ads) ([05824b5](https://github.com/franticg33k/morphe-patches/commit/05824b5bf11c646d4220b6992cf157aee2a0eaa3))",
-  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.2.1-dev.1/patches-1.2.1-dev.1.mpp",
+  "created_at": "2026-07-11T06:17:18",
+  "description": "## [1.2.1](https://github.com/franticg33k/morphe-patches/compare/v1.2.0...v1.2.1) (2026-07-11)\n\n### 🚀 Updated App Support\n\n* add Provide Lite v1.4.6 support (Unlock Premium + Remove Ads) ([05824b5](https://github.com/franticg33k/morphe-patches/commit/05824b5bf11c646d4220b6992cf157aee2a0eaa3))",
+  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.2.1/patches-1.2.1.mpp",
   "signature_download_url": "",
-  "version": "1.2.1-dev.1"
+  "version": "1.2.1"
 }

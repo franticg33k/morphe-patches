@@ -1,3 +1,9 @@
+## [1.2.1](https://github.com/franticg33k/morphe-patches/compare/v1.2.0...v1.2.1) (2026-07-11)
+
+### 🚀 Updated App Support
+
+* add Provide Lite v1.4.6 support (Unlock Premium + Remove Ads) ([05824b5](https://github.com/franticg33k/morphe-patches/commit/05824b5bf11c646d4220b6992cf157aee2a0eaa3))
+
 ## [1.2.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.2.0...v1.2.1-dev.1) (2026-07-11)
 
 ### 🚀 Updated App Support
