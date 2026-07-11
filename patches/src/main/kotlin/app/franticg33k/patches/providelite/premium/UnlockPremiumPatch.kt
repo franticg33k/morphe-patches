@@ -8,8 +8,9 @@ val enableProvidelitePremiumPatch = rawResourcePatch(
     name = "Unlock Premium",
     description = "Patches the Dart AOT-compiled libapp.so to unlock all premium / VIP features. " +
         "Forces the VIP state to always be true by rewriting the constant-pool loads " +
-        "(add xN, x22, #0x30 -> add xN, x22, #0x20) inside the cacheIsVipKey readers and " +
-        "the validatePurchase function. Verified on v1.4.0 (Dart 3.7.0, arm64, obfuscated).",
+        "(add xN, x22, #0x30 -> add xN, x22, #0x20) inside the cacheIsVipKey readers " +
+        "(getter + 3 callers). Verified on v1.4.6 (Dart 3.7.0, arm64, obfuscated) — " +
+        "flutter.cacheIsVipKey=true on device.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_PROVIDELITE)
@@ -18,25 +19,23 @@ val enableProvidelitePremiumPatch = rawResourcePatch(
         val libFile = get("lib/arm64-v8a/libapp.so", false)
         val bytes = libFile.readBytes()
 
-        // validatePurchase (0x5c5a98) — force the purchase-validation result to true.
-        applyPatch(bytes, 0x5c60f8, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "validatePurchase.result")
-        applyPatch(bytes, 0x5c6730, b(0xc4, 0xc2, 0x00, 0x91), b(0xc4, 0x82, 0x00, 0x91), "validatePurchase.a")
-        applyPatch(bytes, 0x5c6748, b(0xc4, 0xc2, 0x00, 0x91), b(0xc4, 0x82, 0x00, 0x91), "validatePurchase.b")
-        applyPatch(bytes, 0x5c676c, b(0xc2, 0xc2, 0x00, 0x91), b(0xc2, 0x82, 0x00, 0x91), "validatePurchase.c")
+        // Every get<VIP flag> in the app funnels through the cacheIsVipKey pool constant
+        // (pp+0x15308). Each reader loads the Dart boolean constant:
+        //   false = add xN, x22, #0x30   (cN c2 00 91)
+        //   true  = add xN, x22, #0x20   (cN 82 00 91)
+        // Flipping the 2nd byte (0x30 -> 0x20) forces the reader to return true.
+        // validatePurchase (0x5d5780) was checked and contains NO false-literal returns,
+        // so the four sites below are the complete set. Verified on v1.4.6
+        // (Dart 3.7.0, arm64, obfuscated) — flutter.cacheIsVipKey=true on device.
 
-        // cacheIsVipKey reader (0x5c09a8)
-        applyPatch(bytes, 0x5c0aac, b(0xc3, 0xc2, 0x00, 0x91), b(0xc3, 0x82, 0x00, 0x91), "isVipReader1.a")
-        applyPatch(bytes, 0x5c0b20, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader1.b")
-        applyPatch(bytes, 0x5c1374, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader1.c")
-        applyPatch(bytes, 0x5c14a4, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader1.d")
-
-        // cacheIsVipKey reader (0x5cb6e4)
-        applyPatch(bytes, 0x5cb7b4, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader2.a")
-        applyPatch(bytes, 0x5cba80, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader2.b")
-        applyPatch(bytes, 0x5cbb00, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader2.c")
-        applyPatch(bytes, 0x5cbc0c, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader2.d")
-        applyPatch(bytes, 0x5cbc9c, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "isVipReader2.e")
-        applyPatch(bytes, 0x5cbd24, b(0xd1, 0xc2, 0x00, 0x91), b(0xd1, 0x82, 0x00, 0x91), "isVipReader2.f")
+        // cacheIsVipKey getter (0x1cf3b0)
+        applyPatch(bytes, 0x1cf3f4, b(0xc1, 0xc2, 0x00, 0x91), b(0xc1, 0x82, 0x00, 0x91), "cacheIsVipKey.getter")
+        // cacheIsVipKey reader #1 (0x5d487c)
+        applyPatch(bytes, 0x5d4cd0, b(0xc3, 0xc2, 0x00, 0x91), b(0xc3, 0x82, 0x00, 0x91), "cacheIsVipKey.reader1")
+        // cacheIsVipKey reader #2 (0x5d4bcc)
+        applyPatch(bytes, 0x5d5de0, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "cacheIsVipKey.reader2")
+        // cacheIsVipKey reader #3 (0x5d69cc)
+        applyPatch(bytes, 0x5d6a9c, b(0xc0, 0xc2, 0x00, 0x91), b(0xc0, 0x82, 0x00, 0x91), "cacheIsVipKey.reader3")
 
         libFile.writeBytes(bytes)
     }
