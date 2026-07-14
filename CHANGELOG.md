@@ -1,3 +1,9 @@
+## [1.3.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.2.2-dev.1...v1.3.0-dev.1) (2026-07-14)
+
+### ✨ New Features
+
+* add Hamro Patro Remove Ads patch ([a907709](https://github.com/franticg33k/morphe-patches/commit/a90770932a1840b4206d605696b86f8270e9e493))
+
 ## [1.2.2](https://github.com/franticg33k/morphe-patches/compare/v1.2.1...v1.2.2) (2026-07-13)
 
 ### 🚀 Updated App Support
