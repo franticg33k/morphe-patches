@@ -1,3 +1,9 @@
+## [1.3.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.0...v1.3.1) (2026-07-24)
+
+### 🚀 Updated App Support
+
+* update JellyWatch premium patch for v2.0.REV-1710 obfuscation changes ([79b2045](https://github.com/franticg33k/morphe-patches/commit/79b2045822c93e3d0854569f08eb2b234de379d9))
+
 ## [1.3.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.0...v1.3.1-dev.1) (2026-07-24)
 
 ### 🚀 Updated App Support
