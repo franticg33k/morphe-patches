@@ -57,14 +57,14 @@ object PairipHandleErrorFingerprint : Fingerprint(
 )
 
 object ShopPurchaseManagerIsOwnedFingerprint : Fingerprint(
-    definingClass = "Lav8",
+    definingClass = "Lyu8",
     name = "a",
     returnType = "Z",
     parameters = listOf("Ljava/lang/String;"),
 )
 
 object ShopPurchaseManagerReplaceOwnedFingerprint : Fingerprint(
-    definingClass = "Lav8",
+    definingClass = "Lyu8",
     name = "d",
     returnType = "V",
     parameters = listOf("Ljava/util/Set;"),

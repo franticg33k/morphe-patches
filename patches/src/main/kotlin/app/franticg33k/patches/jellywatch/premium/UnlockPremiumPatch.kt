@@ -10,29 +10,29 @@ private const val TRUE_RETURN = """
 """
 
 private val SHOP_MERGE_D = """
-    iget-object v0, p0, Lav8;->b:Loha;
-    invoke-virtual {v0}, Loha;->getValue()Ljava/lang/Object;
+    iget-object v0, p0, Lyu8;->b:Lnha;
+    invoke-virtual {v0}, Lnha;->getValue()Ljava/lang/Object;
     move-result-object v1
     check-cast v1, Ljava/util/Set;
     new-instance v2, Ljava/util/HashSet;
     invoke-direct {v2}, Ljava/util/HashSet;-><init>()V
     invoke-interface {v2, v1}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
     invoke-interface {v2, p1}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
-    iget-object p1, p0, Lav8;->a:Landroid/content/SharedPreferences;
+    iget-object p1, p0, Lyu8;->a:Landroid/content/SharedPreferences;
     invoke-interface {p1}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences${'$'}Editor;
     move-result-object p1
     const-string v1, "owned_items"
     invoke-interface {p1, v1, v2}, Landroid/content/SharedPreferences${'$'}Editor;->putStringSet(Ljava/lang/String;Ljava/util/Set;)Landroid/content/SharedPreferences${'$'}Editor;
     invoke-interface {p1}, Landroid/content/SharedPreferences${'$'}Editor;->apply()V
     const/4 v1, 0x0
-    invoke-virtual {v0, v1, v2}, Loha;->o(Ljava/lang/Object;Ljava/lang/Object;)Z
+    invoke-virtual {v0, v1, v2}, Lnha;->p(Ljava/lang/Object;Ljava/lang/Object;)Z
     return-void
 """
 
 private val PREPOPULATE_OWNED = """
-    iget-object v0, p0, Lcom/jellywatch/app/shop/ShopViewModel;->purchaseManager:Lav8;
-    iget-object v1, v0, Lav8;->b:Loha;
-    invoke-virtual {v1}, Loha;->getValue()Ljava/lang/Object;
+    iget-object v0, p0, Lcom/jellywatch/app/shop/ShopViewModel;->purchaseManager:Lyu8;
+    iget-object v1, v0, Lyu8;->b:Lnha;
+    invoke-virtual {v1}, Lnha;->getValue()Ljava/lang/Object;
     move-result-object v2
     check-cast v2, Ljava/util/Set;
     new-instance v3, Ljava/util/HashSet;
@@ -79,8 +79,8 @@ private val PREPOPULATE_OWNED = """
     const-string v2, "app_icon_default"
     invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
     const/4 v2, 0x0
-    invoke-virtual {v1, v2, v3}, Loha;->o(Ljava/lang/Object;Ljava/lang/Object;)Z
-    iget-object v0, v0, Lav8;->a:Landroid/content/SharedPreferences;
+    invoke-virtual {v1, v2, v3}, Lnha;->p(Ljava/lang/Object;Ljava/lang/Object;)Z
+    iget-object v0, v0, Lyu8;->a:Landroid/content/SharedPreferences;
     invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences${'$'}Editor;
     move-result-object v0
     const-string v1, "owned_items"
