@@ -23,16 +23,4 @@ object PurchaseSharedPrefManagerGetProYearPurchaseTimeFingerprint : Fingerprint(
     parameters = listOf("J"),
 )
 
-object BaseSharedPrefManagerGetBooleanFingerprint : Fingerprint(
-    definingClass = "Lcom/lightcone/analogcam/dao/BaseSharedPrefManager;",
-    name = "getBoolean",
-    returnType = "Z",
-    parameters = listOf("Landroid/content/SharedPreferences;", "Ljava/lang/String;", "Z"),
-)
 
-object BaseSharedPrefManagerPutBooleanFingerprint : Fingerprint(
-    definingClass = "Lcom/lightcone/analogcam/dao/BaseSharedPrefManager;",
-    name = "putBoolean",
-    returnType = "V",
-    parameters = listOf("Landroid/content/SharedPreferences;", "Ljava/lang/String;", "Z"),
-)

@@ -1,3 +1,9 @@
+## [1.3.5-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.4...v1.3.5-dev.1) (2026-07-28)
+
+### 🚀 Updated App Support
+
+* remove overly broad getBoolean patch causing crashes ([df410c6](https://github.com/franticg33k/morphe-patches/commit/df410c6f3a5a168e07aef65161a9c6726a35f6d4))
+
 ## [1.3.4](https://github.com/franticg33k/morphe-patches/compare/v1.3.3...v1.3.4) (2026-07-28)
 
 ### 🚀 Updated App Support
