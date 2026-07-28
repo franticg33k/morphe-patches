@@ -1,3 +1,9 @@
+## [1.3.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.2...v1.3.3) (2026-07-28)
+
+### 🚀 Updated App Support
+
+* fix oldroll package name to com.accordion.analogcam ([b201d70](https://github.com/franticg33k/morphe-patches/commit/b201d7075d0ca492231f5b60a655e5667d9e7f22))
+
 ## [1.3.3-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.2...v1.3.3-dev.1) (2026-07-28)
 
 ### 🚀 Updated App Support
