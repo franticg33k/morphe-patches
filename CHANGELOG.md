@@ -1,3 +1,9 @@
+## [1.3.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.1...v1.3.2) (2026-07-28)
+
+### 🚀 Updated App Support
+
+* add oldroll pro unlock patches ([37aa696](https://github.com/franticg33k/morphe-patches/commit/37aa696c2982594350bdfa307987743df8e02374))
+
 ## [1.3.2-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.1...v1.3.2-dev.1) (2026-07-28)
 
 ### 🚀 Updated App Support
