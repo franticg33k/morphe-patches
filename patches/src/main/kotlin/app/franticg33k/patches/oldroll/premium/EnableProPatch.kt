@@ -27,6 +27,5 @@ val enableOldrollProPatch = bytecodePatch(
         PurchaseSharedPrefManagerIsSkuPurchasedFingerprint.method.addInstructions(0, TRUE_RETURN)
         PurchaseSharedPrefManagerGetProMonthPurchaseTimeFingerprint.method.addInstructions(0, RETURN_CURRENT_TIME)
         PurchaseSharedPrefManagerGetProYearPurchaseTimeFingerprint.method.addInstructions(0, RETURN_CURRENT_TIME)
-        BaseSharedPrefManagerGetBooleanFingerprint.method.addInstructions(0, TRUE_RETURN)
     }
 }
