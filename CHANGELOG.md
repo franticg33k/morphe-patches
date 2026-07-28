@@ -1,3 +1,9 @@
+## [1.3.6-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.5...v1.3.6-dev.1) (2026-07-28)
+
+### 🚀 Updated App Support
+
+* remove oldroll patches ([97410f9](https://github.com/franticg33k/morphe-patches/commit/97410f96a8e2756fbfa8ea3e38496347a17aaca8))
+
 ## [1.3.5](https://github.com/franticg33k/morphe-patches/compare/v1.3.4...v1.3.5) (2026-07-28)
 
 ### 🚀 Updated App Support
