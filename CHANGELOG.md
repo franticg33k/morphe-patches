@@ -1,3 +1,9 @@
+## [1.3.4-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.3...v1.3.4-dev.1) (2026-07-28)
+
+### 🚀 Updated App Support
+
+* fix fingerprints to use smali class paths ([3888e3f](https://github.com/franticg33k/morphe-patches/commit/3888e3f11105c5a67aeb1c5229724284353cfee5))
+
 ## [1.3.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.2...v1.3.3) (2026-07-28)
 
 ### 🚀 Updated App Support
