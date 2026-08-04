@@ -1,3 +1,16 @@
+## [1.3.6](https://github.com/franticg33k/morphe-patches/compare/v1.3.5...v1.3.6) (2026-07-31)
+
+### 🚀 Updated App Support
+
+* add native camera premium unlock patch ([be0bb33](https://github.com/franticg33k/morphe-patches/commit/be0bb33179ebe406ae17de69d7682dbb9c4172e9))
+* remove oldroll patches ([97410f9](https://github.com/franticg33k/morphe-patches/commit/97410f96a8e2756fbfa8ea3e38496347a17aaca8))
+
+## [1.3.6-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.6-dev.1...v1.3.6-dev.2) (2026-07-31)
+
+### 🚀 Updated App Support
+
+* add native camera premium unlock patch ([be0bb33](https://github.com/franticg33k/morphe-patches/commit/be0bb33179ebe406ae17de69d7682dbb9c4172e9))
+
 ## [1.3.6-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.5...v1.3.6-dev.1) (2026-07-28)
 
 ### 🚀 Updated App Support
