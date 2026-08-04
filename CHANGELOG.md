@@ -1,3 +1,9 @@
+## [1.3.7-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.7-dev.1...v1.3.7-dev.2) (2026-08-04)
+
+### 🚀 Updated App Support
+
+* update app name in Compatibility for Karobar ([6724240](https://github.com/franticg33k/morphe-patches/commit/6724240631d6fea3a3b58f8901ff5670d2c1c4e2))
+
 ## [1.3.7-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.6...v1.3.7-dev.1) (2026-08-04)
 
 ### 🚀 Updated App Support
