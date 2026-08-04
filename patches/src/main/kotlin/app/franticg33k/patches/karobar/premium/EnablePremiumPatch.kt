@@ -17,45 +17,45 @@ val enableKarobarPremiumPatch = rawResourcePatch(
         val libFile = get("lib/arm64-v8a/libapp.so", false)
         val bytes = libFile.readBytes()
 
-        // Patch 1: hasPremiumAccess @ 0xdebf5c
-        // NOP the `tbnz w0, #4, #0xdebf68` branch that skips the return-true path.
-        // After patch: always falls through to `add x0, x22, #0x20` (return true).
+        // Patch 1: hasPremiumAccess @ 0xdf89a0
+        // NOP the `tbnz w0, #4, #0xdf89ac` branch that skips the return-true path.
+        // After patch: always falls through to `add x0, NULL, #0x20` (return true).
         applyPatch(
             bytes = bytes,
-            offset = 0xdebf5c,
+            offset = 0xdf89a0,
             expected = byteArrayOf(0x60, 0x00, 0x20, 0x37), // tbnz w0, #4, <rel>
             replacement = byteArrayOf(0x1f, 0x20, 0x03.toByte(), 0xd5.toByte()), // NOP
             label = "hasPremiumAccess"
         )
 
-        // Patch 2: isPaidUser @ 0xdede34
-        // NOP the `tbz w1, #4, #0xdede48` branch that skips the return-true path.
-        // After patch: always falls through to `add x0, x22, #0x20` (return true).
+        // Patch 2: isPaidUser @ 0xdfa878
+        // NOP the `tbz w1, #4, #0xdfa88c` branch that skips the return-true path.
+        // After patch: always falls through to `add x0, NULL, #0x20` (return true).
         applyPatch(
             bytes = bytes,
-            offset = 0xdede34,
+            offset = 0xdfa878,
             expected = byteArrayOf(0xa1.toByte(), 0x00, 0x20, 0x36), // tbz w1, #4, <rel>
             replacement = byteArrayOf(0x1f, 0x20, 0x03.toByte(), 0xd5.toByte()), // NOP
             label = "isPaidUser"
         )
 
-        // Patch 3: showSubscriptionExpiredSheetForAdmin @ 0xdbe1b4
+        // Patch 3: showSubscriptionExpiredSheetForAdmin @ 0xdcabe4
         // NOP the BL call so the "subscription expired" bottom sheet is never shown
         // to admin users after login.
         applyPatch(
             bytes = bytes,
-            offset = 0xdbe1b4,
-            expected = byteArrayOf(0x62, 0xa7.toByte(), 0x00, 0x94.toByte()), // bl <showSubscriptionExpiredSheetForAdmin>
+            offset = 0xdcabe4,
+            expected = byteArrayOf(0x67, 0xa7.toByte(), 0x00, 0x94.toByte()), // bl <showSubscriptionExpiredSheetForAdmin>
             replacement = byteArrayOf(0x1f, 0x20, 0x03.toByte(), 0xd5.toByte()), // NOP
             label = "expiredAdminSheet"
         )
 
-        // Patch 4: showSubscriptionExpiredSheetForStaff @ 0xdbe1bc
+        // Patch 4: showSubscriptionExpiredSheetForStaff @ 0xdcabec
         // NOP the BL call so the "subscription expired" bottom sheet is never shown
         // to staff users after login.
         applyPatch(
             bytes = bytes,
-            offset = 0xdbe1bc,
+            offset = 0xdcabec,
             expected = byteArrayOf(0x42, 0x03, 0x00, 0x94.toByte()), // bl <showSubscriptionExpiredSheetForStaff>
             replacement = byteArrayOf(0x1f, 0x20, 0x03.toByte(), 0xd5.toByte()), // NOP
             label = "expiredStaffSheet"
