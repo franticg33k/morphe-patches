@@ -193,6 +193,32 @@
       "dependencies": [],
       "compatiblePackages": [
         {
+          "packageName": "com.jellywatch.tv",
+          "name": "JellyWatch TV",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#008577",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "1.0.REV-0207",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Remove License Activity",
+      "description": "Removes the PairIP LicenseActivity from AndroidManifest.xml.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
           "packageName": "com.harwin.prismatica",
           "name": "Prismatica Pro",
           "description": null,
@@ -332,6 +358,32 @@
           "targets": [
             {
               "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Unlock Premium",
+      "description": "Unlocks all premium features in JellyWatch TV. Premium entitlement is server-verified against verify.jellywatch.app and surfaced to the UI as a PremiumStatus data class (isPremium = first boolean field); the patch forces that field to true and neutralizes the PairIP Play Store license check that gates the app on launch.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.jellywatch.tv",
+          "name": "JellyWatch TV",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#008577",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "1.0.REV-0207",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
