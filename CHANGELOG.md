@@ -1,3 +1,9 @@
+## [1.3.7-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.3.7-dev.3...v1.3.7-dev.4) (2026-08-06)
+
+### 🚀 Updated App Support
+
+* fix JellyWatch premium unlock for 2.0.REV-1712 ([ed92817](https://github.com/franticg33k/morphe-patches/commit/ed92817c5fb13a2192919291ed0caea7a2ac2ec0))
+
 ## [1.3.7-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.7-dev.2...v1.3.7-dev.3) (2026-08-06)
 
 ### 🚀 Updated App Support
