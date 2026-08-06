@@ -2,8 +2,9 @@ package app.franticg33k.patches.nativecamera.premium
 
 import app.morphe.patcher.Fingerprint
 
+// Anchored on the stable SharedPreferences keys / log strings instead of the obfuscated
+// CameraViewModel class name, which can change between APK versions.
 object CameraViewModelPremiumInitFingerprint : Fingerprint(
-    definingClass = "LN1/g;",
     name = "<init>",
     returnType = "V",
     parameters = listOf("Landroid/app/Application;"),
@@ -11,7 +12,6 @@ object CameraViewModelPremiumInitFingerprint : Fingerprint(
 )
 
 object CameraViewModelSetPremiumFingerprint : Fingerprint(
-    definingClass = "LN1/g;",
     returnType = "V",
     parameters = listOf("Z"),
     strings = listOf("setPremium called with value: "),
