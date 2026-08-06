@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.3.6](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.6)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;17 patches total
+> **[v1.3.7-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.7-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;17 patches total
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -85,7 +85,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 </details>
 
 <details open>
-<summary>📦 Mero Karobar&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<summary>📦 Karobar&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
