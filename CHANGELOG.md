@@ -1,3 +1,13 @@
+## [1.3.7](https://github.com/franticg33k/morphe-patches/compare/v1.3.6...v1.3.7) (2026-08-07)
+
+### 🚀 Updated App Support
+
+* add JellyWatch TV premium unlock patch ([f17d309](https://github.com/franticg33k/morphe-patches/commit/f17d309748c27f9ccc68d99cce1f23f47397cb44))
+* fix JellyWatch premium unlock for 2.0.REV-1712 ([ed92817](https://github.com/franticg33k/morphe-patches/commit/ed92817c5fb13a2192919291ed0caea7a2ac2ec0))
+* fix Native Camera premium unlock for 1.1.7 ([13c8db8](https://github.com/franticg33k/morphe-patches/commit/13c8db879f8526db74c33085cae4e4c88ed783fb))
+* update app name in Compatibility for Karobar ([6724240](https://github.com/franticg33k/morphe-patches/commit/6724240631d6fea3a3b58f8901ff5670d2c1c4e2))
+* update offsets and descriptions in EnablePremiumPatch for premium features ([456db10](https://github.com/franticg33k/morphe-patches/commit/456db10338e8e0bc96de2e204b3d04fd3dedfb3c))
+
 ## [1.3.7-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.3.7-dev.3...v1.3.7-dev.4) (2026-08-06)
 
 ### 🚀 Updated App Support
