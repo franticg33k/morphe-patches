@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.3.7-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.7-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;17 patches total
+> **[v1.3.7-dev.4](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.7-dev.4)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;19 patches total
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -65,10 +65,31 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <summary>📦 JellyWatch&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
+**🎯 Supported versions:**
+
+| 2.0.REV-1712 |
+| :---: |
+
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity from AndroidManifest.xml. |  |
 | [Unlock Premium](#unlock-premium) | Unlocks all premium features and shop items in JellyWatch. |  |
+
+</details>
+
+<details open>
+<summary>📦 JellyWatch TV&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 1.0.REV-0207 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity from AndroidManifest.xml. |  |
+| [Unlock Premium](#unlock-premium) | Unlocks all premium features in JellyWatch TV. Premium entitlement is server-verified against verify.jellywatch.app and surfaced to the UI as a PremiumStatus data class (isPremium = first boolean field); the patch forces that field to true and neutralizes the PairIP Play Store license check that gates the app on launch. |  |
 
 </details>
 
@@ -97,6 +118,11 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <details open>
 <summary>📦 Native Camera&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
+
+**🎯 Supported versions:**
+
+| 1.1.7 |
+| :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|

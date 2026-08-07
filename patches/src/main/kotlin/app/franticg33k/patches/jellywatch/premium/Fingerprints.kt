@@ -8,6 +8,13 @@ object PremiumStatusIsPremiumFingerprint : Fingerprint(
     returnType = "Z",
 )
 
+// Resolves the shop purchase manager class from its stable SharedPreferences keys instead of
+// pinning the obfuscated class name (Lyu8 -> Leu8 between versions), which the notes say to
+// avoid. The two keys live in the same <init> method, so the anchor is unambiguous.
+object PurchaseManagerClassFingerprint : Fingerprint(
+    strings = listOf("shop_purchases", "owned_items"),
+)
+
 object PremiumStatusHasFeatureFingerprint : Fingerprint(
     definingClass = "Lcom/jellywatch/app/billing/model/PremiumStatus;",
     name = "hasFeature",
@@ -57,14 +64,14 @@ object PairipHandleErrorFingerprint : Fingerprint(
 )
 
 object ShopPurchaseManagerIsOwnedFingerprint : Fingerprint(
-    definingClass = "Lyu8",
+    classFingerprint = PurchaseManagerClassFingerprint,
     name = "a",
     returnType = "Z",
     parameters = listOf("Ljava/lang/String;"),
 )
 
 object ShopPurchaseManagerReplaceOwnedFingerprint : Fingerprint(
-    definingClass = "Lyu8",
+    classFingerprint = PurchaseManagerClassFingerprint,
     name = "d",
     returnType = "V",
     parameters = listOf("Ljava/util/Set;"),
