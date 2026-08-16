@@ -1,3 +1,9 @@
+## [1.3.8-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.7...v1.3.8-dev.1) (2026-08-16)
+
+### 🚀 Updated App Support
+
+* add Bolpatra Nepal premium unlock + permanent free-trial patch ([09df518](https://github.com/franticg33k/morphe-patches/commit/09df518d563180cedf95b903d58e09c7cc52c187))
+
 ## [1.3.7](https://github.com/franticg33k/morphe-patches/compare/v1.3.6...v1.3.7) (2026-08-07)
 
 ### 🚀 Updated App Support

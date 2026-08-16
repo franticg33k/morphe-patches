@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.3.7](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.7)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;19 patches total
+> **[v1.3.8-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.8-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;20 patches total
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -127,6 +127,16 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Unlock Premium](#unlock-premium) | Forces the premium entitlement in Native Camera. Premium status is a local 'is_premium' SharedPreferences flag read on startup behind PairIP's Play Store licensing, so this unlocks RAW DNG, 10-bit video, HLG/UHDR and the boosted-ISO seekbar. |  |
+
+</details>
+
+<details open>
+<summary>📦 Bolpatra Nepal&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
+<br>
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Unlock Premium, Skip Login & Make Free Trial Permanent](#unlock-premium-skip-login-make-free-trial-permanent) | Patches the Dart AOT-compiled libapp.so of Bolpatra Nepal to skip the login screen, unlock premium/paid features, and make the 7-day free trial permanent. LoginManager::isNotValidatedUser is forced to always return false, lifting the Free-plan paywall and the trial-expiry gate: the trial expiry is computed client-side from the server plan_end_date into statics (isPaid = (plan_end_date - now).inDays <= 0) that only isNotValidatedUser reads, so with it pinned to false the free trial never expires and premium features stay unlocked forever (PPMO/EGP contact redirect, hidden works tab, document download and gallery gates). The isActive() result is left honest so the app stops attaching the invalid Authorization header, and the four login redirects (notice View, document download, gallery, subscription purchase) are bypassed at the branch level so actions run straight through without sending the user to the login page. Verified on v1.1.33 (Dart 3.9.2, arm64, non-obfuscated). |  |
 
 </details>
 
