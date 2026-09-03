@@ -1,3 +1,10 @@
+## [1.3.8-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.8-dev.1...v1.3.8-dev.2) (2026-09-03)
+
+### 🚀 Updated App Support
+
+* add Fricam Pro premium unlock patch ([543dda1](https://github.com/franticg33k/morphe-patches/commit/543dda174a4c6f87451d886680e0488c2fee82b6))
+* fix Fricam target versionCodes map type ([5ada541](https://github.com/franticg33k/morphe-patches/commit/5ada54137af673fb3a4c09960a87bee513314c2c))
+
 ## [1.3.8-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.7...v1.3.8-dev.1) (2026-08-16)
 
 ### 🚀 Updated App Support
