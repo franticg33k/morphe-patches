@@ -13,7 +13,6 @@ object Constants {
         targets = listOf(
             AppTarget(
                 version = "1.3.7",
-                versionCodes = mapOf("versionCode" to 34),
                 isExperimental = false,
                 minSdk = null,
             ),
