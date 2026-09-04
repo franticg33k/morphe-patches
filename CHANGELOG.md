@@ -1,3 +1,9 @@
+## [1.3.10-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.9...v1.3.10-dev.1) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* update Fricam patches for 1.4.0.1 (R8-resilient fingerprints) ([8870548](https://github.com/franticg33k/morphe-patches/commit/8870548d24310b824c7d3e5bef199ae7ccbc856b))
+
 ## [1.3.9](https://github.com/franticg33k/morphe-patches/compare/v1.3.8...v1.3.9) (2026-09-04)
 
 ### 🚀 Updated App Support
