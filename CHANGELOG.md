@@ -1,3 +1,9 @@
+## [1.3.10-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.1...v1.3.10-dev.2) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* add Fricam Edge unlock (self-hosted sidecar support) ([d33b327](https://github.com/franticg33k/morphe-patches/commit/d33b327d3e40ece1cf515c90ceb6e0b8a89dc984))
+
 ## [1.3.10-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.9...v1.3.10-dev.1) (2026-09-04)
 
 ### 🚀 Updated App Support
