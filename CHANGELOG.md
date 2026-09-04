@@ -1,3 +1,12 @@
+## [1.3.8](https://github.com/franticg33k/morphe-patches/compare/v1.3.7...v1.3.8) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* add Bolpatra Nepal premium unlock + permanent free-trial patch ([09df518](https://github.com/franticg33k/morphe-patches/commit/09df518d563180cedf95b903d58e09c7cc52c187))
+* add Fricam Pro premium unlock patch ([543dda1](https://github.com/franticg33k/morphe-patches/commit/543dda174a4c6f87451d886680e0488c2fee82b6))
+* fix Fricam target versionCodes map type ([5ada541](https://github.com/franticg33k/morphe-patches/commit/5ada54137af673fb3a4c09960a87bee513314c2c))
+* fix Native Camera premium unlock for 1.4 (generic fingerprints + PairIP license bypass) ([9b6be76](https://github.com/franticg33k/morphe-patches/commit/9b6be7601e02e691882c8e370bd38004f5f16df8))
+
 ## [1.3.8-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.8-dev.2...v1.3.8-dev.3) (2026-09-04)
 
 ### 🚀 Updated App Support
