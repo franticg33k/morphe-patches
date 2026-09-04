@@ -1,3 +1,9 @@
+## [1.3.8-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.8-dev.2...v1.3.8-dev.3) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* fix Native Camera premium unlock for 1.4 (generic fingerprints + PairIP license bypass) ([9b6be76](https://github.com/franticg33k/morphe-patches/commit/9b6be7601e02e691882c8e370bd38004f5f16df8))
+
 ## [1.3.8-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.8-dev.1...v1.3.8-dev.2) (2026-09-03)
 
 ### 🚀 Updated App Support
