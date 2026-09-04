@@ -1,3 +1,9 @@
+## [1.3.9-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.8...v1.3.9-dev.1) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* fix Atlas Photo Pro unlock for 2.7.3 (structural fallback + idempotency check) ([53e7ba8](https://github.com/franticg33k/morphe-patches/commit/53e7ba894bf2ffa9f8b64bcf8ae49923b8582f2b))
+
 ## [1.3.8](https://github.com/franticg33k/morphe-patches/compare/v1.3.7...v1.3.8) (2026-09-04)
 
 ### 🚀 Updated App Support
