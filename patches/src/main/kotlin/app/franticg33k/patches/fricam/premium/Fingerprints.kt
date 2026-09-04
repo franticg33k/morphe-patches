@@ -38,6 +38,18 @@ object PersistProFlagFingerprint : Fingerprint(
     strings = listOf("pro_unlocked"),
 )
 
+// The single publisher of the Fricam Edge entitlement flag. Unlike Pro there is NO local
+// persistence for Edge: on every RevenueCat sync/modify this method computes
+// entitlements.get("fricam_edge").isActive() and publishes the boolean into the Edge StateFlow
+// (z70.u, consumed by the pairing/settings/diagnostics UI via z70.v). No `name` pin (same R8
+// resilience as the Pro fingerprints); the (CustomerInfo, Z) -> V signature plus the two exact
+// const-strings resolve to exactly one method in 1.4.0.1 (z70.a). (audit: Edge gate)
+object EdgeEntitlementActiveFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf("Lcom/revenuecat/purchases/CustomerInfo;", "Z"),
+    strings = listOf("fricam_edge", "legacy_pro_grant"),
+)
+
 // Neutralize the PairIP Play Store licensing that gates the app on launch. Called from
 // com.pairip.application.Application.attachBaseContext. PairIP is a third-party agent left
 // unrenamed by R8, so definingClass + name are stable; the string anchors guard against that
