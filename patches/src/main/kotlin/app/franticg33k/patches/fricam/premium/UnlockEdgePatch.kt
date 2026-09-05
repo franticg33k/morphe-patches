@@ -35,8 +35,7 @@ val unlockFricamEdgePatch = bytecodePatch(
             val reference = (instruction as? ReferenceInstruction)?.reference
             reference is MethodReference &&
                 reference.definingClass == "Ljava/lang/Boolean;" &&
-                reference.name == "valueOf" &&
-                reference.returnType == "Z"
+                reference.name == "valueOf"
         }
         check(boxIndex >= 0) {
             "Fricam Edge: could not find the Boolean.valueOf boxing in the entitlement sync method"
