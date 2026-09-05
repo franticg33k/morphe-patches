@@ -12,6 +12,11 @@ object Constants {
         appIconColor = 0x1F6FEB,
         targets = listOf(
             AppTarget(
+                version = "1.4.0.1",
+                isExperimental = false,
+                minSdk = null,
+            ),
+            AppTarget(
                 version = "1.3.7",
                 isExperimental = false,
                 minSdk = null,

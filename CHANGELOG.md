@@ -1,3 +1,21 @@
+## [1.3.10-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.2...v1.3.10-dev.3) (2026-09-05)
+
+### 🐛 Bug Fixes
+
+* **fricam:** correct Edge boxing scan (Boolean.valueOf returns Ljava/lang/Boolean;) ([1acbdc5](https://github.com/franticg33k/morphe-patches/commit/1acbdc5a693cc6fecb55218bbd5a7d22ced53031))
+
+## [1.3.10-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.1...v1.3.10-dev.2) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* add Fricam Edge unlock (self-hosted sidecar support) ([d33b327](https://github.com/franticg33k/morphe-patches/commit/d33b327d3e40ece1cf515c90ceb6e0b8a89dc984))
+
+## [1.3.10-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.9...v1.3.10-dev.1) (2026-09-04)
+
+### 🚀 Updated App Support
+
+* update Fricam patches for 1.4.0.1 (R8-resilient fingerprints) ([8870548](https://github.com/franticg33k/morphe-patches/commit/8870548d24310b824c7d3e5bef199ae7ccbc856b))
+
 ## [1.3.9](https://github.com/franticg33k/morphe-patches/compare/v1.3.8...v1.3.9) (2026-09-04)
 
 ### 🚀 Updated App Support
