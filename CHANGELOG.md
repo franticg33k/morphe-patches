@@ -1,3 +1,9 @@
+## [1.3.10-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.2...v1.3.10-dev.3) (2026-09-05)
+
+### 🐛 Bug Fixes
+
+* **fricam:** correct Edge boxing scan (Boolean.valueOf returns Ljava/lang/Boolean;) ([1acbdc5](https://github.com/franticg33k/morphe-patches/commit/1acbdc5a693cc6fecb55218bbd5a7d22ced53031))
+
 ## [1.3.10-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.1...v1.3.10-dev.2) (2026-09-04)
 
 ### 🚀 Updated App Support
