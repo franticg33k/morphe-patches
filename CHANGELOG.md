@@ -1,3 +1,9 @@
+## [1.3.10-dev.6](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.5...v1.3.10-dev.6) (2026-09-27)
+
+### 🐛 Bug Fixes
+
+* **byair:** resolve kotlin.Result.Success box from the APK at patch time ([4dc4525](https://github.com/franticg33k/morphe-patches/commit/4dc45256bf35face58ee6b5765980ec004a948fe))
+
 ## [1.3.10-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.4...v1.3.10-dev.5) (2026-09-27)
 
 ### 🐛 Bug Fixes
