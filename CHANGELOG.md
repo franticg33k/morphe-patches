@@ -1,3 +1,9 @@
+## [1.3.10-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.4...v1.3.10-dev.5) (2026-09-27)
+
+### 🐛 Bug Fixes
+
+* **byair:** build Result.Success boxes with the real y4a$c class ([4d06618](https://github.com/franticg33k/morphe-patches/commit/4d06618f3f0f63ea4354bf659c61941b71b860c6))
+
 ## [1.3.10-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.3...v1.3.10-dev.4) (2026-09-27)
 
 ### 🚀 Updated App Support
