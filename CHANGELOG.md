@@ -1,3 +1,17 @@
+## [1.4.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.10...v1.4.0-dev.1) (2026-09-27)
+
+### 🐛 Bug Fixes
+
+* **ci:** pin conventional-changelog-conventionalcommits to ^9.3.1 ([605f626](https://github.com/franticg33k/morphe-patches/commit/605f626fedd0d99ec6faef4fd74e1b746e2eb250))
+
+### ✨ New Features
+
+* **nostalgiatv:** unlock all client-side Pro features and strip PairIP licensing ([82f6d39](https://github.com/franticg33k/morphe-patches/commit/82f6d3905dee3fa0df73df0f54e021ade5366663))
+
+### 🚀 Updated App Support
+
+* rework Nepali Patro Remove Ads for 6.11.5 (AdMob + flutter_adserver) ([9ecbf49](https://github.com/franticg33k/morphe-patches/commit/9ecbf49f76036081116a8d160d17a8ee93ea9838))
+
 ## [1.3.10](https://github.com/franticg33k/morphe-patches/compare/v1.3.9...v1.3.10) (2026-09-27)
 
 ### 🐛 Bug Fixes
