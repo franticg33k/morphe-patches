@@ -1,8 +1,10 @@
 package app.franticg33k.patches.byair.premium
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.bytecodePatch
 import app.franticg33k.patches.byair.shared.Constants.COMPATIBILITY_BYAIR
+import app.franticg33k.patches.byair.shared.KotlinResultBox
 
 private const val TRUE_RETURN = """
     const/4 v0, 0x1
@@ -14,23 +16,27 @@ private const val FALSE_RETURN = """
     return v0
 """
 
-// y4a is kotlin.Result; y4a$c is its Success box (<init>(Ljava/lang/Object;)V).
-// The obfuscated name is y4a$c -- NOT j89$c, which does not exist in this APK.
-private val SUCCESS_NULL_RETURN = """
-    const/4 v0, 0x0
-    new-instance v1, Ly4a${'$'}c;
-    invoke-direct {v1, v0}, Ly4a${'$'}c;-><init>(Ljava/lang/Object;)V
-    return-object v1
-"""
+/**
+ * Wraps the instructions in [value] (which must leave the success value in `v0`) in a real
+ * `kotlin.Result.Success` and returns it. These seams are suspend functions typed
+ * `Result<T>`, so the box class is resolved from the APK at patch time -- see
+ * [KotlinResultBox] for why it cannot be hardcoded.
+ */
+private fun BytecodePatchContext.successReturn(value: String): String {
+    val box = KotlinResultBox.successBoxType(this)
+    return "$value\n" +
+        "new-instance v1, $box;\n" +
+        "invoke-direct {v1, v0}, $box;-><init>(Ljava/lang/Object;)V\n" +
+        "return-object v1"
+}
 
-private val SUCCESS_TRUE_RETURN = """
+private const val NULL_VALUE = "const/4 v0, 0x0"
+
+private val TRUE_VALUE = """
     const/4 v0, 0x1
     invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
     move-result-object v0
-    new-instance v1, Ly4a${'$'}c;
-    invoke-direct {v1, v0}, Ly4a${'$'}c;-><init>(Ljava/lang/Object;)V
-    return-object v1
-"""
+""".trimIndent()
 
 @Suppress("unused")
 val enableByAirProPatch = bytecodePatch(
@@ -48,11 +54,11 @@ val enableByAirProPatch = bytecodePatch(
         UserInfoIsSubscriberFingerprint.method.addInstructions(0, TRUE_RETURN)
 
         // Notifications preferences "All" gate: handled by HasProEntitlementRequestImpl.invoke
-        // (the bx8 entitlement seam that NotificationsPreferencesProBannerCommandHandler awaits).
+        // (the entitlement seam that NotificationsPreferencesProBannerCommandHandler awaits).
         // This is what keeps "All" locked when only the default patch is enabled.
-        HasProEntitlementRequestFingerprint.method.addInstructions(0, SUCCESS_TRUE_RETURN)
+        HasProEntitlementRequestFingerprint.method.addInstructions(0, successReturn(TRUE_VALUE))
 
-        BuildAppProBannerResultFingerprint.method.addInstructions(0, SUCCESS_NULL_RETURN)
+        BuildAppProBannerResultFingerprint.method.addInstructions(0, successReturn(NULL_VALUE))
 
         NeedShowPaywallAppLaunchDecisionFingerprint.method.addInstructions(0, FALSE_RETURN)
         NeedShowPaywallOnboardingDecisionFingerprint.method.addInstructions(0, FALSE_RETURN)

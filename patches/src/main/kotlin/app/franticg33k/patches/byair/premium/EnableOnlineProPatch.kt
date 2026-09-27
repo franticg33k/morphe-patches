@@ -1,17 +1,24 @@
 package app.franticg33k.patches.byair.premium
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.bytecodePatch
 import app.franticg33k.patches.byair.shared.Constants.COMPATIBILITY_BYAIR
+import app.franticg33k.patches.byair.shared.KotlinResultBox
 
-// y4a is kotlin.Result; y4a$c is its Success box (<init>(Ljava/lang/Object;)V).
-// The obfuscated name is y4a$c -- NOT j89$c, which does not exist in this APK.
-private val SUCCESS_UNIT_RETURN = """
-    sget-object v0, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;
-    new-instance v1, Ly4a${'$'}c;
-    invoke-direct {v1, v0}, Ly4a${'$'}c;-><init>(Ljava/lang/Object;)V
-    return-object v1
-"""
+private const val UNIT_VALUE = "sget-object v0, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;"
+
+/**
+ * Returns `Result.success(Unit)`; these are suspend functions typed `Result<Unit>`, so the
+ * success box is resolved from the APK at patch time -- see [KotlinResultBox].
+ */
+private fun BytecodePatchContext.successUnitReturn(): String {
+    val box = KotlinResultBox.successBoxType(this)
+    return "$UNIT_VALUE\n" +
+        "new-instance v1, $box;\n" +
+        "invoke-direct {v1, v0}, $box;-><init>(Ljava/lang/Object;)V\n" +
+        "return-object v1"
+}
 
 @Suppress("unused")
 val enableByAirOnlineProPatch = bytecodePatch(
@@ -23,8 +30,10 @@ val enableByAirOnlineProPatch = bytecodePatch(
     dependsOn(enableByAirProPatch)
 
     execute {
-        UpdateSubscriptionUserIdUseCaseFingerprint.method.addInstructions(0, SUCCESS_UNIT_RETURN)
-        UpdateRemoteProStatusUseCaseFingerprint.method.addInstructions(0, SUCCESS_UNIT_RETURN)
-        UpdateUserSubscriptionStatusRequestFingerprint.method.addInstructions(0, SUCCESS_UNIT_RETURN)
+        val successUnit = successUnitReturn()
+
+        UpdateSubscriptionUserIdUseCaseFingerprint.method.addInstructions(0, successUnit)
+        UpdateRemoteProStatusUseCaseFingerprint.method.addInstructions(0, successUnit)
+        UpdateUserSubscriptionStatusRequestFingerprint.method.addInstructions(0, successUnit)
     }
 }
