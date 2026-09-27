@@ -1,3 +1,19 @@
+## [1.3.10](https://github.com/franticg33k/morphe-patches/compare/v1.3.9...v1.3.10) (2026-09-27)
+
+### 🐛 Bug Fixes
+
+* **byair:** build Result.Success boxes with the real y4a$c class ([4d06618](https://github.com/franticg33k/morphe-patches/commit/4d06618f3f0f63ea4354bf659c61941b71b860c6))
+* **byair:** drop duplicate semicolon in generated Result.Success smali ([5866a3c](https://github.com/franticg33k/morphe-patches/commit/5866a3cd27949ef4c0d9d50284c23a6c3b574216))
+* **byair:** resolve kotlin.Result.Success box from the APK at patch time ([4dc4525](https://github.com/franticg33k/morphe-patches/commit/4dc45256bf35face58ee6b5765980ec004a948fe))
+* **fricam:** correct Edge boxing scan (Boolean.valueOf returns Ljava/lang/Boolean;) ([1acbdc5](https://github.com/franticg33k/morphe-patches/commit/1acbdc5a693cc6fecb55218bbd5a7d22ced53031))
+
+### 🚀 Updated App Support
+
+* add Fricam Edge unlock (self-hosted sidecar support) ([d33b327](https://github.com/franticg33k/morphe-patches/commit/d33b327d3e40ece1cf515c90ceb6e0b8a89dc984))
+* add Native Camera 1.4.2 compatibility target ([87e8e3f](https://github.com/franticg33k/morphe-patches/commit/87e8e3f2dbe397d9771638228fa2c343a4cbbb2d))
+* prefi ([fc147c8](https://github.com/franticg33k/morphe-patches/commit/fc147c8603a55dbc7f2dadab2ea46239e4ed8277))
+* update Fricam patches for 1.4.0.1 (R8-resilient fingerprints) ([8870548](https://github.com/franticg33k/morphe-patches/commit/8870548d24310b824c7d3e5bef199ae7ccbc856b))
+
 ## [1.3.10-dev.7](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.6...v1.3.10-dev.7) (2026-09-27)
 
 ### 🐛 Bug Fixes
