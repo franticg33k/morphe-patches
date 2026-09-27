@@ -1,3 +1,9 @@
+## [1.3.10-dev.7](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.6...v1.3.10-dev.7) (2026-09-27)
+
+### 🐛 Bug Fixes
+
+* **byair:** drop duplicate semicolon in generated Result.Success smali ([5866a3c](https://github.com/franticg33k/morphe-patches/commit/5866a3cd27949ef4c0d9d50284c23a6c3b574216))
+
 ## [1.3.10-dev.6](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.5...v1.3.10-dev.6) (2026-09-27)
 
 ### 🐛 Bug Fixes
