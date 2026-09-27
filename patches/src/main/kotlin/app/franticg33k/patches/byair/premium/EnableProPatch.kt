@@ -14,10 +14,12 @@ private const val FALSE_RETURN = """
     return v0
 """
 
+// y4a is kotlin.Result; y4a$c is its Success box (<init>(Ljava/lang/Object;)V).
+// The obfuscated name is y4a$c -- NOT j89$c, which does not exist in this APK.
 private val SUCCESS_NULL_RETURN = """
     const/4 v0, 0x0
-    new-instance v1, Lj89${'$'}c;
-    invoke-direct {v1, v0}, Lj89${'$'}c;-><init>(Ljava/lang/Object;)V
+    new-instance v1, Ly4a${'$'}c;
+    invoke-direct {v1, v0}, Ly4a${'$'}c;-><init>(Ljava/lang/Object;)V
     return-object v1
 """
 
@@ -25,8 +27,8 @@ private val SUCCESS_TRUE_RETURN = """
     const/4 v0, 0x1
     invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
     move-result-object v0
-    new-instance v1, Lj89${'$'}c;
-    invoke-direct {v1, v0}, Lj89${'$'}c;-><init>(Ljava/lang/Object;)V
+    new-instance v1, Ly4a${'$'}c;
+    invoke-direct {v1, v0}, Ly4a${'$'}c;-><init>(Ljava/lang/Object;)V
     return-object v1
 """
 
