@@ -25,8 +25,8 @@ private const val FALSE_RETURN = """
 private fun BytecodePatchContext.successReturn(value: String): String {
     val box = KotlinResultBox.successBoxType(this)
     return "$value\n" +
-        "new-instance v1, $box;\n" +
-        "invoke-direct {v1, v0}, $box;-><init>(Ljava/lang/Object;)V\n" +
+        "new-instance v1, $box\n" +
+        "invoke-direct {v1, v0}, $box-><init>(Ljava/lang/Object;)V\n" +
         "return-object v1"
 }
 

@@ -15,8 +15,8 @@ private const val UNIT_VALUE = "sget-object v0, Lkotlin/Unit;->INSTANCE:Lkotlin/
 private fun BytecodePatchContext.successUnitReturn(): String {
     val box = KotlinResultBox.successBoxType(this)
     return "$UNIT_VALUE\n" +
-        "new-instance v1, $box;\n" +
-        "invoke-direct {v1, v0}, $box;-><init>(Ljava/lang/Object;)V\n" +
+        "new-instance v1, $box\n" +
+        "invoke-direct {v1, v0}, $box-><init>(Ljava/lang/Object;)V\n" +
         "return-object v1"
 }
 
