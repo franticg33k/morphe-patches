@@ -44,7 +44,7 @@ object AdMobOnMethodCallFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf(
         "Lio/flutter/plugin/common/MethodCall;",
-        "Lio/flutter/plugin/common/MethodChannel$Result;",
+        "Lio/flutter/plugin/common/MethodChannel${'$'}Result;",
     ),
     strings = listOf(
         "loadInterstitialAd",
