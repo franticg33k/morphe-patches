@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.3.10-dev.3](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.10-dev.3)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;23 patches total
+> **[v1.3.10-dev.4](https://github.com/franticg33k/morphe-patches/releases/tag/v1.3.10-dev.4)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;23 patches total
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -13,7 +13,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Enable Online Pro](#enable-online-pro) | Experimental companion patch that keeps byAir's online Pro gates open without forcing the crash-prone global entitlement refresh path. |  |
-| [Enable Pro](#enable-pro) | Suppresses the main byAir paywall, unlock banners, and local user gating. |  |
+| [Enable Pro](#enable-pro) | Suppresses the main byAir paywall, unlock banners, local user gating, and the notifications preferences "All" gate. |  |
 
 </details>
 
@@ -138,8 +138,8 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 1.4 |
-| :---: |
+| 1.4 | 1.4.2 |
+| :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|

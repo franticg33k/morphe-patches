@@ -1,3 +1,10 @@
+## [1.3.10-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.3...v1.3.10-dev.4) (2026-09-27)
+
+### 🚀 Updated App Support
+
+* add Native Camera 1.4.2 compatibility target ([87e8e3f](https://github.com/franticg33k/morphe-patches/commit/87e8e3f2dbe397d9771638228fa2c343a4cbbb2d))
+* prefi ([fc147c8](https://github.com/franticg33k/morphe-patches/commit/fc147c8603a55dbc7f2dadab2ea46239e4ed8277))
+
 ## [1.3.10-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.3.10-dev.2...v1.3.10-dev.3) (2026-09-05)
 
 ### 🐛 Bug Fixes
