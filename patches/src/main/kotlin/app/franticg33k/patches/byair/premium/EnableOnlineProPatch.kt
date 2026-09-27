@@ -1,24 +1,24 @@
 package app.franticg33k.patches.byair.premium
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.bytecodePatch
 import app.franticg33k.patches.byair.shared.Constants.COMPATIBILITY_BYAIR
+import app.franticg33k.patches.byair.shared.KotlinResultBox
 
-private val SUCCESS_TRUE_RETURN = """
-    const/4 v0, 0x1
-    invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
-    move-result-object v0
-    new-instance v1, Lj89${'$'}c;
-    invoke-direct {v1, v0}, Lj89${'$'}c;-><init>(Ljava/lang/Object;)V
-    return-object v1
-"""
+private const val UNIT_VALUE = "sget-object v0, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;"
 
-private val SUCCESS_UNIT_RETURN = """
-    sget-object v0, Lkotlin/Unit;->INSTANCE:Lkotlin/Unit;
-    new-instance v1, Lj89${'$'}c;
-    invoke-direct {v1, v0}, Lj89${'$'}c;-><init>(Ljava/lang/Object;)V
-    return-object v1
-"""
+/**
+ * Returns `Result.success(Unit)`; these are suspend functions typed `Result<Unit>`, so the
+ * success box is resolved from the APK at patch time -- see [KotlinResultBox].
+ */
+private fun BytecodePatchContext.successUnitReturn(): String {
+    val box = KotlinResultBox.successBoxType(this)
+    return "$UNIT_VALUE\n" +
+        "new-instance v1, $box\n" +
+        "invoke-direct {v1, v0}, $box-><init>(Ljava/lang/Object;)V\n" +
+        "return-object v1"
+}
 
 @Suppress("unused")
 val enableByAirOnlineProPatch = bytecodePatch(
@@ -30,10 +30,10 @@ val enableByAirOnlineProPatch = bytecodePatch(
     dependsOn(enableByAirProPatch)
 
     execute {
-        HasProEntitlementRequestFingerprint.method.addInstructions(0, SUCCESS_TRUE_RETURN)
+        val successUnit = successUnitReturn()
 
-        UpdateSubscriptionUserIdUseCaseFingerprint.method.addInstructions(0, SUCCESS_UNIT_RETURN)
-        UpdateRemoteProStatusUseCaseFingerprint.method.addInstructions(0, SUCCESS_UNIT_RETURN)
-        UpdateUserSubscriptionStatusRequestFingerprint.method.addInstructions(0, SUCCESS_UNIT_RETURN)
+        UpdateSubscriptionUserIdUseCaseFingerprint.method.addInstructions(0, successUnit)
+        UpdateRemoteProStatusUseCaseFingerprint.method.addInstructions(0, successUnit)
+        UpdateUserSubscriptionStatusRequestFingerprint.method.addInstructions(0, successUnit)
     }
 }
