@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-27T16:07:45",
-  "description": "## [1.4.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.10...v1.4.0-dev.1) (2026-09-27)\n\n### 🐛 Bug Fixes\n\n* **ci:** pin conventional-changelog-conventionalcommits to ^9.3.1 ([605f626](https://github.com/franticg33k/morphe-patches/commit/605f626fedd0d99ec6faef4fd74e1b746e2eb250))\n\n### ✨ New Features\n\n* **nostalgiatv:** unlock all client-side Pro features and strip PairIP licensing ([82f6d39](https://github.com/franticg33k/morphe-patches/commit/82f6d3905dee3fa0df73df0f54e021ade5366663))\n\n### 🚀 Updated App Support\n\n* rework Nepali Patro Remove Ads for 6.11.5 (AdMob + flutter_adserver) ([9ecbf49](https://github.com/franticg33k/morphe-patches/commit/9ecbf49f76036081116a8d160d17a8ee93ea9838))",
-  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.4.0-dev.1/patches-1.4.0-dev.1.mpp",
+  "created_at": "2026-09-27T16:47:06",
+  "description": "## [1.4.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2026-09-27)\n\n### 🚀 Updated App Support\n\n* fix Nepali Patro AdMob fingerprint - escape \\$ in MethodChannel descriptor ([456d3da](https://github.com/franticg33k/morphe-patches/commit/456d3da54e9e98d0754549debaf91428f8897426))",
+  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.4.0-dev.2/patches-1.4.0-dev.2.mpp",
   "signature_download_url": "",
-  "version": "1.4.0-dev.1"
+  "version": "1.4.0-dev.2"
 }

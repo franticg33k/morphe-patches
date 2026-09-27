@@ -1,3 +1,9 @@
+## [1.4.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2026-09-27)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro AdMob fingerprint - escape \$ in MethodChannel descriptor ([456d3da](https://github.com/franticg33k/morphe-patches/commit/456d3da54e9e98d0754549debaf91428f8897426))
+
 ## [1.4.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.10...v1.4.0-dev.1) (2026-09-27)
 
 ### 🐛 Bug Fixes
