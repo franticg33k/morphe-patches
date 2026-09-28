@@ -1,3 +1,9 @@
+## [1.4.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.4...v1.4.0-dev.5) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* cap Nepali Patro guard scratch registers at the InlineSmaliCompiler v15 ceiling ([1deb1ee](https://github.com/franticg33k/morphe-patches/commit/1deb1eec3008f783531f328f51021e617d6fc46e))
+
 ## [1.4.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.3...v1.4.0-dev.4) (2026-09-28)
 
 ### 🚀 Updated App Support
