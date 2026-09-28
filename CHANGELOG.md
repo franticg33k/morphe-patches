@@ -1,3 +1,9 @@
+## [1.4.0-dev.12](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.11...v1.4.0-dev.12) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* gate Nepali Patro interstitials in the shared callee, not a caller ([32b5b60](https://github.com/franticg33k/morphe-patches/commit/32b5b60d8e23de62377621b5feba4bf72dd8918b)), closes [#0x961d78](https://github.com/franticg33k/morphe-patches/issues/0x961d78) [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30)
+
 ## [1.4.0-dev.11](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.10...v1.4.0-dev.11) (2026-09-28)
 
 ### 🚀 Updated App Support
