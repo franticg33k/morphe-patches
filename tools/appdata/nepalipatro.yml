@@ -1,0 +1,93 @@
+# Nepali Patro 6.11.5 - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/nepalipatro/ads/Fingerprints.kt
+# Keeping the two in sync is the point of this file: the YAML is what the harness checks,
+# so drift between it and the Kotlin is caught by `verify.py --fingerprints`.
+#
+# Matcher semantics replicated here (from app/morphe/patcher/Fingerprint.matchOrNull in the
+# decompiled manager APK, patcher 1.14.1):
+#   * `strings` is an AND over substring containment against the method's const-strings,
+#     and supplying it also forces a non-empty method body.
+#   * `name` is exact string equality.
+#   * `accessFlags` is EXACT int equality, not a mask - which is why nothing in the repo
+#     pins it.
+#   * omitted `parameters` means "unconstrained" (matches any arity).
+
+package: np.com.nepalipatro
+appName: Nepali Patro
+version: "6.11.5"
+extracted: apks/extracted/nepalipatro
+
+fingerprints:
+  - name: AdMobOnMethodCallFingerprint
+    method: onMethodCall
+    returnType: V
+    # NOTE: this is the real dex descriptor, with a literal '$'. The Kotlin source spells the
+    # same descriptor "Lio/flutter/plugin/common/MethodChannel${'$'}Result;" because a bare $
+    # would be a template expression there. The escape is a *Kotlin* concern only - this file
+    # is data, not source, so it stores the descriptor the matcher must find.
+    parameters: ["Lio/flutter/plugin/common/MethodCall;", "Lio/flutter/plugin/common/MethodChannel$Result;"]
+    strings:
+      - loadInterstitialAd
+      - loadAppOpenAd
+      - loadNativeAd
+      - MobileAds#initialize
+      - showAdWithoutView
+    note: >-
+      Guarding this one method covers every ad format. The ${'$'} escape is load-bearing in
+      Fingerprints.kt: with a bare $, kotlin.Result resolves through the default kotlin.*
+      import, the compiler emits "MethodChannel" + Result.toString() + ";", and the patch
+      fails at runtime with "Failed to match the fingerprint". See
+      docs/nepalipatro-ads-analysis.md section 8.2.
+
+  - name: WebViewLoadUrlFingerprint
+    method: loadUrl
+    returnType: V
+    parameters: [Landroid/webkit/WebView;, Ljava/lang/String;, Ljava/util/Map;]
+    requireBody: true
+    note: >-
+      requireBody mirrors `custom { implementation != null }` - the abstract PigeonApiWebView
+      declares the same signature with no body, so a body is required to disambiguate.
+
+  - name: WebViewLoadDataFingerprint
+    method: loadData
+    returnType: V
+    parameters: [Landroid/webkit/WebView;, Ljava/lang/String;, Ljava/lang/String;, Ljava/lang/String;]
+    requireBody: true
+    note: >-
+      The one fingerprint where `name` is load-bearing: this 4-String signature is shared
+      with five unrelated onReceivedLoginRequest implementations. With name -> 1 match,
+      without -> 6.
+
+  - name: WebViewLoadDataWithBaseUrlFingerprint
+    method: loadDataWithBaseUrl
+    returnType: V
+    parameters:
+      - Landroid/webkit/WebView;
+      - Ljava/lang/String;
+      - Ljava/lang/String;
+      - Ljava/lang/String;
+      - Ljava/lang/String;
+      - Ljava/lang/String;
+    requireBody: true
+
+# Literals each fingerprint depends on. Checked against the COMPILED bundle's dex
+# constant pool, because the matcher simulation cannot see compilation-time damage - a
+# descriptor mangled by a Kotlin template still matches structurally.
+# Scoped per fingerprint on purpose: RemoveAdsPatchKt's own smali guard legitimately
+# contains the same MethodChannel$Result descriptor, so a bundle-wide scan false-passes a
+# broken build.
+compiledLiterals:
+  - fingerprint: AdMobOnMethodCallFingerprint
+    literals:
+      - Lio/flutter/plugin/common/MethodCall;
+      - "Lio/flutter/plugin/common/MethodChannel$Result;"
+      - loadInterstitialAd
+      - showAdWithoutView
+  - fingerprint: WebViewLoadUrlFingerprint
+    literals: [loadUrl]
+  - fingerprint: WebViewLoadDataFingerprint
+    literals: [loadData]
+  - fingerprint: WebViewLoadDataWithBaseUrlFingerprint
+    literals: [loadDataWithBaseUrl]
+

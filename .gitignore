@@ -132,3 +132,7 @@ local.properties
 apks/
 docs/
 /.opencode
+
+# Python bytecode from tools/
+__pycache__/
+*.pyc
