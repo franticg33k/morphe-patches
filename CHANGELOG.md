@@ -1,3 +1,83 @@
+## [1.4.0-dev.12](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.11...v1.4.0-dev.12) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* gate Nepali Patro interstitials in the shared callee, not a caller ([32b5b60](https://github.com/franticg33k/morphe-patches/commit/32b5b60d8e23de62377621b5feba4bf72dd8918b)), closes [#0x961d78](https://github.com/franticg33k/morphe-patches/issues/0x961d78) [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30)
+
+## [1.4.0-dev.11](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.10...v1.4.0-dev.11) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* never open the Nepali Patro interstitial, not just its ad host ([405c082](https://github.com/franticg33k/morphe-patches/commit/405c0829ca9da7235002f7c1d01edcc6771fcacc)), closes [#0xc531e8](https://github.com/franticg33k/morphe-patches/issues/0xc531e8) [#-0x10](https://github.com/franticg33k/morphe-patches/issues/-0x10)
+
+## [1.4.0-dev.10](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.9...v1.4.0-dev.10) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* block Nepali Patro ad server host so the interstitial overlay never opens ([b1d2623](https://github.com/franticg33k/morphe-patches/commit/b1d2623f771cf634baf150d819c01677727ba5a5))
+
+## [1.4.0-dev.9](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.8...v1.4.0-dev.9) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro descriptor parser emitting a stray ';' parameter ([05abecf](https://github.com/franticg33k/morphe-patches/commit/05abecfb2bd56e68c0f927e70ec01dbb95450e71))
+
+## [1.4.0-dev.8](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.7...v1.4.0-dev.8) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* derive Nepali Patro guard label positions from program order ([de1bae5](https://github.com/franticg33k/morphe-patches/commit/de1bae5435a2cea998fa1a90e13f8099e50b213e))
+
+## [1.4.0-dev.7](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.6...v1.4.0-dev.7) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* read AdMob MethodCall from v1 - 22c/21c registers are 4-bit nibbles ([227d32b](https://github.com/franticg33k/morphe-patches/commit/227d32b701044d51392e914a2b3c009abe2a5d19))
+
+## [1.4.0-dev.6](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.5...v1.4.0-dev.6) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* build Nepali Patro guards with dexlib2 instead of inline smali ([356f069](https://github.com/franticg33k/morphe-patches/commit/356f06925459fd7bb2209c3e05d8edb34da85e7c))
+
+## [1.4.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.4...v1.4.0-dev.5) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* cap Nepali Patro guard scratch registers at the InlineSmaliCompiler v15 ceiling ([1deb1ee](https://github.com/franticg33k/morphe-patches/commit/1deb1eec3008f783531f328f51021e617d6fc46e))
+
+## [1.4.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.3...v1.4.0-dev.4) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro guard - InlineSmaliCompiler only accepts .locals registers ([a36bba9](https://github.com/franticg33k/morphe-patches/commit/a36bba9099e3db0eca70898ab292d2d505898b98))
+
+## [1.4.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.2...v1.4.0-dev.3) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro launch crash - address inserted smali with vN registers only ([1a83481](https://github.com/franticg33k/morphe-patches/commit/1a83481155e8abd8e247b3da801fff2a197fdf73))
+
+## [1.4.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2026-09-27)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro AdMob fingerprint - escape \$ in MethodChannel descriptor ([456d3da](https://github.com/franticg33k/morphe-patches/commit/456d3da54e9e98d0754549debaf91428f8897426))
+
+## [1.4.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.3.10...v1.4.0-dev.1) (2026-09-27)
+
+### 🐛 Bug Fixes
+
+* **ci:** pin conventional-changelog-conventionalcommits to ^9.3.1 ([605f626](https://github.com/franticg33k/morphe-patches/commit/605f626fedd0d99ec6faef4fd74e1b746e2eb250))
+
+### ✨ New Features
+
+* **nostalgiatv:** unlock all client-side Pro features and strip PairIP licensing ([82f6d39](https://github.com/franticg33k/morphe-patches/commit/82f6d3905dee3fa0df73df0f54e021ade5366663))
+
+### 🚀 Updated App Support
+
+* rework Nepali Patro Remove Ads for 6.11.5 (AdMob + flutter_adserver) ([9ecbf49](https://github.com/franticg33k/morphe-patches/commit/9ecbf49f76036081116a8d160d17a8ee93ea9838))
+
 ## [1.3.10](https://github.com/franticg33k/morphe-patches/compare/v1.3.9...v1.3.10) (2026-09-27)
 
 ### 🐛 Bug Fixes
