@@ -1,3 +1,9 @@
+## [1.4.1-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.4.1-dev.2...v1.4.1-dev.3) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* pin Hamro Patro compatibility to 10.7.33 ([3e17533](https://github.com/franticg33k/morphe-patches/commit/3e175331dcbb532bb4e0ba4f92a43f01fab4b5bb))
+
 ## [1.4.1-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.1-dev.1...v1.4.1-dev.2) (2026-09-28)
 
 ### 🚀 Updated App Support
