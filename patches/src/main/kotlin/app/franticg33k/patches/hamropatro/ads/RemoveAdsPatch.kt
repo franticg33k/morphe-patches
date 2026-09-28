@@ -16,8 +16,9 @@ val removeHamroPatroAdsPatch = bytecodePatch(
     description = "Disables all ad serving in Hamro Patro by no-oping the native ad-placement " +
         "resolver (HamroAdsPlacements). Every banner, native, interstitial, fullscreen and " +
         "roadblock placement funnels through these leaf builders, so returning an empty list " +
-        "means no ad request is ever built for AdMob, Pangle, IronSource or Facebook Audience " +
-        "Network. Verified on v10.7.30.",
+        "means no ad request is ever built for the bundled MAX, Pangle, ironSource, Facebook " +
+        "Audience, Unity, Vungle and Google Ads SDKs, and no mediation cycle ever starts. " +
+        "Re-verified on v10.7.33.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_HAMROPATRO)
