@@ -13,9 +13,10 @@ import app.morphe.patcher.Fingerprint
  *
  *  2. The first-party ad server `flutter_adserver`
  *     (https://ads-delivery.nepalipatro.com.np/...) — this is the stack that actually renders
- *     visible ads. It drives a flutter_webview platform view, so every navigation it performs
- *     funnels through the Pigeon bridge into WebViewProxyApi.loadData /
- *     loadDataWithBaseUrl / loadUrl (the three loaders this webview_flutter build exposes).
+ *     visible ads. It loads HTML ad markup into a flutter_webview platform view, so the
+ *     loaders that feed HTML are the chokepoint:
+ *     WebViewProxyApi.loadData / loadDataWithBaseUrl (the only two this build patches — see
+ *     RemoveAdsPatch for why loadUrl is left alone).
  *
  * Resilience rules applied here, per docs/writing-update-resilient-patches.md:
  *  - never pin an obfuscated `definingClass` — all four omit it, so an R8 rename of
@@ -26,7 +27,7 @@ import app.morphe.patcher.Fingerprint
  *    is shared with five unrelated `onReceivedLoginRequest` implementations, so the stable
  *    Pigeon-generated name is required to disambiguate (verified: with the name, exactly 1
  *    match; without it, 6);
- *  - the abstract PigeonApiWebView declares the same three signatures with no body, so the
+ *  - the abstract PigeonApiWebView declares the same two signatures with no body, so the
  *    WebView loaders additionally require a concrete implementation (`custom` below).
  *
  * Every fingerprint was verified against all 138,339 smali methods of 6.11.5 and resolves to
@@ -53,16 +54,6 @@ object AdMobOnMethodCallFingerprint : Fingerprint(
         "MobileAds#initialize",
         "showAdWithoutView",
     ),
-)
-
-/**
- * `WebViewProxyApi.loadUrl(WebView, String, Map)`. Matches the abstract
- * `PigeonApiWebView.loadUrl` too, hence the body requirement.
- */
-object WebViewLoadUrlFingerprint : Fingerprint(
-    returnType = "V",
-    parameters = listOf("Landroid/webkit/WebView;", "Ljava/lang/String;", "Ljava/util/Map;"),
-    custom = { method, _ -> method.implementation != null },
 )
 
 /**
