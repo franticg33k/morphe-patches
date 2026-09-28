@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.1-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.1-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
+> **[v1.4.1-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.1-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -31,6 +31,11 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <details open>
 <summary>📦 Hamropatro&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
+
+**🎯 Supported versions:**
+
+| 10.7.33 |
+| :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
