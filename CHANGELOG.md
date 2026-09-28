@@ -1,3 +1,9 @@
+## [1.4.0-dev.8](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.7...v1.4.0-dev.8) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* derive Nepali Patro guard label positions from program order ([de1bae5](https://github.com/franticg33k/morphe-patches/commit/de1bae5435a2cea998fa1a90e13f8099e50b213e))
+
 ## [1.4.0-dev.7](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.6...v1.4.0-dev.7) (2026-09-28)
 
 ### 🚀 Updated App Support

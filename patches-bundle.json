@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-28T08:53:26",
-  "description": "## [1.4.0-dev.7](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.6...v1.4.0-dev.7) (2026-09-28)\n\n### 🚀 Updated App Support\n\n* read AdMob MethodCall from v1 - 22c/21c registers are 4-bit nibbles ([227d32b](https://github.com/franticg33k/morphe-patches/commit/227d32b701044d51392e914a2b3c009abe2a5d19))",
-  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.4.0-dev.7/patches-1.4.0-dev.7.mpp",
+  "created_at": "2026-09-28T09:01:59",
+  "description": "## [1.4.0-dev.8](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.7...v1.4.0-dev.8) (2026-09-28)\n\n### 🚀 Updated App Support\n\n* derive Nepali Patro guard label positions from program order ([de1bae5](https://github.com/franticg33k/morphe-patches/commit/de1bae5435a2cea998fa1a90e13f8099e50b213e))",
+  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.4.0-dev.8/patches-1.4.0-dev.8.mpp",
   "signature_download_url": "",
-  "version": "1.4.0-dev.7"
+  "version": "1.4.0-dev.8"
 }
