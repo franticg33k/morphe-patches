@@ -1,3 +1,9 @@
+## [1.4.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.3...v1.4.0-dev.4) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro guard - InlineSmaliCompiler only accepts .locals registers ([a36bba9](https://github.com/franticg33k/morphe-patches/commit/a36bba9099e3db0eca70898ab292d2d505898b98))
+
 ## [1.4.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.2...v1.4.0-dev.3) (2026-09-28)
 
 ### 🚀 Updated App Support
