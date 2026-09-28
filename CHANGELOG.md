@@ -1,3 +1,11 @@
+## [1.4.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.0...v1.4.1) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* note the Hamro Patro patch combines with Nai64's No Ads ([ba99ad9](https://github.com/franticg33k/morphe-patches/commit/ba99ad962347bfac1300d82e391d4a6ed43f04cc))
+* pin Hamro Patro compatibility to 10.7.33 ([3e17533](https://github.com/franticg33k/morphe-patches/commit/3e175331dcbb532bb4e0ba4f92a43f01fab4b5bb))
+* re-pin the Hamro Patro ad patch to 10.7.33 ([4fdfd53](https://github.com/franticg33k/morphe-patches/commit/4fdfd536b3babd3130663ff95c73b6669e30c1c8))
+
 ## [1.4.1-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.4.1-dev.2...v1.4.1-dev.3) (2026-09-28)
 
 ### 🚀 Updated App Support
