@@ -1,3 +1,9 @@
+## [1.4.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.2...v1.4.0-dev.3) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro launch crash - address inserted smali with vN registers only ([1a83481](https://github.com/franticg33k/morphe-patches/commit/1a83481155e8abd8e247b3da801fff2a197fdf73))
+
 ## [1.4.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.1...v1.4.0-dev.2) (2026-09-27)
 
 ### 🚀 Updated App Support
