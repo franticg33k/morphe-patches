@@ -1,8 +1,8 @@
 """Device -> analysed source tree, in one command.
 
     python tools/intake.py --package np.com.nepalipatro
-    python tools/intake.py --package com.hamropatro --skip-jadx
     python tools/intake.py --package com.hamropatro --census-only
+    python tools/intake.py --package com.hamropatro --skip-pull
 
 Does, in order:
   1. reads package metadata from `dumpsys package`
@@ -12,6 +12,10 @@ Does, in order:
   4. stages libapp.so / libflutter.so out of the ABI split
   5. locates the Flutter AOT snapshot magic
   6. counts methods, and prints an ad-SDK census
+
+jadx is not run: for the ad work in this repo apktool smali is the source of truth, and jadx
+adds a multi-minute decompile of a 100MB+ APK for little gain. Reach for it by hand only when
+you need to read Kotlin/Java logic rather than locate methods.
 
 Output layout (all gitignored):
     apks/<key>/                      the pulled splits

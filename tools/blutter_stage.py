@@ -164,6 +164,11 @@ def main(argv: list[str]) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--package", required=True)
     ap.add_argument("--key")
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="only inspect existing blutter output; do not stage or write a handoff",
+    )
     args = ap.parse_args(argv[1:])
 
     from intake import resolve_key
@@ -171,6 +176,15 @@ def main(argv: list[str]) -> int:
     key = resolve_key(args.package, args.key)
     apk_dir = APKS_DIR / key
     analysis = EXTRACTED_DIR / f"{key}-analysis"
+
+    if args.check:
+        if not analysis.exists():
+            raise ToolError(f"nothing staged at {rel(analysis)}")
+        check_output(analysis)
+        print()
+        ok("check complete")
+        return 0
+
     if not apk_dir.exists():
         raise ToolError(
             f"no apks at {apk_dir} - run: python tools/intake.py --package {args.package}"
