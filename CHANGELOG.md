@@ -1,3 +1,9 @@
+## [1.4.0-dev.6](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.5...v1.4.0-dev.6) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* build Nepali Patro guards with dexlib2 instead of inline smali ([356f069](https://github.com/franticg33k/morphe-patches/commit/356f06925459fd7bb2209c3e05d8edb34da85e7c))
+
 ## [1.4.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.4...v1.4.0-dev.5) (2026-09-28)
 
 ### 🚀 Updated App Support

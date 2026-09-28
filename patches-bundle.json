@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-09-28T06:05:58",
-  "description": "## [1.4.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.4...v1.4.0-dev.5) (2026-09-28)\n\n### 🚀 Updated App Support\n\n* cap Nepali Patro guard scratch registers at the InlineSmaliCompiler v15 ceiling ([1deb1ee](https://github.com/franticg33k/morphe-patches/commit/1deb1eec3008f783531f328f51021e617d6fc46e))",
-  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.4.0-dev.5/patches-1.4.0-dev.5.mpp",
+  "created_at": "2026-09-28T07:52:35",
+  "description": "## [1.4.0-dev.6](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.5...v1.4.0-dev.6) (2026-09-28)\n\n### 🚀 Updated App Support\n\n* build Nepali Patro guards with dexlib2 instead of inline smali ([356f069](https://github.com/franticg33k/morphe-patches/commit/356f06925459fd7bb2209c3e05d8edb34da85e7c))",
+  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.4.0-dev.6/patches-1.4.0-dev.6.mpp",
   "signature_download_url": "",
-  "version": "1.4.0-dev.5"
+  "version": "1.4.0-dev.6"
 }
