@@ -75,8 +75,8 @@ private class Branch(
     val target: String,
 )
 
-/** A label placed immediately after the [Op] with the given index (or after all ops). */
-private class Target(val name: String, val afterOp: Int)
+/** A label placed at this point in the program; the following instruction is its target. */
+private class Target(val name: String)
 
 private val METHOD_CALL_METHOD_FIELD =
     "Lio/flutter/plugin/common/MethodCall;->method:Ljava/lang/String;"
@@ -143,39 +143,43 @@ private fun MutableMethod.insertProgram(
     label: String,
 ) {
     val implementation = checkNotNull(implementation) { "Nepali Patro: $label has no implementation" }
-    val ops = program.filterIsInstance<Op>()
-    val branches = program.filterIsInstance<Branch>()
-    val targets = program.filterIsInstance<Target>()
-
-    ops.forEachIndexed { offset, op -> implementation.addInstruction(index + offset, op.instruction) }
-    // A branch needs a Label to be constructed, but the final target positions only exist once
-    // everything is in place. Park the branches on a throwaway label, then rewrite them.
+    // A branch needs a Label to construct, but the real target positions only exist once the
+    // whole block is in place. Park every branch on a throwaway label, then rewrite them.
     val parkingLabel = implementation.newLabelForIndex(0)
-    branches.sortedByDescending { it.positionIn(program) }.forEach { b ->
-        implementation.addInstruction(index + b.positionIn(program), labelledBranch(b, parkingLabel))
+
+    // Insert in program order, so a Target's final index is simply the number of instructions
+    // that precede it. Doing this arithmetically instead (an explicit offset plus a correction
+    // for later insertions) double-counted, which only showed up on WebViewProxyApi.loadUrl: it
+    // is a two-instruction method, so the overshoot ran past the end of the instruction list.
+    var cursor = index
+    val branchPositions = ArrayList<Pair<Int, Branch>>()
+    program.forEach { item ->
+        when (item) {
+            is Op -> { implementation.addInstruction(cursor, item.instruction); cursor++ }
+            is Branch -> {
+                implementation.addInstruction(cursor, labelledBranch(item, parkingLabel))
+                branchPositions += cursor to item
+                cursor++
+            }
+            is Target -> Unit
+        }
     }
 
     val labels = HashMap<String, Label>()
-    targets.forEach { t ->
-        val shift = branches.count { b -> b.positionIn(program) < t.afterOp }
-        labels[t.name] = implementation.newLabelForIndex(index + t.afterOp + shift)
+    program.filterIsInstance<Target>().forEach { target ->
+        var preceding = 0
+        for (item in program) {
+            if (item === target) break
+            if (item is Op || item is Branch) preceding++
+        }
+        labels[target.name] = implementation.newLabelForIndex(index + preceding)
     }
-    branches.forEach { b ->
+    branchPositions.forEach { (position, branch) ->
         implementation.replaceInstruction(
-            index + b.positionIn(program),
-            labelledBranch(b, requireNotNull(labels[b.target]) { "unknown target ${b.target}" }),
+            position,
+            labelledBranch(branch, requireNotNull(labels[branch.target]) { "unknown ${branch.target}" }),
         )
     }
-}
-
-/** Where a branch sits in the final instruction stream: the number of ops that precede it. */
-private fun Branch.positionIn(program: List<Any>): Int {
-    var seen = 0
-    for (item in program) {
-        if (item === this) return seen
-        if (item is Op) seen++
-    }
-    return seen
 }
 
 private fun labelledBranch(branch: Branch, label: Label) =
@@ -212,9 +216,9 @@ private fun admobLoadGuard(scratch: Int, needle: Int) = listOf(
     invokeVirtual(scratch, needle, STRING_STARTS_WITH),
     moveResult(scratch),
     branch(Opcode.IF_EQZ, scratch, RUN),
+    Target(BLOCK),
     returnVoid(),
-    Target(BLOCK, 9),
-    Target(RUN, 10),
+    Target(RUN),
 )
 
 
@@ -237,9 +241,9 @@ private fun webViewLoadUrlGuard(url: Int) = listOf(
     invokeVirtual(url, 0, STRING_CONTAINS),
     moveResult(0),
     branch(Opcode.IF_EQZ, 0, RUN),
+    Target(BLOCK),
     returnVoid(),
-    Target(BLOCK, 9),
-    Target(RUN, 10),
+    Target(RUN),
 )
 
 private const val BLOCK = "morphe_block"
