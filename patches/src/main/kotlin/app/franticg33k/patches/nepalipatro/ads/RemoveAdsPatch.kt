@@ -16,7 +16,12 @@ import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction21c
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction21t
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction22c
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ThreeRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableFieldReference
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableStringReference
@@ -183,30 +188,35 @@ private fun labelledBranch(branch: Branch, label: Label) =
  * of the plugin keeps working - notably `MobileAds#initialize` still completes, so the Dart side
  * does not hang on startup.
  *
- * `p1` (the `MethodCall`) is read directly, which is only possible because this guard is built
- * with dexlib2 rather than the inline compiler. A blocked call returns void: the Dart side never
- * receives `onAdLoaded` / `onAdFailedToLoad`, so no ad object is ever created. Completing the
- * channel call instead would need a null reference, and dex has no encoding of null that the
- * verifier accepts in a `Ljava/lang/Object;` slot (`const/4 vN, 0x0` is an int).
- *
- * `v0`/`v1` are scratch: the guard runs at offset 0 and the original prologue immediately
- * overwrites both before reading them, which `execute` asserts.
+  * The `MethodCall` is read from **v1**, not from its parameter slot. That is not a stylistic
+  * choice: `iget-object` is dex format `22c`, whose two register operands are encoded as 4-bit
+  * nibbles, so the instruction physically cannot name a register above v15. The parameter slot
+  * for the `MethodCall` is v22, and constructing that instruction throws
+  * `IllegalArgumentException: Invalid register: v22. Must be between v0 and v15, inclusive.`
+  * The prologue already parks the receiver, the `MethodCall` and the `Result` in v0/v1/v2, so
+  * reading v1 is both legal and equivalent.
+  *
+  * A blocked call returns void: the Dart side never receives `onAdLoaded` / `onAdFailedToLoad`, so
+  * no ad object is ever created. Completing the channel call instead would need a null reference,
+  * and dex has no encoding of null that the verifier accepts in a `Ljava/lang/Object;` slot
+  * (`const/4 vN, 0x0` is an int).
  */
-private fun admobLoadGuard(call: Int) = listOf(
-    iGetObject(0, call, METHOD_CALL_METHOD_FIELD),
-    constString(1, "load"),
-    invokeVirtual(0, 1, STRING_STARTS_WITH),
-    moveResult(0),
-    branch(Opcode.IF_NEZ, 0, BLOCK),
-    iGetObject(0, call, METHOD_CALL_METHOD_FIELD),
-    constString(1, "show"),
-    invokeVirtual(0, 1, STRING_STARTS_WITH),
-    moveResult(0),
-    branch(Opcode.IF_EQZ, 0, RUN),
+private fun admobLoadGuard(scratch: Int, needle: Int) = listOf(
+    iGetObject(scratch, 1, METHOD_CALL_METHOD_FIELD),
+    constString(needle, "load"),
+    invokeVirtual(scratch, needle, STRING_STARTS_WITH),
+    moveResult(scratch),
+    branch(Opcode.IF_NEZ, scratch, BLOCK),
+    iGetObject(scratch, 1, METHOD_CALL_METHOD_FIELD),
+    constString(needle, "show"),
+    invokeVirtual(scratch, needle, STRING_STARTS_WITH),
+    moveResult(scratch),
+    branch(Opcode.IF_EQZ, scratch, RUN),
     returnVoid(),
     Target(BLOCK, 9),
     Target(RUN, 10),
 )
+
 
 /**
  * `WebViewProxyApi.loadUrl(WebView, String, Map)` - the only loader that takes a URL we do not
@@ -235,6 +245,95 @@ private fun webViewLoadUrlGuard(url: Int) = listOf(
 private const val BLOCK = "morphe_block"
 private const val RUN = "morphe_run"
 
+/**
+ * Highest register any instruction we build can name.
+ *
+ * Every format used here (`21c`, `22c`, `21t`, `11x`, `10x`, `35c`) encodes its register operands
+ * as 4-bit nibbles, so v16 and above are unrepresentable - dexlib2 rejects them in the
+ * constructor with "Invalid register: v22. Must be between v0 and v15, inclusive." This is a dex
+ * format property, not a patcher limitation; Nai64Patches notes the same constraint.
+ */
+private const val MAX_NIBBLE_REGISTER = 15
+
+/** Opcodes whose single register operand is a pure destination. Under-approximated on purpose. */
+private val SINGLE_REGISTER_WRITES = setOf(
+    Opcode.MOVE, Opcode.MOVE_FROM16, Opcode.MOVE_16,
+    Opcode.MOVE_OBJECT, Opcode.MOVE_OBJECT_FROM16, Opcode.MOVE_OBJECT_16,
+    Opcode.MOVE_RESULT, Opcode.MOVE_RESULT_WIDE, Opcode.MOVE_RESULT_OBJECT,
+    Opcode.CONST_4, Opcode.CONST_16, Opcode.CONST, Opcode.CONST_HIGH16,
+    Opcode.CONST_STRING, Opcode.CONST_STRING_JUMBO,
+    Opcode.NEW_INSTANCE, Opcode.NEW_ARRAY, Opcode.FILL_ARRAY_DATA,
+    Opcode.ARRAY_LENGTH, Opcode.INSTANCE_OF, Opcode.CHECK_CAST,
+    Opcode.IGET, Opcode.IGET_WIDE, Opcode.IGET_OBJECT, Opcode.IGET_BOOLEAN,
+    Opcode.IGET_BYTE, Opcode.IGET_CHAR, Opcode.IGET_SHORT,
+    Opcode.SGET, Opcode.SGET_WIDE, Opcode.SGET_OBJECT, Opcode.SGET_BOOLEAN,
+    Opcode.SGET_BYTE, Opcode.SGET_CHAR, Opcode.SGET_SHORT,
+    Opcode.SPUT, Opcode.SPUT_WIDE, Opcode.SPUT_OBJECT, Opcode.SPUT_BOOLEAN,
+    Opcode.SPUT_BYTE, Opcode.SPUT_CHAR, Opcode.SPUT_SHORT,
+)
+
+/** Opcodes whose two-register form writes the first operand. */
+private val TWO_REGISTER_WRITES = setOf(
+    Opcode.MOVE, Opcode.MOVE_FROM16, Opcode.MOVE_16,
+    Opcode.MOVE_OBJECT, Opcode.MOVE_OBJECT_FROM16, Opcode.MOVE_OBJECT_16,
+    Opcode.INT_TO_LONG, Opcode.INT_TO_FLOAT, Opcode.INT_TO_DOUBLE,
+    Opcode.LONG_TO_INT, Opcode.LONG_TO_FLOAT, Opcode.LONG_TO_DOUBLE,
+    Opcode.FLOAT_TO_INT, Opcode.FLOAT_TO_LONG, Opcode.FLOAT_TO_DOUBLE,
+    Opcode.DOUBLE_TO_INT, Opcode.DOUBLE_TO_LONG, Opcode.DOUBLE_TO_FLOAT,
+    Opcode.INT_TO_BYTE, Opcode.INT_TO_CHAR, Opcode.INT_TO_SHORT,
+    Opcode.AGET, Opcode.AGET_WIDE, Opcode.AGET_OBJECT, Opcode.AGET_BOOLEAN,
+    Opcode.AGET_BYTE, Opcode.AGET_CHAR, Opcode.AGET_SHORT,
+)
+
+private fun writtenRegisters(instruction: Instruction): Set<Int> = when (instruction) {
+    is FiveRegisterInstruction -> listOf(
+        instruction.registerD, instruction.registerE, instruction.registerF, instruction.registerG,
+    ).take(instruction.registerCount).toSet()
+    is RegisterRangeInstruction ->
+        List(instruction.registerCount) { instruction.startRegister + it }.toSet()
+    is ThreeRegisterInstruction -> setOf(instruction.registerA)
+    is TwoRegisterInstruction ->
+        if (instruction.opcode in TWO_REGISTER_WRITES) setOf(instruction.registerA) else emptySet()
+    is OneRegisterInstruction ->
+        if (instruction.opcode in SINGLE_REGISTER_WRITES) setOf(instruction.registerA) else emptySet()
+    else -> emptySet()
+}
+
+private fun registersOf(instruction: Instruction): List<Int> = when (instruction) {
+    is FiveRegisterInstruction -> listOf(
+        instruction.registerC, instruction.registerD, instruction.registerE,
+        instruction.registerF, instruction.registerG,
+    ).take(instruction.registerCount)
+    is RegisterRangeInstruction -> List(instruction.registerCount) { instruction.startRegister + it }
+    is ThreeRegisterInstruction ->
+        listOf(instruction.registerA, instruction.registerB, instruction.registerC)
+    is TwoRegisterInstruction -> listOf(instruction.registerA, instruction.registerB)
+    is OneRegisterInstruction -> listOf(instruction.registerA)
+    else -> emptyList()
+}
+
+/**
+ * Registers in `0..v15` that are safe to clobber from [startIndex] onwards.
+ *
+ * All 21 locals of `onMethodCall` are referenced *somewhere*, so none is free for the whole
+ * method. But a register whose first reference from [startIndex] onwards is a write is dead at
+ * that point - the original overwrites it before it can be read - which is what this returns.
+ */
+private fun MutableMethod.deadLocalsFrom(startIndex: Int, excluded: Set<Int>): List<Int> {
+    val implementation = checkNotNull(implementation) { "method has no implementation" }
+    val firstReference = HashMap<Int, Instruction>()
+    implementation.instructions.forEachIndexed { index, instruction ->
+        if (index < startIndex) return@forEachIndexed
+        for (register in registersOf(instruction)) firstReference.putIfAbsent(register, instruction)
+    }
+    return (0..MAX_NIBBLE_REGISTER)
+        .filter { it !in excluded }
+        .filter { register ->
+            val use = firstReference[register] ?: return@filter true
+            register in writtenRegisters(use)
+        }
+}
+
 @Suppress("unused")
 val removeNepalipatroAdsPatch = bytecodePatch(
     name = "Remove Ads",
@@ -257,24 +356,38 @@ val removeNepalipatroAdsPatch = bytecodePatch(
         if (AccessFlags.STATIC.isSet(adMob.accessFlags)) {
             throw PatchException(
                 "Nepali Patro: AdMob onMethodCall became static; the guard reads the MethodCall " +
-                    "from the first parameter slot"
+                    "from the local the prologue parks it in"
             )
         }
-        // The guard clobbers v0 and v1 before the original body runs, so its prologue has to
-        // overwrite both before reading them. In 6.11.5 that is
-        // `move-object/from16 v0, p0` then `... v1, p1`.
-        val prologueWrites = adMobImplementation.instructions.take(2).map { instruction ->
-            (instruction as? OneRegisterInstruction)?.registerA ?: -1
-        }
-        if (prologueWrites != listOf(0, 1)) {
+        // The guard is inserted straight after the prologue, which in 6.11.5 parks the receiver,
+        // the MethodCall and the Result in v0/v1/v2. It reads the MethodCall from v1 and must
+        // therefore leave all three alone; the assertion pins that shape so a reshuffle fails
+        // here rather than corrupting the method.
+        val parameterBase = adMobImplementation.registerCount - (adMob.parameterTypes.size + 1)
+        val prologue = adMobImplementation.instructions.take(3).map { it as? TwoRegisterInstruction }
+        val prologueWrites = prologue.map { it?.registerA }
+        val prologueReads = prologue.map { it?.registerB }
+        if (prologueWrites != listOf(0, 1, 2) ||
+            prologueReads != (0..2).map { parameterBase + it }
+        ) {
             throw PatchException(
-                "Nepali Patro: AdMob onMethodCall prologue no longer writes v0 then v1 " +
-                    "(found $prologueWrites); the load/show guard needs both as scratch registers"
+                "Nepali Patro: AdMob onMethodCall prologue is no longer three moves of p0/p1/p2 " +
+                    "into v0/v1/v2 (writes=$prologueWrites reads=$prologueReads); the guard " +
+                    "inserts at offset 3 and reads the MethodCall from v1"
             )
         }
-        val declaredSlots = adMob.parameterTypes.size + 1
-        val callRegister = adMobImplementation.registerCount - declaredSlots + 1
-        adMob.insertProgram(0, admobLoadGuard(callRegister), "AdMob onMethodCall load/show guard")
+        val scratch = adMob.deadLocalsFrom(startIndex = 3, excluded = setOf(0, 1, 2))
+        if (scratch.size < 2) {
+            throw PatchException(
+                "Nepali Patro: AdMob onMethodCall offers only ${scratch.size} clobberable local(s) " +
+                    "in v0..v$MAX_NIBBLE_REGISTER after the prologue ($scratch), need 2"
+            )
+        }
+        adMob.insertProgram(
+            3,
+            admobLoadGuard(scratch = scratch[0], needle = scratch[1]),
+            "AdMob onMethodCall load/show guard",
+        )
 
         // ------------------------------------------------------------ WebView
         // flutter_adserver renders HTML, so the loaders that feed a WebView are the chokepoint
@@ -299,11 +412,11 @@ val removeNepalipatroAdsPatch = bytecodePatch(
                     "from its second parameter slot"
             )
         }
-        // The gate uses p0 as scratch. That is only safe if the original body never reads it.
+        // `.locals 0`, so p0..p3 *are* v0..v3 and every one is nibble-representable. v0 (the
+        // receiver) is the only register the original delegate does not need, so it doubles as
+        // scratch - its body is a single `invoke-virtual {p1, p2, p3}` that never reads v0.
         val readsReceiver = urlImplementation.instructions.any { instruction ->
-            instruction is OneRegisterInstruction && instruction.registerA == 0 ||
-                instruction is com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction &&
-                (instruction.registerA == 0 || instruction.registerB == 0)
+            0 in registersOf(instruction)
         }
         if (readsReceiver) {
             throw PatchException(
@@ -313,6 +426,12 @@ val removeNepalipatroAdsPatch = bytecodePatch(
         }
         val urlSlots = urlLoader.parameterTypes.size + 1
         val urlRegister = urlImplementation.registerCount - urlSlots + 2
+        if (urlRegister > MAX_NIBBLE_REGISTER) {
+            throw PatchException(
+                "Nepali Patro: WebViewProxyApi.loadUrl url register v$urlRegister exceeds the " +
+                    "v$MAX_NIBBLE_REGISTER limit of the 22c/21c register encodings"
+            )
+        }
         urlLoader.insertProgram(
             0,
             webViewLoadUrlGuard(urlRegister),
