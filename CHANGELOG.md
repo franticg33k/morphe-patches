@@ -1,3 +1,9 @@
+## [1.4.0-dev.9](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.8...v1.4.0-dev.9) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* fix Nepali Patro descriptor parser emitting a stray ';' parameter ([05abecf](https://github.com/franticg33k/morphe-patches/commit/05abecfb2bd56e68c0f927e70ec01dbb95450e71))
+
 ## [1.4.0-dev.8](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.7...v1.4.0-dev.8) (2026-09-28)
 
 ### 🚀 Updated App Support
