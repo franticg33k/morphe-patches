@@ -3,6 +3,7 @@ package app.franticg33k.patches.nepalipatro.ads
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALIPATRO
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
@@ -15,12 +16,12 @@ import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 /*
  * Nepali Patro 6.11.5 has two independent ad stacks and both have to go:
  *
- *  1. Google Mobile Ads — no ad actually renders today (every request dies with
+ *  1. Google Mobile Ads - no ad actually renders today (every request dies with
  *     "Error building request URL"), but the SDK is still wired up, so the plugin's
  *     method-channel entry point is short-circuited for every load and show call. Nothing is
  *     ever constructed, so there is nothing left to show.
  *
- *  2. flutter_adserver — the first-party server that renders the ads you actually SEE
+ *  2. flutter_adserver - the first-party server that renders the ads you actually SEE
  *     (the "SLIDERWIDGET" / "Slider impression" logs). It loads HTML into a flutter_webview
  *     platform view, so neutralising the three loaders the Pigeon bridge exposes kills it at
  *     the only place that touches android.webkit.WebView.
@@ -32,56 +33,122 @@ import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
  */
 
 /**
+ * Instructions the patcher must emit, addressed by `vN` only.
+ *
+ * `addInstructions` runs the block through `InlineSmaliCompiler`, and that compiler
+ * **silently drops any instruction that references a `pN` register** while keeping `vN`
+ * ones. This is not theoretical: a guard written with `iget-object v0, p1, ...` produced a
+ * `onMethodCall` whose first surviving instruction was
+ *
+ *     const-string v1, "load"
+ *     invoke-virtual {v0, v1}, Ljava/lang/String;->startsWith(...)Z
+ *
+ * - v0 never assigned, so the dex verifier rejected the class and the app died on launch with
+ *
+ *     VerifyError: ... onMethodCall failed to verify:
+ *     [0x2] tried to get class from non-reference register v0 (type=Undefined)
+ *
+ * `verifyInsertedInstructionCount` below turns that silent drop into a loud failure.
+ */
+private fun String.instructionCount(): Int =
+    lineSequence().count { val line = it.trim(); line.isNotEmpty() && !line.startsWith(":") }
+
+/**
+ * The `vN` number of parameter register [index] (0 = `this` for an instance method).
+ *
+ * Parameter registers occupy the tail of the register file, so the mapping depends on the
+ * method's own register count and parameter count - which is why these are computed rather
+ * than hardcoded, and why the blocks are built per method.
+ */
+private fun MutableMethod.parameterRegister(index: Int, label: String): String {
+    val implementation = checkNotNull(implementation) { "Nepali Patro: $label has no implementation" }
+    val declared = parameterTypes.size
+    val slots = declared + if (AccessFlags.STATIC.isSet(accessFlags)) 0 else 1
+    val registerCount = implementation.registerCount
+    val register = registerCount - slots + index
+    if (register < 0 || register >= registerCount) {
+        throw PatchException(
+            "Nepali Patro: $label - parameter register $index maps to v$register, outside " +
+                "the register file (registers=$registerCount, parameterSlots=$slots)"
+        )
+    }
+    return "v$register"
+}
+
+/**
+ * Inserts [block] at [index] and verifies the patcher emitted every instruction.
+ *
+ * `InlineSmaliCompiler` drops instructions it cannot compile *without raising anything*,
+ * which turns a typo into a corrupt dex that only fails at app start. Comparing the
+ * instruction count before and after turns that into a patch-time `PatchException`.
+ */
+private fun MutableMethod.insertGuard(index: Int, block: String, label: String) {
+    val before = implementation?.instructions?.size ?: 0
+    addInstructions(index, block)
+    val after = implementation?.instructions?.size ?: 0
+    val expected = block.instructionCount()
+    if (after - before != expected) {
+        throw PatchException(
+            "Nepali Patro: $label - the patcher emitted ${after - before} of $expected " +
+                "instructions; InlineSmaliCompiler silently drops instructions that use pN " +
+                "registers, so the guard must address every register as vN"
+        )
+    }
+}
+
+/**
  * `GoogleMobileAdsPlugin.onMethodCall` dispatches on `MethodCall.method`, so one guard at the
  * top of the method covers every ad format. Ad formats are always requested as `load*` and
  * presented as `show*`; everything else (`MobileAds#initialize`, `disposeAd`, `getAdSize`,
  * consent, settings) falls through untouched so the rest of the plugin behaves normally.
  *
- * Answering with `Result.success(null)` and returning means the Dart side sees a completed
- * `load` call and simply never receives an `onAdLoaded`/`onAdFailedToLoad` event — no error
- * is raised and no ad object exists to be shown.
+ * The blocked calls are answered with `Result.success(<the MethodCall>)` and returned, so the
+ * Dart side sees a completed call and never receives `onAdLoaded` / `onAdFailedToLoad` - no
+ * ad object is ever created, and no error is raised. Every method reachable through a
+ * `load*` / `show*` case in this plugin is `void` on the Dart side, so the argument is
+ * discarded; a real object is passed rather than a literal `null` because `const/4 vN, 0x0`
+ * yields an *int*, which the dex verifier rejects when the slot is typed `Ljava/lang/Object;`.
  *
- * Needs two scratch registers (`v0`, `v1`) and must read `p1`/`p2`, so it is only valid for a
- * non-static method whose prologue writes `v0` then `v1` before anything reads them.
- *
- * `${'$'}` is Kotlin's escape for the `$` inside the `MethodChannel$Result` descriptor.
+ * Needs two scratch registers (`v0`, `v1`) and must read the `MethodCall` and `Result`
+ * parameters, so it is only valid for a non-static method whose prologue writes `v0` then
+ * `v1` before anything reads them.
  */
-private val ADMOB_LOAD_GUARD = """
-    iget-object v0, p1, Lio/flutter/plugin/common/MethodCall;->method:Ljava/lang/String;
+private fun admobLoadGuard(call: String, result: String) = """
+    iget-object v0, $call, Lio/flutter/plugin/common/MethodCall;->method:Ljava/lang/String;
     const-string v1, "load"
     invoke-virtual {v0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
     move-result v0
     if-nez v0, :morphe_block
-    iget-object v0, p1, Lio/flutter/plugin/common/MethodCall;->method:Ljava/lang/String;
+    iget-object v0, $call, Lio/flutter/plugin/common/MethodCall;->method:Ljava/lang/String;
     const-string v1, "show"
     invoke-virtual {v0, v1}, Ljava/lang/String;->startsWith(Ljava/lang/String;)Z
     move-result v0
     if-eqz v0, :morphe_run
     :morphe_block
-    const/4 v0, 0x0
-    invoke-interface {p2, v0}, Lio/flutter/plugin/common/MethodChannel${'$'}Result;->success(Ljava/lang/Object;)V
+    invoke-interface {$result, $call}, Lio/flutter/plugin/common/MethodChannel${'$'}Result;->success(Ljava/lang/Object;)V
     return-void
     :morphe_run
     nop
 """
 
 /**
- * `WebViewProxyApi.loadUrl(WebView, String, Map)` — the only loader that takes a URL we do not
+ * `WebViewProxyApi.loadUrl(WebView, String, Map)` - the only loader that takes a URL we do not
  * control. Blocking it outright would break legitimate in-app browsing, so it is gated on the
  * ad server host and on `data:` (inline HTML) URLs, which is what an ad WebView navigates to.
  *
- * `.locals 0` in 6.11.5, so `v0` aliases `p0` (the receiver) — free only because the original
- * body never touches register 0, which the assertion in `execute` enforces. `p2` is the URL
- * (the fingerprint pins the parameter list, and the static check keeps `pN` aligned).
+ * `.locals 0` in 6.11.5, so there is no spare register and the guard has to clobber `this`.
+ * That is only safe because the original body never touches register 0, which the assertion
+ * in `execute` enforces. (smali normalises `v0` to `p0` for such methods; either name emits
+ * the same register.)
  */
-private val WEBVIEW_LOAD_URL_GUARD = """
-    if-eqz p2, :morphe_run
+private fun webViewLoadUrlGuard(url: String) = """
+    if-eqz $url, :morphe_run
     const-string v0, "data:"
-    invoke-virtual {p2, v0}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+    invoke-virtual {$url, v0}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
     move-result v0
     if-nez v0, :morphe_block
     const-string v0, "ads-delivery"
-    invoke-virtual {p2, v0}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
+    invoke-virtual {$url, v0}, Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z
     move-result v0
     if-eqz v0, :morphe_run
     :morphe_block
@@ -136,13 +203,13 @@ val removeNepalipatroAdsPatch = bytecodePatch(
         }
         if (AccessFlags.STATIC.isSet(adMob.accessFlags)) {
             throw PatchException(
-                "Nepali Patro: AdMob onMethodCall became static; the guard addresses p1/p2 by " +
-                    "their instance-method positions"
+                "Nepali Patro: AdMob onMethodCall became static; the guard addresses the " +
+                    "MethodCall/Result parameters by their instance-method positions"
             )
         }
 
         // The guard clobbers v0 and v1 before branching, so the original body has to overwrite
-        // both itself before it can read them — otherwise our constants leak into its work.
+        // both itself before it can read them - otherwise our constants leak into its work.
         // In 6.11.5 the prologue is exactly `move-object/from16 v0, p0` then `... v1, p1`.
         val prologueWrites = adMobImplementation.instructions.take(2).map { instruction ->
             (instruction as? OneRegisterInstruction)?.registerA ?: -1
@@ -153,27 +220,38 @@ val removeNepalipatroAdsPatch = bytecodePatch(
                     "(found $prologueWrites); the load/show guard needs both as scratch registers"
             )
         }
-        adMob.addInstructions(0, ADMOB_LOAD_GUARD)
+        adMob.insertGuard(
+            0,
+            admobLoadGuard(
+                call = adMob.parameterRegister(1, "AdMob onMethodCall"),
+                result = adMob.parameterRegister(2, "AdMob onMethodCall"),
+            ),
+            "AdMob onMethodCall load/show guard",
+        )
 
         // ------------------------------------------------------------ WebView
         // flutter_adserver renders HTML ads, so the loaders that feed a WebView are the
         // chokepoint for everything it draws. Both HTML loaders are pure one-instruction
         // delegates in `.locals 0` methods; a bare `return-void` needs no registers at all,
         // so no scratch-register precondition has to hold for them.
-        WebViewLoadDataFingerprint.method.addInstructions(0, "return-void")
-        WebViewLoadDataWithBaseUrlFingerprint.method.addInstructions(0, "return-void")
+        WebViewLoadDataFingerprint.method.insertGuard(0, "return-void", "WebViewProxyApi.loadData")
+        WebViewLoadDataWithBaseUrlFingerprint.method.insertGuard(
+            0,
+            "return-void",
+            "WebViewProxyApi.loadDataWithBaseUrl",
+        )
 
         // loadUrl is the one loader whose target we do not own, so it gets a host gate rather
-        // than a blanket no-op — but the gate needs `v0` as scratch, which under `.locals 0`
-        // aliases the receiver. Refuse to patch if a future build starts using register 0.
+        // than a blanket no-op - but the gate needs a scratch register, and under `.locals 0`
+        // that is the receiver. Refuse to patch if a future build starts using register 0.
         val urlLoader = WebViewLoadUrlFingerprint.method
         val urlImplementation = checkNotNull(urlLoader.implementation) {
             "Nepali Patro: WebViewProxyApi.loadUrl has no implementation"
         }
         if (AccessFlags.STATIC.isSet(urlLoader.accessFlags)) {
             throw PatchException(
-                "Nepali Patro: WebViewProxyApi.loadUrl became static; the guard addresses p2 " +
-                    "by its instance-method position"
+                "Nepali Patro: WebViewProxyApi.loadUrl became static; the guard addresses the " +
+                    "url parameter by its instance-method position"
             )
         }
         // `v0` has to be a register the original body leaves alone: under `.locals 0` it aliases
@@ -188,6 +266,10 @@ val removeNepalipatroAdsPatch = bytecodePatch(
                     "(${touchedByOriginal.opcode}); the URL gate needs that register as scratch"
             )
         }
-        urlLoader.addInstructions(0, WEBVIEW_LOAD_URL_GUARD)
+        urlLoader.insertGuard(
+            0,
+            webViewLoadUrlGuard(url = urlLoader.parameterRegister(2, "WebViewProxyApi.loadUrl")),
+            "WebViewProxyApi.loadUrl host gate",
+        )
     }
 }
