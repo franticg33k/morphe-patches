@@ -1,3 +1,9 @@
+## [1.4.0-dev.10](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.9...v1.4.0-dev.10) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* block Nepali Patro ad server host so the interstitial overlay never opens ([b1d2623](https://github.com/franticg33k/morphe-patches/commit/b1d2623f771cf634baf150d819c01677727ba5a5))
+
 ## [1.4.0-dev.9](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.8...v1.4.0-dev.9) (2026-09-28)
 
 ### 🚀 Updated App Support

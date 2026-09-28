@@ -1,7 +1,33 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.4.0-dev.9",
+  "version": "1.4.0-dev.10",
   "patches": [
+    {
+      "name": "Block Ad Server",
+      "description": "Stops Nepali Patro's interstitial ad page from ever opening. The overlay is only shown when the first-party ad fetch succeeds (with no network at all it is skipped entirely), so this rewrites the ad-only host ads-delivery.nepalipatro.com.np in libapp.so to an unresolvable .xx domain of the same length. The request then fails exactly as it does offline and the five second blank ad page never appears, while the rest of the app stays online. Pairs with Remove Ads, which suppresses the ad content and the AdMob interstitials themselves.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "np.com.nepalipatro",
+          "name": "Nepalipatro",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#E53935",
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
     {
       "name": "Enable Online Pro",
       "description": "Experimental companion patch that keeps byAir's online Pro gates open without forcing the crash-prone global entitlement refresh path.",

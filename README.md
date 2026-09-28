@@ -5,7 +5,18 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.0-dev.9](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.0-dev.9)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;25 patches total
+> **[v1.4.0-dev.10](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.0-dev.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
+<details open>
+<summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<br>
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's interstitial ad page from ever opening. The overlay is only shown when the first-party ad fetch succeeds (with no network at all it is skipped entirely), so this rewrites the ad-only host ads-delivery.nepalipatro.com.np in libapp.so to an unresolvable .xx domain of the same length. The request then fails exactly as it does offline and the five second blank ad page never appears, while the rest of the app stays online. Pairs with Remove Ads, which suppresses the ad content and the AdMob interstitials themselves. |  |
+| [Remove Ads](#remove-ads) | Disables both ad stacks in Nepali Patro: Google Mobile Ads (AdMob) and the first-party flutter_adserver HTML ad server. AdMob's method-channel entry point is short-circuited for every load and show call so no ad is ever created, and the WebView loaders the ad server uses are neutralised - loadData and loadDataWithBaseUrl become no-ops, while loadUrl only refuses the ads-delivery.nepalipatro.com.np host and data: URLs so normal in-app browsing keeps working. |  |
+
+</details>
+
 <details open>
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -24,16 +35,6 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Remove Ads](#remove-ads) | Disables all ad serving in Hamro Patro by no-oping the native ad-placement resolver (HamroAdsPlacements). Every banner, native, interstitial, fullscreen and roadblock placement funnels through these leaf builders, so returning an empty list means no ad request is ever built for AdMob, Pangle, IronSource or Facebook Audience Network. Verified on v10.7.30. |  |
-
-</details>
-
-<details open>
-<summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
-<br>
-
-| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
-|----------|----------------|-----------|
-| [Remove Ads](#remove-ads) | Disables both ad stacks in Nepali Patro: Google Mobile Ads (AdMob) and the first-party flutter_adserver HTML ad server. AdMob's method-channel entry point is short-circuited for every load and show call so no ad is ever created, and the WebView loaders the ad server uses are neutralised - loadData and loadDataWithBaseUrl become no-ops, while loadUrl only refuses the ads-delivery.nepalipatro.com.np host and data: URLs so normal in-app browsing keeps working. |  |
 
 </details>
 
