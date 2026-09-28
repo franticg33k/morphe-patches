@@ -1,3 +1,9 @@
+## [1.4.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.0...v1.4.1-dev.1) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* re-pin the Hamro Patro ad patch to 10.7.33 ([4fdfd53](https://github.com/franticg33k/morphe-patches/commit/4fdfd536b3babd3130663ff95c73b6669e30c1c8))
+
 ## [1.4.0](https://github.com/franticg33k/morphe-patches/compare/v1.3.10...v1.4.0) (2026-09-28)
 
 ### 🐛 Bug Fixes
