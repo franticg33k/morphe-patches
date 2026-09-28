@@ -83,6 +83,13 @@ private val METHOD_CALL_METHOD_FIELD =
 private val STRING_STARTS_WITH = "Ljava/lang/String;->startsWith(Ljava/lang/String;)Z"
 private val STRING_CONTAINS = "Ljava/lang/String;->contains(Ljava/lang/CharSequence;)Z"
 
+private fun isTypeDescriptor(value: String): Boolean = when {
+    value.startsWith("[") -> isTypeDescriptor(value.substring(1))
+    value.length == 1 -> value in "VZBSCIFJD"
+    value.startsWith("L") -> value.endsWith(";")
+    else -> false
+}
+
 /** `Lcom/Foo;->bar(Ljava/lang/String;)V` -> an [ImmutableMethodReference]. */
 private fun methodReference(descriptor: String): ImmutableMethodReference {
     val arrow = descriptor.indexOf("->")
@@ -92,11 +99,20 @@ private fun methodReference(descriptor: String): ImmutableMethodReference {
     val name = remainder.substring(0, open)
     val tail = remainder.substring(open + 1)
     val close = tail.lastIndexOf(')')
+    // The slice between the parentheses already ends each type with ';', so split and drop the
+    // empty remainder. Re-appending ';' to a list that still holds it produced a stray ";"
+    // parameter, which dex rejected at load time with "Invalid type descriptor: ';'" and took
+    // the whole APK down before it could even start.
     val parameterTypes = tail.substring(0, close)
-        .takeIf { it.isNotEmpty() }
-        ?.split(";")
-        ?.map { "$it;" }
-        ?: emptyList()
+        .split(";")
+        .filter { it.isNotEmpty() }
+        .map { "$it;" }
+    val bad = parameterTypes.filterNot { isTypeDescriptor(it) }
+    if (bad.isNotEmpty() || !isTypeDescriptor(tail.substring(close + 1))) {
+        throw PatchException(
+            "Nepali Patro: cannot parse method descriptor '$descriptor' (bad parameters=$bad)"
+        )
+    }
     return ImmutableMethodReference(definingClass, name, parameterTypes, tail.substring(close + 1))
 }
 
