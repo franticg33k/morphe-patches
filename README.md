@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.1-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.1-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
+> **[v1.4.0](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -34,7 +34,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Remove Ads](#remove-ads) | Disables all ad serving in Hamro Patro by no-oping the native ad-placement resolver (HamroAdsPlacements). Every banner, native, interstitial, fullscreen and roadblock placement funnels through these leaf builders, so returning an empty list means no ad request is ever built for the bundled MAX, Pangle, ironSource, Facebook Audience, Unity, Vungle and Google Ads SDKs, and no mediation cycle ever starts. Re-verified on v10.7.33. |  |
+| [Remove Ads](#remove-ads) | Disables all ad serving in Hamro Patro by no-oping the native ad-placement resolver (HamroAdsPlacements). Every banner, native, interstitial, fullscreen and roadblock placement funnels through these leaf builders, so returning an empty list means no ad request is ever built for the bundled MAX, Pangle, ironSource, Facebook Audience, Unity, Vungle and Google Ads SDKs, and no mediation cycle ever starts. Re-verified on v10.7.33. Works on its own, and combines cleanly with Nai64's universal No Ads patch if you have it enabled - the two act on different layers, so together they also cover the Google ads_mobile_sdk layer that no SDK-level patch reaches. |  |
 
 </details>
 
