@@ -5,14 +5,14 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.0-dev.10](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.0-dev.10)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
+> **[v1.4.0-dev.11](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.0-dev.11)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's interstitial ad page from ever opening. The overlay is only shown when the first-party ad fetch succeeds (with no network at all it is skipped entirely), so this rewrites the ad-only host ads-delivery.nepalipatro.com.np in libapp.so to an unresolvable .xx domain of the same length. The request then fails exactly as it does offline and the five second blank ad page never appears, while the rest of the app stays online. Pairs with Remove Ads, which suppresses the ad content and the AdMob interstitials themselves. |  |
+| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's first-party ads in libapp.so. Two edits: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the same length, so the ad request always fails; and the bottom-menu interstitial handler is forced down its already-present 'return null' path so the full-screen ad page and its five second countdown never open. The ad switches themselves come from remote config and are cached in SharedPreferences, which an APK patch cannot write and which the app rewrites on every launch - hence the two edits above. Pairs with Remove Ads, which suppresses the ad content itself and the AdMob interstitials. |  |
 | [Remove Ads](#remove-ads) | Disables both ad stacks in Nepali Patro: Google Mobile Ads (AdMob) and the first-party flutter_adserver HTML ad server. AdMob's method-channel entry point is short-circuited for every load and show call so no ad is ever created, and the WebView loaders the ad server uses are neutralised - loadData and loadDataWithBaseUrl become no-ops, while loadUrl only refuses the ads-delivery.nepalipatro.com.np host and data: URLs so normal in-app browsing keeps working. |  |
 
 </details>

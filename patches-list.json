@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.4.0-dev.10",
+  "version": "1.4.0-dev.11",
   "patches": [
     {
       "name": "Block Ad Server",
-      "description": "Stops Nepali Patro's interstitial ad page from ever opening. The overlay is only shown when the first-party ad fetch succeeds (with no network at all it is skipped entirely), so this rewrites the ad-only host ads-delivery.nepalipatro.com.np in libapp.so to an unresolvable .xx domain of the same length. The request then fails exactly as it does offline and the five second blank ad page never appears, while the rest of the app stays online. Pairs with Remove Ads, which suppresses the ad content and the AdMob interstitials themselves.",
+      "description": "Stops Nepali Patro's first-party ads in libapp.so. Two edits: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the same length, so the ad request always fails; and the bottom-menu interstitial handler is forced down its already-present 'return null' path so the full-screen ad page and its five second countdown never open. The ad switches themselves come from remote config and are cached in SharedPreferences, which an APK patch cannot write and which the app rewrites on every launch - hence the two edits above. Pairs with Remove Ads, which suppresses the ad content itself and the AdMob interstitials.",
       "default": true,
       "dependencies": [],
       "compatiblePackages": [

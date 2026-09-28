@@ -1,3 +1,9 @@
+## [1.4.0-dev.11](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.10...v1.4.0-dev.11) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* never open the Nepali Patro interstitial, not just its ad host ([405c082](https://github.com/franticg33k/morphe-patches/commit/405c0829ca9da7235002f7c1d01edcc6771fcacc)), closes [#0xc531e8](https://github.com/franticg33k/morphe-patches/issues/0xc531e8) [#-0x10](https://github.com/franticg33k/morphe-patches/issues/-0x10)
+
 ## [1.4.0-dev.10](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.9...v1.4.0-dev.10) (2026-09-28)
 
 ### 🚀 Updated App Support
