@@ -1,3 +1,9 @@
+## [1.4.0-dev.7](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.6...v1.4.0-dev.7) (2026-09-28)
+
+### 🚀 Updated App Support
+
+* read AdMob MethodCall from v1 - 22c/21c registers are 4-bit nibbles ([227d32b](https://github.com/franticg33k/morphe-patches/commit/227d32b701044d51392e914a2b3c009abe2a5d19))
+
 ## [1.4.0-dev.6](https://github.com/franticg33k/morphe-patches/compare/v1.4.0-dev.5...v1.4.0-dev.6) (2026-09-28)
 
 ### 🚀 Updated App Support
