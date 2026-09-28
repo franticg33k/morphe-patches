@@ -9,17 +9,23 @@ import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALI
  * interstitial route and runs a five second countdown on it, and with the content removed you get
  * a blank page for the full timer.
  *
- * Verified on device: with wifi and mobile data off, the interstitial is never shown at all. The
- * overlay is therefore only opened when the ad fetch succeeds, not merely when ad content is
- * suppressed.
+ * Two independent things drive that overlay, and only one of them is the network:
  *
- * That makes the ad server host itself the cheapest correct chokepoint. The creative host is a
- * separate, ad-only name - the rest of the app talks to api.nepalipatro.com.np,
- * api-news.nepalipatro.com.np, blog.nepalipatro.com.np and friends - so failing just this one
- * lookup reproduces the offline behaviour for ads while leaving the app fully online.
+ *  1. The creative comes from the first-party ad server, whose host is ad-only - the rest of the
+ *     app talks to api.nepalipatro.com.np, api-news.nepalipatro.com.np and friends.
+ *  2. Whether to open the overlay at all is decided in Dart, from the removal-type list that
+ *     fetchSubscriptionTypeFromRemoteConfig fills in and AdsPrefDao caches as
+ *     PREFS_ADS_REMOVAL_TYPE. That list is remote config, and the app rewrites it on every launch,
+ *     so patching the host alone does not stop the overlay - a device test confirmed the overlay
+ *     still opens with the ad server unreachable, it just has nothing to show.
+ *
+ * So the host rewrite handles (1) and a one-instruction branch flip in
+ * AdsBloc::handleInterstitialAdsOnDashboardBottomMenuNavigation handles (2), which is the part
+ * that actually produces the five second page.
  *
  * Confirmed empirically before writing this: blocking only 157.10.100.114 (the address of
- * ads-delivery.nepalipatro.com.np) removed the overlay with no other loss of function.
+ * ads-delivery.nepalipatro.com.np) removed the overlay with no other loss of function, which is
+ * what identified the ad server host in the first place.
  */
 
 private const val AD_SERVER_HOST = "ads-delivery.nepalipatro.com.np"
@@ -32,6 +38,14 @@ private const val AD_SERVER_HOST = "ads-delivery.nepalipatro.com.np"
 private const val BLOCKED_AD_SERVER_HOST = "ads-delivery.nepalipatro.com.xx"
 
 private const val LIBAPP = "lib/arm64-v8a/libapp.so"
+
+/**
+ * Blutter address of the `cbz x3, ...` that guards the interstitial call inside
+ * `AdsBloc::handleInterstitialAdsOnDashboardBottomMenuNavigation` (function addr 0xc531bc).
+ * Blutter's per-function `addr` is the file offset in libapp.so, confirmed by the AArch64
+ * prologue landing exactly on `stp x29, x30, [sp, #-0x10]!`.
+ */
+private const val INTERSTITIAL_GATE_OFFSET = 0xc531d4L
 
 private fun ByteArray.matchesAt(offset: Int, needle: ByteArray): Boolean {
     if (offset < 0 || offset + needle.size > size) return false
@@ -56,16 +70,49 @@ private fun ByteArray.indexOfSub(needle: ByteArray, from: Int): Int {
     return -1
 }
 
+/**
+ * Rewrites bytes at [offset] after asserting they are exactly [expected].
+ *
+ * Every offset here was read out of a blutter disassembly of this exact snapshot, so a byte
+ * mismatch means the app was updated and the recipe no longer applies - fail loudly rather than
+ * patch the wrong instruction.
+ */
+private fun patchAt(
+    bytes: ByteArray,
+    offset: Long,
+    expected: ByteArray,
+    replacement: ByteArray,
+    label: String,
+) {
+    require(expected.size == replacement.size) { "$label: replacement must be the same size" }
+    val at = offset.toInt()
+    if (at < 0 || at + expected.size > bytes.size) {
+        error("$label: offset 0x${offset.toString(16)} is outside $LIBAPP (${bytes.size} bytes)")
+    }
+    val actual = bytes.copyOfRange(at, at + expected.size)
+    if (!actual.contentEquals(expected)) {
+        error(
+            "$label: byte mismatch at 0x${offset.toString(16)}; expected " +
+                expected.joinToString(" ") { "%02x".format(it) } + " but found " +
+                actual.joinToString(" ") { "%02x".format(it) }
+        )
+    }
+    replacement.forEachIndexed { i, byte -> bytes[at + i] = byte }
+}
+
+private fun b(vararg values: Int): ByteArray = ByteArray(values.size) { i -> values[i].toByte() }
+
 @Suppress("unused")
 val blockNepalipatroAdServerPatch = rawResourcePatch(
     name = "Block Ad Server",
-    description = "Stops Nepali Patro's interstitial ad page from ever opening. The overlay is " +
-        "only shown when the first-party ad fetch succeeds (with no network at all it is skipped " +
-        "entirely), so this rewrites the ad-only host ads-delivery.nepalipatro.com.np in " +
-        "libapp.so to an unresolvable .xx domain of the same length. The request then fails " +
-        "exactly as it does offline and the five second blank ad page never appears, while the " +
-        "rest of the app stays online. Pairs with Remove Ads, which suppresses the ad content and " +
-        "the AdMob interstitials themselves.",
+    description = "Stops Nepali Patro's first-party ads in libapp.so. Two edits: the ad-only " +
+        "host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the " +
+        "same length, so the ad request always fails; and the bottom-menu interstitial handler " +
+        "is forced down its already-present 'return null' path so the full-screen ad page and " +
+        "its five second countdown never open. The ad switches themselves come from remote " +
+        "config and are cached in SharedPreferences, which an APK patch cannot write and which " +
+        "the app rewrites on every launch - hence the two edits above. Pairs with Remove Ads, " +
+        "which suppresses the ad content itself and the AdMob interstitials.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_NEPALIPATRO)
@@ -95,6 +142,29 @@ val blockNepalipatroAdServerPatch = rawResourcePatch(
             error("byte verification failed for $AD_SERVER_HOST at 0x${at.toString(16)}")
         }
         replacement.forEachIndexed { i, byte -> bytes[at + i] = byte }
+
+        // AdsBloc::handleInterstitialAdsOnDashboardBottomMenuNavigation (blutter addr 0xc531bc)
+        // is the bottom-menu interstitial handler, and the only direct caller of
+        // featureInterstitialAdWithHtmlPopup. Its body is:
+        //
+        //   0xc531d4: cbz  x3, #0xc531e8     ; x3 == null -> return null
+        //   0xc531d8: mov  x0, NULL          ; the "no ad" return
+        //   0xc531dc: mov  SP, fp
+        //   0xc531e0: ldp  fp, lr, [SP], #0x10
+        //   0xc531e4: ret
+        //   0xc531e8: ...                     ; bl featureInterstitialAdWithHtmlPopup
+        //
+        // Turning that one conditional into an unconditional branch to the existing return keeps
+        // the frame setup and teardown intact and skips only the ad. Same size, so nothing in the
+        // instruction stream moves.
+        patchAt(
+            bytes = bytes,
+            offset = INTERSTITIAL_GATE_OFFSET,
+            expected = b(0xa3, 0x00, 0x00, 0xb4), // cbz x3, #0xc531e8
+            replacement = b(0x01, 0x00, 0x00, 0x14), // b #0xc531d8
+            label = "interstitial gate",
+        )
+
         lib.writeBytes(bytes)
     }
 }
