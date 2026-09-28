@@ -19,9 +19,14 @@ import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALI
  *     so patching the host alone does not stop the overlay - a device test confirmed the overlay
  *     still opens with the ad server unreachable, it just has nothing to show.
  *
- * So the host rewrite handles (1) and a one-instruction branch flip in
- * AdsBloc::handleInterstitialAdsOnDashboardBottomMenuNavigation handles (2), which is the part
- * that actually produces the five second page.
+ * So the host rewrite handles (1) and a one-instruction retarget inside
+ * featureInterstitialAdWithHtmlPopup handles (2), which is the part that actually produces the
+ * five second page.
+ *
+ * A device test is what separated the two. The overlay still opened with this patch applied and
+ * the ad server unreachable, and the app had cached the full ad URL list in SharedPreferences
+ * under PREF_SLIDER_DATA - so the snapshot rewrite never even got consulted, and the decision to
+ * push the route was being made from remote config, not from the network.
  *
  * Confirmed empirically before writing this: blocking only 157.10.100.114 (the address of
  * ads-delivery.nepalipatro.com.np) removed the overlay with no other loss of function, which is
@@ -40,12 +45,12 @@ private const val BLOCKED_AD_SERVER_HOST = "ads-delivery.nepalipatro.com.xx"
 private const val LIBAPP = "lib/arm64-v8a/libapp.so"
 
 /**
- * Blutter address of the `cbz x3, ...` that guards the interstitial call inside
- * `AdsBloc::handleInterstitialAdsOnDashboardBottomMenuNavigation` (function addr 0xc531bc).
+ * Blutter address of the "premium / removal type" branch inside
+ * `AdsBloc::featureInterstitialAdWithHtmlPopup` (async wrapper 0x9619fc, state machine 0x961b88).
  * Blutter's per-function `addr` is the file offset in libapp.so, confirmed by the AArch64
  * prologue landing exactly on `stp x29, x30, [sp, #-0x10]!`.
  */
-private const val INTERSTITIAL_GATE_OFFSET = 0xc531d4L
+private const val INTERSTITIAL_GATE_OFFSET = 0x961d1cL
 
 private fun ByteArray.matchesAt(offset: Int, needle: ByteArray): Boolean {
     if (offset < 0 || offset + needle.size > size) return false
@@ -105,14 +110,15 @@ private fun b(vararg values: Int): ByteArray = ByteArray(values.size) { i -> val
 @Suppress("unused")
 val blockNepalipatroAdServerPatch = rawResourcePatch(
     name = "Block Ad Server",
-    description = "Stops Nepali Patro's first-party ads in libapp.so. Two edits: the ad-only " +
+    description = "Stops Nepali Patro's interstitial ads. Two edits to libapp.so: the ad-only " +
         "host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the " +
-        "same length, so the ad request always fails; and the bottom-menu interstitial handler " +
-        "is forced down its already-present 'return null' path so the full-screen ad page and " +
-        "its five second countdown never open. The ad switches themselves come from remote " +
-        "config and are cached in SharedPreferences, which an APK patch cannot write and which " +
-        "the app rewrites on every launch - hence the two edits above. Pairs with Remove Ads, " +
-        "which suppresses the ad content itself and the AdMob interstitials.",
+        "same length, and AdsBloc::featureInterstitialAdWithHtmlPopup - the single callee behind " +
+        "all 24 interstitial call sites - is forced down its existing 'popup blocked' return, so " +
+        "the full-screen ad page and its countdown never open. The host rewrite alone is not " +
+        "enough: the ad URLs are also cached in SharedPreferences under PREF_SLIDER_DATA, and " +
+        "whether to show the page at all comes from remote config, which the app rewrites on " +
+        "every launch. Pairs with Remove Ads, which stops the ad content itself and the AdMob " +
+        "interstitials.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_NEPALIPATRO)
@@ -143,25 +149,38 @@ val blockNepalipatroAdServerPatch = rawResourcePatch(
         }
         replacement.forEachIndexed { i, byte -> bytes[at + i] = byte }
 
-        // AdsBloc::handleInterstitialAdsOnDashboardBottomMenuNavigation (blutter addr 0xc531bc)
-        // is the bottom-menu interstitial handler, and the only direct caller of
-        // featureInterstitialAdWithHtmlPopup. Its body is:
+        // featureInterstitialAdWithHtmlPopup is the single callee behind all 24
+        // `bl #0x9619fc` call sites in the app (calendar tab, my_calendar, home, weather, forex,
+        // blog, petroleum, rashifal, suya_sait, vegetable, government holiday, date conversion,
+        // radio, bullion, kundali, unit conversion, dashboard, app_web_view, app_utils, and the
+        // bottom-menu navigation handler), so one edit here covers every HTML interstitial.
+        // Patching the callers instead would mean 24 fragile offsets.
         //
-        //   0xc531d4: cbz  x3, #0xc531e8     ; x3 == null -> return null
-        //   0xc531d8: mov  x0, NULL          ; the "no ad" return
-        //   0xc531dc: mov  SP, fp
-        //   0xc531e0: ldp  fp, lr, [SP], #0x10
-        //   0xc531e4: ret
-        //   0xc531e8: ...                     ; bl featureInterstitialAdWithHtmlPopup
+        // Its state machine opens with the app's own "should I show this?" decision:
         //
-        // Turning that one conditional into an unconditional branch to the existing return keeps
-        // the frame setup and teardown intact and skips only the ad. Same size, so nothing in the
-        // instruction stream moves.
+        //   0x961d10: ldur  x0, [fp, #-0xd8]     ; the premium / removal-type flag
+        //   0x961d18: cmp   w0, true
+        //   0x961d1c: b.ne  #0x961d78            ; not premium -> carry on and show the ad
+        //   0x961d20: ldur  x0, [fp, #-0xe8]     ; build the log line
+        //   0x961d24: tbz   w0, #4, #0x961d70
+        //   0x961d28: ...   "POPUP_ADS: scope=... blocked due to premium/removal-type rules"
+        //   0x961d68: add   x0, xzr, #0x30        ; false
+        //   0x961d6c: b     ReturnAsyncNotFutureStub
+        //
+        // The app is not premium, so control always takes the `b.ne`. Retargeting that one branch
+        // at 0x961d68 sends every interstitial down the app's own "blocked" return, which is
+        // already the well-trodden path whenever there is nothing to show - it completes the
+        // future with `false` and the route is simply never pushed, so no page and no countdown.
+        //
+        // Branching to 0x961d68 rather than NOPing the instruction matters: the fall-through
+        // contains a `tbz` that rejoins the show path, so a NOP would not reliably block. Jumping
+        // straight to the return skips the log string as a side effect, and the print it would
+        // have emitted is the only thing lost.
         patchAt(
             bytes = bytes,
             offset = INTERSTITIAL_GATE_OFFSET,
-            expected = b(0xa3, 0x00, 0x00, 0xb4), // cbz x3, #0xc531e8
-            replacement = b(0x01, 0x00, 0x00, 0x14), // b #0xc531d8
+            expected = b(0xe1, 0x02, 0x00, 0x54), // b.ne #0x961d78
+            replacement = b(0x13, 0x00, 0x00, 0x14), // b #0x961d68
             label = "interstitial gate",
         )
 
