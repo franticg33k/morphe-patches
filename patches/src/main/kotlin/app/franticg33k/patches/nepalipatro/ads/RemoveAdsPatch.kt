@@ -33,6 +33,23 @@ import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
  * silently corrupting the method.
  */
 
+/*
+ * Highest register an inserted block may name.
+ *
+ * `InlineSmaliCompiler` assembles the block inside a fixed 16-register template rather than the
+ * target method's own register file, so anything above `v15` is rejected. Observed directly
+ * from the patcher:
+ *
+ *     Invalid register: v22. Must be between v0 and v15, inclusive.
+ *
+ * and the ceiling does not move with the `registerCount` handed to it (v15 assembles fine at
+ * registerCount 8, 16, 24 and 32). The same constraint is documented by
+ * https://github.com/Nai64/Nai64Patches in `universal/ads/util/SmaliUtils.kt`:
+ * "morphe inline smali cannot reference p-regs in non-first operand position when they resolve
+ * above v15 (the line is silently dropped)".
+ */
+private const val INLINE_SMALI_REGISTER_CEILING = 16
+
 /**
  * Opcodes whose single register operand is a pure destination.
  *
@@ -132,7 +149,10 @@ private fun MutableMethod.deadLocalsFrom(startIndex: Int, excluded: Set<Int>): L
     val implementation = checkNotNull(implementation) { "method has no implementation" }
     val declared = parameterTypes.size
     val slots = declared + if (AccessFlags.STATIC.isSet(accessFlags)) 0 else 1
-    val localCount = implementation.registerCount - slots
+    // `InlineSmaliCompiler` assembles the block inside a fixed 16-register template, so v16 and
+    // up are rejected outright ("Invalid register: v16. Must be between v0 and v15, inclusive.")
+    // regardless of how many locals the real method has. Cap the search at that ceiling.
+    val localCount = minOf(implementation.registerCount - slots, INLINE_SMALI_REGISTER_CEILING)
     if (localCount <= 0) return emptyList()
 
     val firstReference = HashMap<Int, Instruction>()
@@ -158,6 +178,16 @@ private fun String.instructionCount(): Int =
     lineSequence().count { val line = it.trim(); line.isNotEmpty() && !line.startsWith(":") }
 
 private fun MutableMethod.insertGuard(index: Int, block: String, label: String) {
+    val outOfRange = Regex("""\b[vp](\d+)\b""").findAll(block)
+        .map { it.groupValues[1].toInt() }
+        .filter { it >= INLINE_SMALI_REGISTER_CEILING }
+        .toList()
+    if (outOfRange.isNotEmpty()) {
+        throw PatchException(
+            "Nepali Patro: $label references register(s) $outOfRange, but InlineSmaliCompiler " +
+                "only assembles v0..v${INLINE_SMALI_REGISTER_CEILING - 1}"
+        )
+    }
     val before = implementation?.instructions?.size ?: 0
     addInstructions(index, block)
     val after = implementation?.instructions?.size ?: 0
