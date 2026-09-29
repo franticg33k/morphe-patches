@@ -1,3 +1,9 @@
+## [1.4.2-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.1...v1.4.2-dev.1) (2026-09-29)
+
+### 🚀 Updated App Support
+
+* re-verify Fricam 1.6.5 and JellyWatch TV 1.0.REV-0570; record JellyWatch Admin drift ([0610e0f](https://github.com/franticg33k/morphe-patches/commit/0610e0f36b7fc30125558d7bde06c54d2c707430))
+
 ## [1.4.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.0...v1.4.1) (2026-09-28)
 
 ### 🚀 Updated App Support
