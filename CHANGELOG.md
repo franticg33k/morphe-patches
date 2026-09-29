@@ -1,3 +1,9 @@
+## [1.4.2-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.2-dev.1...v1.4.2-dev.2) (2026-09-29)
+
+### 🐛 Bug Fixes
+
+* pin Fricam to 1.6.5, and cross-check every app's AppTarget list ([ca05fea](https://github.com/franticg33k/morphe-patches/commit/ca05fea9dd5ae248e15b4b51e04395e046b72b6f))
+
 ## [1.4.2-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.1...v1.4.2-dev.1) (2026-09-29)
 
 ### 🚀 Updated App Support
