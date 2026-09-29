@@ -124,6 +124,7 @@ class AppSpec:
     forbidden_literals: list[str] = field(default_factory=list)
     pinned_versions: list[str] | None = None
     pin_mismatch_expected: bool = False
+    method_shapes: list[dict] = field(default_factory=list)
 
 
 # packageName -> the patch directory that owns it, for the pin-consistency check.
@@ -221,6 +222,7 @@ def load_spec(key: str) -> AppSpec:
         forbidden_literals=list(raw.get("forbiddenLiterals") or []),
         pinned_versions=raw.get("pinnedVersions"),
         pin_mismatch_expected=bool(raw.get("pinMismatchExpected")),
+        method_shapes=list(raw.get("methodShape") or []),
     )
     return spec
 
@@ -234,14 +236,31 @@ def available_apps() -> list[str]:
 # --------------------------------------------------------------------------------------
 
 
-class SmaliIndex:
-    """All methods of an apktool tree, with const-strings scoped per METHOD BODY.
+BOOLEAN_VALUE_OF = re.compile(
+    r"^invoke-static(?:/range)?\s*\{(?P<regs>[^}]*)\},\s*Ljava/lang/Boolean;->valueOf"
+)
 
-    Per-method scoping is what morphe does and it matters: a file-level approximation
-    attributes every const-string in a file to every method in it, so a fingerprint can
-    appear to match a method that does not contain the string at all. That produced
-    nonsense when re-pinning Fricam's obfuscated billing class, where one file legitimately
-    holds every `fricam_*` literal and five methods each "had" all of them.
+
+def _record_boxing(m: Method, line: str) -> None:
+    """Record the register(s) each Boolean.valueOf call consumes, in order."""
+    hit = BOOLEAN_VALUE_OF.match(line.strip())
+    if not hit:
+        return
+    regs = [r.strip() for r in hit.group("regs").split(",") if r.strip()]
+    m.shape.append(regs[0] if len(regs) == 1 else "{" + ",".join(regs) + "}")
+
+
+class MethodScanner:
+    """Index an apktool tree: methods, per-method const-strings, and boxing-call shapes.
+
+    Two scopes matter and getting them wrong is how re-pinning goes wrong:
+
+    * const-strings are scoped to the METHOD BODY, like morphe. A file-level approximation
+      attributes every literal in a file to every method in it, so while re-pinning Fricam a
+      method appeared to hold fricam_pro, fricam_edge and pro_unlocked at once - they share
+      one obfuscated class.
+    * labels are NOT instructions, so a smali index and a patcher instruction index differ.
+      Fricam's two Boolean.valueOf calls are smali 24/37 but patcher 20/32.
     """
 
     def __init__(self, extracted: Path) -> None:
@@ -279,6 +298,9 @@ class SmaliIndex:
                             self.consts_by_key.setdefault(
                                 (id(current)), set()
                             ).add(value)
+                        continue
+                    if current is not None:
+                        _record_boxing(current, line)
             if file_consts and ctype:
                 self.classes.setdefault(ctype, set()).update(file_consts)
 
@@ -295,7 +317,7 @@ class SmaliIndex:
 # --------------------------------------------------------------------------------------
 
 
-def check_fingerprints(spec: AppSpec, index: SmaliIndex) -> bool:
+def check_fingerprints(spec: AppSpec, index: MethodScanner) -> bool:
     head(f"{spec.app_name} {spec.version} - {len(spec.fingerprints)} fingerprint(s)")
     info(f"tree: {spec.extracted}")
     all_ok = True
@@ -367,6 +389,51 @@ def _class_matches(fp: Fingerprint, consts: set[str]) -> bool:
     return all(any(needle in s for s in consts) for needle in fp.strings)
 
 
+def check_method_shapes(spec: AppSpec, index: MethodScanner) -> bool:
+    """Assert the internal facts a patch body depends on that a Fingerprint cannot express.
+
+    UnlockEdgePatch broke because it asserted a body shape that was wrong - a `Boolean.valueOf`
+    count read off a partial dump. That class of assumption is invisible to fingerprint
+    resolution, so it is declared here as data and checked directly.
+    """
+    if not spec.method_shapes:
+        return True
+    head(f"{spec.app_name} - patch body assumptions")
+    by_name = {f.name: f for f in spec.fingerprints}
+    all_ok = True
+    for shape in spec.method_shapes:
+        fp = by_name.get(shape.get("fingerprint", ""))
+        if fp is None or fp.class_level:
+            fail(f"{shape.get('fingerprint')}: not a method fingerprint")
+            all_ok = False
+            continue
+        hits = [m for m in index.methods if fp.matches(m, index.consts_for(m))]
+        if len(hits) != 1:
+            fail(f"{fp.name}: cannot check body shape, resolves to {len(hits)} methods")
+            all_ok = False
+            continue
+        method = hits[0]
+        labels, want_count = method.shape, shape.get("booleanValueOfCount")
+        if want_count is not None and len(labels) != int(want_count):
+            all_ok = False
+            fail(f"{fp.name}: {len(labels)} Boolean.valueOf call(s), patch expects {want_count}")
+            info("a patch that hard-codes an instruction index will target the wrong call; " +
+                 "re-read the body and update BOTH the patch and this file")
+            continue
+        if want_count is not None:
+            ok(f"{fp.name}: {len(labels)} Boolean.valueOf call(s), as the patch expects")
+        want_reg = shape.get("firstConsumesRegister")
+        if want_reg:
+            got = labels[0] if labels else None
+            if got != want_reg:
+                all_ok = False
+                fail(f"{fp.name}: first boxing consumes {got!r}, patch forces {want_reg!r}")
+                info("forcing a dead or wrong register is a silent no-op")
+            else:
+                ok(f"{fp.name}: first boxing consumes {got}, as the patch forces")
+    return all_ok
+
+
 def check_bundle(spec: AppSpec, bundle: Path) -> bool:
     head(f"compiled bundle - {bundle.name}")
     entries = dex_entries(bundle)
@@ -416,9 +483,10 @@ def run_app(key: str, bundle: Path | None, scan: bool) -> bool:
     good = check_pin(spec)
     print()
     if scan:
-        index = SmaliIndex(spec.extracted)
+        index = MethodScanner(spec.extracted)
         index.scan()
         good = check_fingerprints(spec, index) and good
+        good = check_method_shapes(spec, index) and good
     # NB: do not reassign `good` here. An earlier `good = True` in this branch silently
     # discarded the pin-check result, so a deliberate pin mismatch still reported success.
     if bundle is not None:
@@ -471,3 +539,4 @@ if __name__ == "__main__":
     except ToolError as exc:
         fail(str(exc))
         sys.exit(2)
+

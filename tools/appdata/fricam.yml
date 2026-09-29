@@ -61,5 +61,26 @@ compiledLiterals:
   - fingerprint: EdgeEntitlementActiveFingerprint
     literals: [fricam_edge, pro_unlocked]
 
+# Facts the Kotlin patch depends on that a Fingerprint does NOT express, so nothing in the
+# harness would catch them drifting. The UnlockEdgePatch error on 1.6.5 was caused by breaking
+# the first one, and it was only found because the patcher refused to guess:
+#
+#   1. the sync method contains EXACTLY TWO Boolean.valueOf calls, at patcher instruction
+#      indices 20 and 32 (smali 24 and 37 - labels are not instructions).
+#   2. the FIRST one consumes p1 and publishes the EDGE flag into StateFlow Lua0;->t.
+#      UnlockEdgePatch forces p1 to 1 there.
+#   3. the SECOND boxes v1 = pro || edge and drives the pro_unlocked persist; it needs no
+#      patch because UnlockPremiumPatch already forces the pro check true.
+#   4. v0 is dead after the iget-object at smali 23, so the pre-1.6.5 `const/4 v0, 0x1` was
+#      a silent no-op on this build.
+#
+# An earlier revision of UnlockEdgePatch asserted "exactly 1" boxing call, from a partial read
+# of this body, and aborted the whole patch on a good build. Keep these in step with the patch.
+methodShape:
+  - fingerprint: EdgeEntitlementActiveFingerprint
+    booleanValueOfCount: 2
+    firstConsumesRegister: p1
+
+
 
 
