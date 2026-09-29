@@ -12,6 +12,7 @@
 package: com.tgezginis.fricam
 appName: Fricam
 version: "1.6.5"
+pinnedVersions: ["1.6.5"]
 extracted: apks/extracted/fricam
 
 fingerprints:
@@ -59,5 +60,6 @@ compiledLiterals:
     literals: [frigate, demo_mode, fricam_billing, pro_unlocked]
   - fingerprint: EdgeEntitlementActiveFingerprint
     literals: [fricam_edge, pro_unlocked]
+
 
 

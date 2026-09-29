@@ -122,6 +122,67 @@ class AppSpec:
     fingerprints: list[Fingerprint] = field(default_factory=list)
     compiled_literals: list[tuple[str, list[str]]] = field(default_factory=list)
     forbidden_literals: list[str] = field(default_factory=list)
+    pinned_versions: list[str] | None = None
+    pin_mismatch_expected: bool = False
+
+
+# packageName -> the patch directory that owns it, for the pin-consistency check.
+PIN_SOURCE = REPO_ROOT / "patches" / "src" / "main" / "kotlin" / "app" / "franticg33k" / "patches"
+PACKAGE_RE = re.compile(r'packageName\s*=\s*"([^"]+)"')
+APP_TARGET_RE = re.compile(r'version\s*=\s*"([^"]+)"')
+
+
+def declared_targets(package: str) -> list[str] | None:
+    """Versions listed in the app's own Constants.kt, or None if it is package-name-only.
+
+    Guards the mistake made on Fricam 1.6.5: the fingerprints were re-pinned and the Edge bug
+    fixed for 1.6.5 while `AppTarget` still said 1.4.0.1/1.3.7, so the manager would not have
+    offered the patch on the version it had just been fixed for. Nothing checked that.
+    """
+    for constants in PIN_SOURCE.rglob("Constants.kt"):
+        text = constants.read_text(encoding="utf-8", errors="replace")
+        for m in PACKAGE_RE.finditer(text):
+            if m.group(1) != package:
+                continue
+            targets = APP_TARGET_RE.findall(text)
+            # No AppTarget entries means package-name-only, which is a valid and deliberate
+            # configuration - not an empty list that should be treated as a mismatch.
+            return targets or None
+    return None
+
+
+def check_pin(spec: AppSpec) -> bool:
+    """The verified version must be one the app actually offers itself."""
+    head(f"{spec.app_name} - compatibility pin")
+    targets = declared_targets(spec.package)
+    if targets is None:
+        info(f"{spec.package}: no AppTarget list (package-name-only) - nothing to cross-check")
+        return True
+    if not spec.pinned_versions:
+        # The yml does not state what it expects; fall back to the single-target assumption.
+        pinned = [spec.version]
+        if len(targets) == 1 and targets[0] == spec.version:
+            ok(f"pin matches the verified version ({spec.version})")
+            return True
+        fail(f"{spec.package}: verified {spec.version} but Constants.kt lists {targets}")
+        info("add `pinnedVersions:` to the appdata yml to make this check explicit")
+        return False
+    if spec.version not in spec.pinned_versions:
+        if spec.pin_mismatch_expected:
+            warn(f"{spec.package}: verified {spec.version}, pinned {spec.pinned_versions} - "
+                 "DECLARED via pinMismatchExpected, so the patch will not be offered on the "
+                 "verified build")
+            return True
+        fail(f"{spec.package}: verified {spec.version}, "
+             f"but the yml pins {spec.pinned_versions} - which is what Constants.kt says")
+        info("either the pin is stale (the patch will not be offered) or the yml is")
+        return False
+    if spec.version not in targets:
+        fail(f"{spec.package}: yml pins {spec.pinned_versions} "
+             f"but Constants.kt lists {targets} - they disagree")
+        return False
+    ok(f"pin agrees: verified {spec.version} is offered ({', '.join(targets)})")
+    return True
 
 
 def load_spec(key: str) -> AppSpec:
@@ -149,7 +210,7 @@ def load_spec(key: str) -> AppSpec:
         (e["fingerprint"], e.get("literals") or [])
         for e in (raw.get("compiledLiterals") or [])
     ]
-    return AppSpec(
+    spec = AppSpec(
         key=key,
         package=raw["package"],
         app_name=raw.get("appName", key),
@@ -158,7 +219,10 @@ def load_spec(key: str) -> AppSpec:
         fingerprints=fps,
         compiled_literals=literals,
         forbidden_literals=list(raw.get("forbiddenLiterals") or []),
+        pinned_versions=raw.get("pinnedVersions"),
+        pin_mismatch_expected=bool(raw.get("pinMismatchExpected")),
     )
+    return spec
 
 
 def available_apps() -> list[str]:
@@ -349,12 +413,14 @@ def run_app(key: str, bundle: Path | None, scan: bool) -> bool:
             f"extracted tree missing: {spec.extracted}\n"
             f"  run:  python tools/intake.py --package {spec.package}"
         )
+    good = check_pin(spec)
+    print()
     if scan:
         index = SmaliIndex(spec.extracted)
         index.scan()
-        good = check_fingerprints(spec, index)
-    else:
-        good = True
+        good = check_fingerprints(spec, index) and good
+    # NB: do not reassign `good` here. An earlier `good = True` in this branch silently
+    # discarded the pin-check result, so a deliberate pin mismatch still reported success.
     if bundle is not None:
         good = check_bundle(spec, bundle) and good
     return good

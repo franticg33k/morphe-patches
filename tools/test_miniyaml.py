@@ -177,6 +177,33 @@ class TestRealAppDataFiles(unittest.TestCase):
         self.assertEqual(d["forbiddenLiterals"], ["Lyq7;", "Lzq7;", "Lar7;"])
         self.assertEqual(len(d["compiledLiterals"]), 5)
 
+    def test_every_app_declares_its_pins(self):
+        """The gap that let Fricam 1.6.5 ship with a stale AppTarget list.
+
+        The fingerprints were re-pinned and the Edge bug fixed for 1.6.5 while
+        Constants.kt still said 1.4.0.1/1.3.7, so the manager would not have offered the
+        patch on the version it had just been fixed for. Every app data file must therefore
+        state `pinnedVersions` explicitly - an empty list is a valid answer for a
+        package-name-only app, an absent key is not.
+        """
+        for path in (Path(__file__).resolve().parent / "appdata").glob("*.yml"):
+            d = loads(path.read_text(encoding="utf-8"))
+            with self.subTest(app=path.stem):
+                self.assertIn(
+                    "pinnedVersions", d,
+                    "%s is missing pinnedVersions; fingerprints.py cannot cross-check the "
+                    "AppTarget list without it" % path.stem,
+                )
+                self.assertIsInstance(d["pinnedVersions"], list)
+                if d["pinnedVersions"] and d["version"] not in d["pinnedVersions"]:
+                    # Only acceptable when the app has explicitly opted in, so the mismatch
+                    # is a recorded decision rather than an accident nobody noticed.
+                    self.assertTrue(
+                        d.get("pinMismatchExpected"),
+                        "%s: verified %s but pins %s, without pinMismatchExpected: true"
+                        % (path.stem, d["version"], d["pinnedVersions"]),
+                    )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

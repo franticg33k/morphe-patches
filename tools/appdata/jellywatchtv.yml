@@ -6,6 +6,7 @@
 package: com.jellywatch.tv
 appName: JellyWatch TV
 version: "1.0.REV-0570"
+pinnedVersions: ["1.0.REV-0570"]
 extracted: apks/extracted/jellywatchtv
 
 fingerprints:
@@ -48,3 +49,6 @@ compiledLiterals:
     literals: ["PremiumStatus(isPremium="]
   - fingerprint: PairipCheckLicenseFingerprint
     literals: [Lcom/pairip/licensecheck/LicenseClient;]
+
+
+

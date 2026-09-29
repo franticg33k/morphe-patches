@@ -53,6 +53,11 @@ package: com.jellywatch.app
 appName: JellyWatch Admin
 version: "2.0.REV-1744"
 pinnedVersions: ["2.0.REV-1712"]
+# The one app whose verified version is deliberately NOT the pinned version, so
+# fingerprints.py and test_miniyaml.py report a known failure rather than passing silently.
+# See the long note above: the four unresolved fingerprints mean the patch must not be
+# offered on 2.0.REV-1744. Clear this flag only when the pin is actually updated.
+pinMismatchExpected: true
 extracted: apks/extracted/jellywatch
 
 fingerprints:
