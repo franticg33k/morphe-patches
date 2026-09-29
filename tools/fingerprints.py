@@ -50,8 +50,8 @@ from common import (
     head,
     human,
     info,
-    iter_methods,
     ok,
+    parse_method_line,
     read_class_type,
     smali_files,
     smali_roots,
@@ -76,13 +76,17 @@ class Fingerprint:
     defining_class: str | None
     require_body: bool
     note: str = ""
+    class_level: bool = False
+    class_fingerprint: str | None = None
 
-    def matches(self, m: Method, consts: set[str]) -> bool:
+    def matches(self, m: Method, consts: set[str], scope: set[str] | None = None) -> bool:
         # An omitted `method` means unconstrained, exactly as morphe treats an omitted
         # `name`. It must NOT fall back to the fingerprint's own label: that would make a
         # missing field silently match nothing, which reads as a stale fingerprint rather
         # than as the data-entry mistake it is.
         if self.method is not None and m.name != self.method:
+            return False
+        if scope is not None and m.defining_class not in scope:
             return False
         if self.defining_class and m.defining_class != self.defining_class:
             return False
@@ -118,6 +122,68 @@ class AppSpec:
     fingerprints: list[Fingerprint] = field(default_factory=list)
     compiled_literals: list[tuple[str, list[str]]] = field(default_factory=list)
     forbidden_literals: list[str] = field(default_factory=list)
+    pinned_versions: list[str] | None = None
+    pin_mismatch_expected: bool = False
+    method_shapes: list[dict] = field(default_factory=list)
+
+
+# packageName -> the patch directory that owns it, for the pin-consistency check.
+PIN_SOURCE = REPO_ROOT / "patches" / "src" / "main" / "kotlin" / "app" / "franticg33k" / "patches"
+PACKAGE_RE = re.compile(r'packageName\s*=\s*"([^"]+)"')
+APP_TARGET_RE = re.compile(r'version\s*=\s*"([^"]+)"')
+
+
+def declared_targets(package: str) -> list[str] | None:
+    """Versions listed in the app's own Constants.kt, or None if it is package-name-only.
+
+    Guards the mistake made on Fricam 1.6.5: the fingerprints were re-pinned and the Edge bug
+    fixed for 1.6.5 while `AppTarget` still said 1.4.0.1/1.3.7, so the manager would not have
+    offered the patch on the version it had just been fixed for. Nothing checked that.
+    """
+    for constants in PIN_SOURCE.rglob("Constants.kt"):
+        text = constants.read_text(encoding="utf-8", errors="replace")
+        for m in PACKAGE_RE.finditer(text):
+            if m.group(1) != package:
+                continue
+            targets = APP_TARGET_RE.findall(text)
+            # No AppTarget entries means package-name-only, which is a valid and deliberate
+            # configuration - not an empty list that should be treated as a mismatch.
+            return targets or None
+    return None
+
+
+def check_pin(spec: AppSpec) -> bool:
+    """The verified version must be one the app actually offers itself."""
+    head(f"{spec.app_name} - compatibility pin")
+    targets = declared_targets(spec.package)
+    if targets is None:
+        info(f"{spec.package}: no AppTarget list (package-name-only) - nothing to cross-check")
+        return True
+    if not spec.pinned_versions:
+        # The yml does not state what it expects; fall back to the single-target assumption.
+        pinned = [spec.version]
+        if len(targets) == 1 and targets[0] == spec.version:
+            ok(f"pin matches the verified version ({spec.version})")
+            return True
+        fail(f"{spec.package}: verified {spec.version} but Constants.kt lists {targets}")
+        info("add `pinnedVersions:` to the appdata yml to make this check explicit")
+        return False
+    if spec.version not in spec.pinned_versions:
+        if spec.pin_mismatch_expected:
+            warn(f"{spec.package}: verified {spec.version}, pinned {spec.pinned_versions} - "
+                 "DECLARED via pinMismatchExpected, so the patch will not be offered on the "
+                 "verified build")
+            return True
+        fail(f"{spec.package}: verified {spec.version}, "
+             f"but the yml pins {spec.pinned_versions} - which is what Constants.kt says")
+        info("either the pin is stale (the patch will not be offered) or the yml is")
+        return False
+    if spec.version not in targets:
+        fail(f"{spec.package}: yml pins {spec.pinned_versions} "
+             f"but Constants.kt lists {targets} - they disagree")
+        return False
+    ok(f"pin agrees: verified {spec.version} is offered ({', '.join(targets)})")
+    return True
 
 
 def load_spec(key: str) -> AppSpec:
@@ -137,13 +203,15 @@ def load_spec(key: str) -> AppSpec:
                 defining_class=entry.get("definingClass"),
                 require_body=bool(entry.get("requireBody")),
                 note=(entry.get("note") or "").strip(),
+                class_level=bool(entry.get("classLevel")),
+                class_fingerprint=entry.get("classFingerprint"),
             )
         )
     literals = [
         (e["fingerprint"], e.get("literals") or [])
         for e in (raw.get("compiledLiterals") or [])
     ]
-    return AppSpec(
+    spec = AppSpec(
         key=key,
         package=raw["package"],
         app_name=raw.get("appName", key),
@@ -152,7 +220,11 @@ def load_spec(key: str) -> AppSpec:
         fingerprints=fps,
         compiled_literals=literals,
         forbidden_literals=list(raw.get("forbiddenLiterals") or []),
+        pinned_versions=raw.get("pinnedVersions"),
+        pin_mismatch_expected=bool(raw.get("pinMismatchExpected")),
+        method_shapes=list(raw.get("methodShape") or []),
     )
+    return spec
 
 
 def available_apps() -> list[str]:
@@ -164,37 +236,80 @@ def available_apps() -> list[str]:
 # --------------------------------------------------------------------------------------
 
 
-class SmaliIndex:
-    """All methods of an apktool tree, plus per-method const-strings.
+BOOLEAN_VALUE_OF = re.compile(
+    r"^invoke-static(?:/range)?\s*\{(?P<regs>[^}]*)\},\s*Ljava/lang/Boolean;->valueOf"
+)
 
-    Built once and shared by every fingerprint. Const-strings are gathered per file rather
-    than per method: that is slightly coarser than morphe (which scopes to the body) but
-    strictly conservative for AND-containment, and it keeps memory sane at 600k methods.
+
+def _record_boxing(m: Method, line: str) -> None:
+    """Record the register(s) each Boolean.valueOf call consumes, in order."""
+    hit = BOOLEAN_VALUE_OF.match(line.strip())
+    if not hit:
+        return
+    regs = [r.strip() for r in hit.group("regs").split(",") if r.strip()]
+    m.shape.append(regs[0] if len(regs) == 1 else "{" + ",".join(regs) + "}")
+
+
+class MethodScanner:
+    """Index an apktool tree: methods, per-method const-strings, and boxing-call shapes.
+
+    Two scopes matter and getting them wrong is how re-pinning goes wrong:
+
+    * const-strings are scoped to the METHOD BODY, like morphe. A file-level approximation
+      attributes every literal in a file to every method in it, so while re-pinning Fricam a
+      method appeared to hold fricam_pro, fricam_edge and pro_unlocked at once - they share
+      one obfuscated class.
+    * labels are NOT instructions, so a smali index and a patcher instruction index differ.
+      Fricam's two Boolean.valueOf calls are smali 24/37 but patcher 20/32.
     """
 
     def __init__(self, extracted: Path) -> None:
         self.extracted = extracted
         self.roots = smali_roots(extracted)
         self.files = smali_files(extracted)
-        self.consts_by_file: dict[Path, set[str]] = {}
+        self.consts_by_key: dict[tuple, set[str]] = {}
+        self.classes: dict[str, set[str]] = {}
         self.methods: list[Method] = []
         self._build()
 
     def _build(self) -> None:
         for path in self.files:
-            consts: set[str] = set()
+            file_consts: set[str] = set()
+            ctype = read_class_type(path) or ""
+            current: Method | None = None
             with path.open("r", encoding="utf-8", errors="replace") as fh:
                 for line in fh:
+                    if line.startswith(".method"):
+                        current = parse_method_line(line)
+                        if current is not None:
+                            current.defining_class = ctype
+                            current.path = path
+                            self.methods.append(current)
+                            self.consts_by_key.setdefault((id(current)), set())
+                        continue
+                    if line.startswith(".end method"):
+                        current = None
+                        continue
                     m = CONST_STRING_RE.match(line)
                     if m:
-                        consts.add(m.group("s"))
-            if consts:
-                self.consts_by_file[path] = consts
-        for method in iter_methods(self.files):
-            self.methods.append(method)
+                        value = m.group("s")
+                        file_consts.add(value)
+                        if current is not None:
+                            self.consts_by_key.setdefault(
+                                (id(current)), set()
+                            ).add(value)
+                        continue
+                    if current is not None:
+                        _record_boxing(current, line)
+            if file_consts and ctype:
+                self.classes.setdefault(ctype, set()).update(file_consts)
+
+    def consts_for(self, m: Method) -> set[str]:
+        return self.consts_by_key.get((id(m)), set())
 
     def scan(self) -> None:
-        info(f"indexed {human(len(self.methods))} methods across {human(len(self.files))} smali files")
+        info(f"indexed {human(len(self.methods))} methods across "
+             f"{human(len(self.files))} smali files")
 
 
 # --------------------------------------------------------------------------------------
@@ -202,14 +317,52 @@ class SmaliIndex:
 # --------------------------------------------------------------------------------------
 
 
-def check_fingerprints(spec: AppSpec, index: SmaliIndex) -> bool:
+def check_fingerprints(spec: AppSpec, index: MethodScanner) -> bool:
     head(f"{spec.app_name} {spec.version} - {len(spec.fingerprints)} fingerprint(s)")
     info(f"tree: {spec.extracted}")
     all_ok = True
+
+    # Class-level fingerprints resolve a CLASS rather than a method, and are then used to
+    # scope the method fingerprints that carry `classFingerprint`. This is how the repo
+    # pins an R8-obfuscated manager class by its stable SharedPreferences keys instead of
+    # by a class name that rotates every build.
+    scopes: dict[str, set[str]] = {}
     for fp in spec.fingerprints:
-        hits = [m for m in index.methods if fp.matches(m, index.consts_by_file.get(m.path, set()))]
+        if not fp.class_level:
+            continue
+        hits = [
+            ctype
+            for ctype, cconsts in index.classes.items()
+            if _class_matches(fp, cconsts)
+        ]
+        if len(hits) == 1:
+            ok(f"{fp.name:<40} class matches=1")
+            info(hits[0])
+            scopes[fp.name] = {hits[0]}
+        else:
+            all_ok = False
+            fail(f"{fp.name:<40} class matches={len(hits)}")
+            for h in hits[:5]:
+                info(h)
+            scopes[fp.name] = set()
+        print()
+
+    for fp in spec.fingerprints:
+        if fp.class_level:
+            continue
+        scope = scopes.get(fp.class_fingerprint) if fp.class_fingerprint else None
+        if fp.class_fingerprint and scope is not None and not scope:
+            # Already reported above; do not double-report as a method miss.
+            continue
+        hits = [
+            m
+            for m in index.methods
+            if fp.matches(m, index.consts_for(m), scope)
+        ]
         if len(hits) == 1:
             ok(f"{fp.name:<40} matches=1")
+            if scope is not None:
+                info(f"scoped to {fp.class_fingerprint}")
             info(fp.describe())
             loc = hits[0].path
             try:
@@ -223,9 +376,61 @@ def check_fingerprints(spec: AppSpec, index: SmaliIndex) -> bool:
             for h in hits[:5]:
                 info(str(h.path))
             if not hits:
-                # The most common cause by far: an obfuscated type rotated. Say so.
-                warn("no match - if the parameters are obfuscated, they rotate every "
-                     "release; re-pin and re-run")
+                warn("no match - if the parameters or method name are obfuscated they "
+                     "rotate every release; re-pin and re-run")
+        print()
+    return all_ok
+
+
+def _class_matches(fp: Fingerprint, consts: set[str]) -> bool:
+    """Class-level match: only the strings anchor applies (morphe ignores name/params)."""
+    if not fp.strings:
+        return False
+    return all(any(needle in s for s in consts) for needle in fp.strings)
+
+
+def check_method_shapes(spec: AppSpec, index: MethodScanner) -> bool:
+    """Assert the internal facts a patch body depends on that a Fingerprint cannot express.
+
+    UnlockEdgePatch broke because it asserted a body shape that was wrong - a `Boolean.valueOf`
+    count read off a partial dump. That class of assumption is invisible to fingerprint
+    resolution, so it is declared here as data and checked directly.
+    """
+    if not spec.method_shapes:
+        return True
+    head(f"{spec.app_name} - patch body assumptions")
+    by_name = {f.name: f for f in spec.fingerprints}
+    all_ok = True
+    for shape in spec.method_shapes:
+        fp = by_name.get(shape.get("fingerprint", ""))
+        if fp is None or fp.class_level:
+            fail(f"{shape.get('fingerprint')}: not a method fingerprint")
+            all_ok = False
+            continue
+        hits = [m for m in index.methods if fp.matches(m, index.consts_for(m))]
+        if len(hits) != 1:
+            fail(f"{fp.name}: cannot check body shape, resolves to {len(hits)} methods")
+            all_ok = False
+            continue
+        method = hits[0]
+        labels, want_count = method.shape, shape.get("booleanValueOfCount")
+        if want_count is not None and len(labels) != int(want_count):
+            all_ok = False
+            fail(f"{fp.name}: {len(labels)} Boolean.valueOf call(s), patch expects {want_count}")
+            info("a patch that hard-codes an instruction index will target the wrong call; " +
+                 "re-read the body and update BOTH the patch and this file")
+            continue
+        if want_count is not None:
+            ok(f"{fp.name}: {len(labels)} Boolean.valueOf call(s), as the patch expects")
+        want_reg = shape.get("firstConsumesRegister")
+        if want_reg:
+            got = labels[0] if labels else None
+            if got != want_reg:
+                all_ok = False
+                fail(f"{fp.name}: first boxing consumes {got!r}, patch forces {want_reg!r}")
+                info("forcing a dead or wrong register is a silent no-op")
+            else:
+                ok(f"{fp.name}: first boxing consumes {got}, as the patch forces")
     return all_ok
 
 
@@ -275,12 +480,15 @@ def run_app(key: str, bundle: Path | None, scan: bool) -> bool:
             f"extracted tree missing: {spec.extracted}\n"
             f"  run:  python tools/intake.py --package {spec.package}"
         )
+    good = check_pin(spec)
+    print()
     if scan:
-        index = SmaliIndex(spec.extracted)
+        index = MethodScanner(spec.extracted)
         index.scan()
-        good = check_fingerprints(spec, index)
-    else:
-        good = True
+        good = check_fingerprints(spec, index) and good
+        good = check_method_shapes(spec, index) and good
+    # NB: do not reassign `good` here. An earlier `good = True` in this branch silently
+    # discarded the pin-check result, so a deliberate pin mismatch still reported success.
     if bundle is not None:
         good = check_bundle(spec, bundle) and good
     return good
@@ -331,3 +539,4 @@ if __name__ == "__main__":
     except ToolError as exc:
         fail(str(exc))
         sys.exit(2)
+

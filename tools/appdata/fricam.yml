@@ -1,0 +1,86 @@
+# Fricam (com.tgezginis.fricam) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/fricam/premium/Fingerprints.kt
+# Verified against 1.6.5. See docs/fricam-security-audit.md.
+#
+# Fricam's billing classes are R8-obfuscated and BOTH the class and method names drift between
+# versions (w70 -> z70 = PurchaseManager, az4 -> uk8 = entitlement gate; gate method K -> c,
+# persist writer d -> g). So every Pro/Edge fingerprint deliberately omits `name`: in morphe a
+# null name matches any rename. They anchor instead on the stable SharedPreferences keys, the
+# RevenueCat entitlement ids, and the un-obfuscatable parameter + return types.
+
+package: com.tgezginis.fricam
+appName: Fricam
+version: "1.6.5"
+pinnedVersions: ["1.6.5"]
+extracted: apks/extracted/fricam
+
+fingerprints:
+  # Single RevenueCat entitlement check:
+  # CustomerInfo.getEntitlements().get("fricam_pro").isActive(). Forcing true unlocks Pro on
+  # every sync/purchase/restore path and (audit: P1)
+  - name: RevenueCatEntitlementActiveFingerprint
+    returnType: Z
+    parameters: [Lcom/revenuecat/purchases/CustomerInfo;]
+    strings: [fricam_pro]
+    note: "no `method` pin on purpose - see the file header"
+
+  # Master UI gate. Reads "frigate" prefs "demo_mode" (true => all free) else "fricam_billing"
+  # prefs "pro_unlocked". Forcing true makes every feature gate deterministic. (audit: P2)
+  - name: MasterProGateFingerprint
+    returnType: Z
+    parameters: [Landroid/content/Context;]
+    strings: [frigate, demo_mode, fricam_billing, pro_unlocked]
+
+  # Sole publisher of the entitlement flag, AND the sole writer of pro_unlocked in 1.6.5.
+  # The standalone (Z)V persist writer that used to be targeted separately is gone: persistence
+  # was folded into this method, which writes putBoolean("pro_unlocked", <pro||edge>).
+  # Because RevenueCatEntitlementActiveFingerprint forces the pro check true, that value can no
+  # longer be false, so the old P3 hardening is subsumed rather than lost.
+  # Signature changed from (CustomerInfo, Z)V in 1.4.0.1; legacy_pro_grant no longer exists.
+  - name: EdgeEntitlementActiveFingerprint
+    returnType: V
+    parameters: [Lcom/revenuecat/purchases/CustomerInfo;]
+    strings: [fricam_edge, pro_unlocked]
+    note: >-
+      fricam_edge alone is NOT unique - it also appears in unrelated coroutine builders. The
+      (CustomerInfo)V signature plus fricam_edge plus pro_unlocked together resolve to one method.
+
+  # PairIP Play Store licensing, called from com.pairip.application.Application.
+  - name: PairipCheckLicenseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: checkLicense
+    returnType: V
+    parameters: [Landroid/content/Context;]
+
+compiledLiterals:
+  - fingerprint: RevenueCatEntitlementActiveFingerprint
+    literals: [fricam_pro]
+  - fingerprint: MasterProGateFingerprint
+    literals: [frigate, demo_mode, fricam_billing, pro_unlocked]
+  - fingerprint: EdgeEntitlementActiveFingerprint
+    literals: [fricam_edge, pro_unlocked]
+
+# Facts the Kotlin patch depends on that a Fingerprint does NOT express, so nothing in the
+# harness would catch them drifting. The UnlockEdgePatch error on 1.6.5 was caused by breaking
+# the first one, and it was only found because the patcher refused to guess:
+#
+#   1. the sync method contains EXACTLY TWO Boolean.valueOf calls, at patcher instruction
+#      indices 20 and 32 (smali 24 and 37 - labels are not instructions).
+#   2. the FIRST one consumes p1 and publishes the EDGE flag into StateFlow Lua0;->t.
+#      UnlockEdgePatch forces p1 to 1 there.
+#   3. the SECOND boxes v1 = pro || edge and drives the pro_unlocked persist; it needs no
+#      patch because UnlockPremiumPatch already forces the pro check true.
+#   4. v0 is dead after the iget-object at smali 23, so the pre-1.6.5 `const/4 v0, 0x1` was
+#      a silent no-op on this build.
+#
+# An earlier revision of UnlockEdgePatch asserted "exactly 1" boxing call, from a partial read
+# of this body, and aborted the whole patch on a good build. Keep these in step with the patch.
+methodShape:
+  - fingerprint: EdgeEntitlementActiveFingerprint
+    booleanValueOfCount: 2
+    firstConsumesRegister: p1
+
+
+
+

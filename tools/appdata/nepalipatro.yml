@@ -16,6 +16,10 @@
 package: np.com.nepalipatro
 appName: Nepali Patro
 version: "6.11.5"
+# Nepali Patro's compatibility is package-name-only on purpose (see Constants.kt), so there is
+# no AppTarget list to cross-check. Recorded explicitly so the harness reports that as a
+# deliberate choice rather than as missing data.
+pinnedVersions: []
 extracted: apks/extracted/nepalipatro
 
 fingerprints:
@@ -90,4 +94,5 @@ compiledLiterals:
     literals: [loadData]
   - fingerprint: WebViewLoadDataWithBaseUrlFingerprint
     literals: [loadDataWithBaseUrl]
+
 

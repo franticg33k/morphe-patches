@@ -1,0 +1,54 @@
+# JellyWatch TV / player (com.jellywatch.tv) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/jellywatchtv/premium/Fingerprints.kt
+# Verified against 1.0.REV-0570. See docs/jellywatchtv-premium-implementation.md.
+
+package: com.jellywatch.tv
+appName: JellyWatch TV
+version: "1.0.REV-0570"
+pinnedVersions: ["1.0.REV-0570"]
+extracted: apks/extracted/jellywatchtv
+
+fingerprints:
+  # Anchored on the stable Kotlin data-class toString literal rather than the obfuscated
+  # PremiumStatus class name - the string survives R8, the class name may not.
+  - name: PremiumStatusIsPremiumFingerprint
+    method: toString
+    returnType: Ljava/lang/String;
+    strings: ["PremiumStatus(isPremium="]
+    note: >-
+      This is the toString() of the PremiumStatus data class, not a real isPremium method.
+      The generated toString is a stable anchor because its literal contains the field name.
+
+  - name: PairipCheckLicenseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: checkLicense
+    returnType: V
+    parameters: [Landroid/content/Context;]
+
+  - name: PairipProcessResponseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: processResponse
+    returnType: V
+    parameters: [I, Landroid/os/Bundle;]
+
+  - name: PairipValidateResponseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseResponseHelper;
+    method: validateResponse
+    returnType: V
+    parameters: [Landroid/os/Bundle;, Ljava/lang/String;]
+
+  - name: PairipHandleErrorFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: handleError
+    returnType: V
+    parameters: [Lcom/pairip/licensecheck/LicenseCheckException;]
+
+compiledLiterals:
+  - fingerprint: PremiumStatusIsPremiumFingerprint
+    literals: ["PremiumStatus(isPremium="]
+  - fingerprint: PairipCheckLicenseFingerprint
+    literals: [Lcom/pairip/licensecheck/LicenseClient;]
+
+
+

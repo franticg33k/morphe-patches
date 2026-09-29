@@ -276,6 +276,10 @@ class Method:
     defining_class: str
     path: Path
     has_body: bool = field(default=False)
+    # Registers consumed by each Boolean.valueOf(invoke-static) call, in order. Filled only
+    # for methods read through MethodScanner, which is how a patch body's hard-coded
+    # register assumption can be checked instead of taken on trust.
+    shape: list[str] = field(default_factory=list)
 
     @property
     def signature(self) -> str:
