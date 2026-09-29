@@ -50,8 +50,8 @@ from common import (
     head,
     human,
     info,
-    iter_methods,
     ok,
+    parse_method_line,
     read_class_type,
     smali_files,
     smali_roots,
@@ -76,13 +76,17 @@ class Fingerprint:
     defining_class: str | None
     require_body: bool
     note: str = ""
+    class_level: bool = False
+    class_fingerprint: str | None = None
 
-    def matches(self, m: Method, consts: set[str]) -> bool:
+    def matches(self, m: Method, consts: set[str], scope: set[str] | None = None) -> bool:
         # An omitted `method` means unconstrained, exactly as morphe treats an omitted
         # `name`. It must NOT fall back to the fingerprint's own label: that would make a
         # missing field silently match nothing, which reads as a stale fingerprint rather
         # than as the data-entry mistake it is.
         if self.method is not None and m.name != self.method:
+            return False
+        if scope is not None and m.defining_class not in scope:
             return False
         if self.defining_class and m.defining_class != self.defining_class:
             return False
@@ -137,6 +141,8 @@ def load_spec(key: str) -> AppSpec:
                 defining_class=entry.get("definingClass"),
                 require_body=bool(entry.get("requireBody")),
                 note=(entry.get("note") or "").strip(),
+                class_level=bool(entry.get("classLevel")),
+                class_fingerprint=entry.get("classFingerprint"),
             )
         )
     literals = [
@@ -165,36 +171,59 @@ def available_apps() -> list[str]:
 
 
 class SmaliIndex:
-    """All methods of an apktool tree, plus per-method const-strings.
+    """All methods of an apktool tree, with const-strings scoped per METHOD BODY.
 
-    Built once and shared by every fingerprint. Const-strings are gathered per file rather
-    than per method: that is slightly coarser than morphe (which scopes to the body) but
-    strictly conservative for AND-containment, and it keeps memory sane at 600k methods.
+    Per-method scoping is what morphe does and it matters: a file-level approximation
+    attributes every const-string in a file to every method in it, so a fingerprint can
+    appear to match a method that does not contain the string at all. That produced
+    nonsense when re-pinning Fricam's obfuscated billing class, where one file legitimately
+    holds every `fricam_*` literal and five methods each "had" all of them.
     """
 
     def __init__(self, extracted: Path) -> None:
         self.extracted = extracted
         self.roots = smali_roots(extracted)
         self.files = smali_files(extracted)
-        self.consts_by_file: dict[Path, set[str]] = {}
+        self.consts_by_key: dict[tuple, set[str]] = {}
+        self.classes: dict[str, set[str]] = {}
         self.methods: list[Method] = []
         self._build()
 
     def _build(self) -> None:
         for path in self.files:
-            consts: set[str] = set()
+            file_consts: set[str] = set()
+            ctype = read_class_type(path) or ""
+            current: Method | None = None
             with path.open("r", encoding="utf-8", errors="replace") as fh:
                 for line in fh:
+                    if line.startswith(".method"):
+                        current = parse_method_line(line)
+                        if current is not None:
+                            current.defining_class = ctype
+                            current.path = path
+                            self.methods.append(current)
+                            self.consts_by_key.setdefault((id(current)), set())
+                        continue
+                    if line.startswith(".end method"):
+                        current = None
+                        continue
                     m = CONST_STRING_RE.match(line)
                     if m:
-                        consts.add(m.group("s"))
-            if consts:
-                self.consts_by_file[path] = consts
-        for method in iter_methods(self.files):
-            self.methods.append(method)
+                        value = m.group("s")
+                        file_consts.add(value)
+                        if current is not None:
+                            self.consts_by_key.setdefault(
+                                (id(current)), set()
+                            ).add(value)
+            if file_consts and ctype:
+                self.classes.setdefault(ctype, set()).update(file_consts)
+
+    def consts_for(self, m: Method) -> set[str]:
+        return self.consts_by_key.get((id(m)), set())
 
     def scan(self) -> None:
-        info(f"indexed {human(len(self.methods))} methods across {human(len(self.files))} smali files")
+        info(f"indexed {human(len(self.methods))} methods across "
+             f"{human(len(self.files))} smali files")
 
 
 # --------------------------------------------------------------------------------------
@@ -206,10 +235,48 @@ def check_fingerprints(spec: AppSpec, index: SmaliIndex) -> bool:
     head(f"{spec.app_name} {spec.version} - {len(spec.fingerprints)} fingerprint(s)")
     info(f"tree: {spec.extracted}")
     all_ok = True
+
+    # Class-level fingerprints resolve a CLASS rather than a method, and are then used to
+    # scope the method fingerprints that carry `classFingerprint`. This is how the repo
+    # pins an R8-obfuscated manager class by its stable SharedPreferences keys instead of
+    # by a class name that rotates every build.
+    scopes: dict[str, set[str]] = {}
     for fp in spec.fingerprints:
-        hits = [m for m in index.methods if fp.matches(m, index.consts_by_file.get(m.path, set()))]
+        if not fp.class_level:
+            continue
+        hits = [
+            ctype
+            for ctype, cconsts in index.classes.items()
+            if _class_matches(fp, cconsts)
+        ]
+        if len(hits) == 1:
+            ok(f"{fp.name:<40} class matches=1")
+            info(hits[0])
+            scopes[fp.name] = {hits[0]}
+        else:
+            all_ok = False
+            fail(f"{fp.name:<40} class matches={len(hits)}")
+            for h in hits[:5]:
+                info(h)
+            scopes[fp.name] = set()
+        print()
+
+    for fp in spec.fingerprints:
+        if fp.class_level:
+            continue
+        scope = scopes.get(fp.class_fingerprint) if fp.class_fingerprint else None
+        if fp.class_fingerprint and scope is not None and not scope:
+            # Already reported above; do not double-report as a method miss.
+            continue
+        hits = [
+            m
+            for m in index.methods
+            if fp.matches(m, index.consts_for(m), scope)
+        ]
         if len(hits) == 1:
             ok(f"{fp.name:<40} matches=1")
+            if scope is not None:
+                info(f"scoped to {fp.class_fingerprint}")
             info(fp.describe())
             loc = hits[0].path
             try:
@@ -223,10 +290,17 @@ def check_fingerprints(spec: AppSpec, index: SmaliIndex) -> bool:
             for h in hits[:5]:
                 info(str(h.path))
             if not hits:
-                # The most common cause by far: an obfuscated type rotated. Say so.
-                warn("no match - if the parameters are obfuscated, they rotate every "
-                     "release; re-pin and re-run")
+                warn("no match - if the parameters or method name are obfuscated they "
+                     "rotate every release; re-pin and re-run")
+        print()
     return all_ok
+
+
+def _class_matches(fp: Fingerprint, consts: set[str]) -> bool:
+    """Class-level match: only the strings anchor applies (morphe ignores name/params)."""
+    if not fp.strings:
+        return False
+    return all(any(needle in s for s in consts) for needle in fp.strings)
 
 
 def check_bundle(spec: AppSpec, bundle: Path) -> bool:

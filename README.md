@@ -106,7 +106,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 1.0.REV-0207 |
+| 1.0.REV-0570 |
 | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |

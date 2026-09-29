@@ -33,10 +33,11 @@ val unlockFricamPremiumPatch = bytecodePatch(
         // deterministic.
         MasterProGateFingerprint.method.addInstructions(0, TRUE_RETURN)
 
-        // P3: Hardening — the sole pro_unlocked writer. Force the boolean argument so a later,
-        // non-premium RevenueCat refresh can never downgrade the persisted entitlement (and the
-        // Compose StateFlow it fans out to can never show a locked state).
-        PersistProFlagFingerprint.method.addInstructions(0, "const/4 p1, 0x1")
+        // P3: hardening is now implicit. The standalone pro_unlocked writer this used to force
+        // no longer exists in 1.6.5 - persistence moved into the entitlement sync method, which
+        // writes the combined pro||edge value. Because P1 forces the pro check true, that value
+        // can no longer be false, so a non-premium refresh cannot downgrade the persisted flag.
+        // See Fingerprints.kt for the full reasoning.
 
         // Neutralize the PairIP Play Store licensing that would otherwise shut the app down on a
         // sideloaded/resigned build (application class calls checkLicense in attachBaseContext).

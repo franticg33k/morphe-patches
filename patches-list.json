@@ -260,7 +260,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": "1.0.REV-0207",
+              "version": "1.0.REV-0570",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
@@ -534,7 +534,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": "1.0.REV-0207",
+              "version": "1.0.REV-0570",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,

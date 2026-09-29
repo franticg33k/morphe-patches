@@ -31,15 +31,49 @@ val unlockFricamEdgePatch = bytecodePatch(
         val implementation = checkNotNull(method.implementation) {
             "Fricam Edge: the entitlement sync method has no implementation"
         }
-        val boxIndex = implementation.instructions.indexOfFirst { instruction ->
-            val reference = (instruction as? ReferenceInstruction)?.reference
-            reference is MethodReference &&
-                reference.definingClass == "Ljava/lang/Boolean;" &&
-                reference.name == "valueOf"
+        // In 1.4.0.1 the method was a(CustomerInfo, Z)V and one Boolean.valueOf boxed the Edge flag
+        // held in v0, so forcing v0 worked. In 1.6.5 it is a(CustomerInfo)V and the body is:
+        //
+        //   invoke-static {p1}, Lua0;->b(CustomerInfo)Z   ; -> v0   (pro entitlement)
+        //   ... EntitlementInfos.get("fricam_edge").isActive() -> p1  (edge entitlement)
+        //   :goto_0 / if-nez v0 / if-eqz p1 / move v1, v2   ; v1 = pro || edge
+        //   iget-object v0, p0, Lua0;->t
+        //   invoke-static {p1}, Boolean;->valueOf(Z)       ; ONE call, boxes p1
+        //
+        // The published register is therefore p1, and v0 is dead after the iget - forcing v0 there
+        // is a silent no-op, which is what happened on 1.6.5 until this was caught. Force the
+        // register the invoke actually takes rather than assuming v0.
+        //
+        // Assert exactly one boxing call instead of taking the first: the Pro path used to persist
+        // via SharedPreferences rather than boxing, and if a future build adds a second
+        // Boolean.valueOf then indexOfFirst would silently start targeting the wrong one.
+        val boxIndices = implementation.instructions.withIndex()
+            .filter { (_, instruction) ->
+                val reference = (instruction as? ReferenceInstruction)?.reference
+                reference is MethodReference &&
+                    reference.definingClass == "Ljava/lang/Boolean;" &&
+                    reference.name == "valueOf"
+            }
+            .map { (i, _) -> i }
+            .toList()
+        check(boxIndices.size == 1) {
+            "Fricam Edge: expected exactly 1 Boolean.valueOf boxing call in the entitlement sync " +
+                "method, found ${boxIndices.size} at $boxIndices. Refusing to guess which one " +
+                "carries the published flag."
         }
-        check(boxIndex >= 0) {
-            "Fricam Edge: could not find the Boolean.valueOf boxing in the entitlement sync method"
-        }
-        method.addInstructions(boxIndex, "const/4 v0, 0x1")
+        val boxIndex = boxIndices.single()
+
+        // Force p1, the register the invoke actually boxes. p1 is the edge entitlement result,
+        // carried out of the `EntitlementInfos.get("fricam_edge").isActive()` call. This is a
+        // literal rather than something read back off the instruction, because dexlib2's
+        // `ReferenceInstruction` does not expose the register list - only the concrete
+        // Instruction35c / RegisterRangeInstruction types do, and 35c always reports a
+        // fixed-width (padded) register list, so parsing it back is worse than stating it.
+        //
+        // The reason this is safe to hard-code: `EdgeEntitlementActiveFingerprint` is already
+        // method-scoped and string-anchored (fricam_edge + pro_unlocked, signature
+        // (CustomerInfo)V), so a version change either re-resolves to a method with this exact
+        // shape or the fingerprint fails and the patch refuses to run.
+        method.addInstructions(boxIndex, "const/4 p1, 0x1")
     }
 }

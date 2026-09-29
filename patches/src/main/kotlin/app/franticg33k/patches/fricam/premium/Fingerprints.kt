@@ -28,26 +28,35 @@ object MasterProGateFingerprint : Fingerprint(
     strings = listOf("frigate", "demo_mode", "fricam_billing", "pro_unlocked"),
 )
 
-// The sole writer of pro_unlocked. Sets the Compose StateFlow and persists the flag via
-// SharedPreferences$Editor.putBoolean. Forcing the argument true means a later non-premium
-// RevenueCat refresh can never downgrade the local entitlement. (1.4.0.1: z70.g; previously
-// w70.d). (audit: P3 hardening)
-object PersistProFlagFingerprint : Fingerprint(
-    returnType = "V",
-    parameters = listOf("Z"),
-    strings = listOf("pro_unlocked"),
-)
+// P3 hardening - REMOVED for 1.6.5, deliberately.
+//
+// In 1.3.x/1.4.0.1 there was a standalone pro_unlocked writer: a (Z)V method that persisted the
+// flag through SharedPreferences$Editor.putBoolean, where forcing the argument true meant a later
+// non-premium RevenueCat refresh could never downgrade the local entitlement.
+//
+// In 1.6.5 no such method exists anywhere in the APK. Persistence was folded into the
+// entitlement sync method (EdgeEntitlementActiveFingerprint below), which writes
+// `putBoolean("pro_unlocked", v1)` where v1 is the combined pro||edge boolean. Leaving the
+// fingerprint in place would abort the whole patch on a Fingerprint miss, so it is removed rather
+// than left to fail.
+//
+// The hardening is not lost, it is subsumed: v1 is assigned from v0, and v0 is the result of the
+// RevenueCat pro check that RevenueCatEntitlementActiveFingerprint already forces to true. The
+// persisted flag therefore cannot be written false, which is exactly what P3 was for.
 
-// The single publisher of the Fricam Edge entitlement flag. Unlike Pro there is NO local
-// persistence for Edge: on every RevenueCat sync/modify this method computes
-// entitlements.get("fricam_edge").isActive() and publishes the boolean into the Edge StateFlow
-// (z70.u, consumed by the pairing/settings/diagnostics UI via z70.v). No `name` pin (same R8
-// resilience as the Pro fingerprints); the (CustomerInfo, Z) -> V signature plus the two exact
-// const-strings resolve to exactly one method in 1.4.0.1 (z70.a). (audit: Edge gate)
+// The entitlement sync / publish method. In 1.4.0.1 this was (CustomerInfo, Z)V and persisted
+// the sticky `legacy_pro_grant`; in 1.6.5 the Z parameter is gone, `legacy_pro_grant` no longer
+// exists anywhere in the APK, and the same method now writes `pro_unlocked` instead. The
+// published value is the combined (pro || edge) flag, so forcing it true unlocks both.
+// (1.4.0.1: z70.a  ->  1.6.5: Lua0.a) (audit: Edge gate)
+//
+// The two strings are required together: `fricam_edge` also appears in unrelated coroutine
+// builders, so it alone is not unique, while (CustomerInfo)V + fricam_edge + pro_unlocked
+// resolves to exactly one method.
 object EdgeEntitlementActiveFingerprint : Fingerprint(
     returnType = "V",
-    parameters = listOf("Lcom/revenuecat/purchases/CustomerInfo;", "Z"),
-    strings = listOf("fricam_edge", "legacy_pro_grant"),
+    parameters = listOf("Lcom/revenuecat/purchases/CustomerInfo;"),
+    strings = listOf("fricam_edge", "pro_unlocked"),
 )
 
 // Neutralize the PairIP Play Store licensing that gates the app on launch. Called from

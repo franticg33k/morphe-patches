@@ -1,0 +1,141 @@
+# JellyWatch Admin (com.jellywatch.app) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/jellywatch/premium/Fingerprints.kt
+# See docs/jellywatch-premium-implementation.md.
+#
+# =====================================================================================
+# STATE ON 2.0.REV-1744: 8 of 12 resolve. 4 DO NOT, and are left failing on purpose.
+# =====================================================================================
+# The installed app is 2.0.REV-1744. The compatibility pin in Constants.kt still lists only
+# 2.0.REV-1712, so the manager will NOT offer this patch on 2.0.REV-1744. That is the correct
+# fail-safe state: a stale pin means "not offered", whereas a guessed re-pin means "silently
+# wrong".
+#
+# Still resolving on 2.0.REV-1744 (91,845 methods):
+#   PurchaseManagerClassFingerprint                     class matches=1  -> Lr8c;
+#   PremiumStatusIsPremiumFingerprint                   matches=1
+#   PremiumStatusHasFeatureFingerprint                  matches=1
+#   PremiumStatusIsSubscriptionActiveFingerprint         matches=1
+#   PairipCheckLicense / ProcessResponse / ValidateResponse / HandleError   all matches=1
+#
+# The four that broke, and what is actually there now:
+#
+#  1. BillingRepositoryIsPremiumFeatureAvailableFingerprint
+#     was: Lcom/jellywatch/app/billing/BillingRepository;isPremiumFeatureAvailable(PremiumFeature;)Z
+#     The class is unchanged, but R8 obfuscated the method to `p(PremiumFeature;)Z`. Confident
+#     re-pin, but NOT applied: see the note on the naming question below.
+#
+#  2. ShopPurchaseManagerReplaceOwnedFingerprint
+#     was: <r8c>;d(Set;)V     now: <r8c>;e(Set;)V
+#     A pure single-letter rename. This is the one re-pin that is safe to make.
+#
+#  3. ShopPurchaseManagerIsOwnedFingerprint
+#     was: <r8c>;a(String;)Z
+#     The class Lr8c; now has c(String;)V, d(String;)V, e(Set;)V and NO (String)Z at all.
+#     The isOwned check has either moved to another class or been inlined. Cannot be re-pinned
+#     from a signature alone - it would be a guess.
+#
+#  4. ShopViewModelInitializeBillingOnceFingerprint
+#     was: Lcom/jellywatch/app/shop/ShopViewModel;initializeBillingOnce()V
+#     ShopViewModel still exists but now has only f(zo2;)Object, g()V and h(Map;)V. Which of
+#     those is the old initializeBillingOnce cannot be determined from shape alone - `g()V` is
+#     the only void no-arg method, which is suggestive but not proof.
+#
+# Deciding factor: pinning to single-letter R8 names is a regression in resilience, and the
+# existing code deliberately avoids it (see PurchaseManagerClassFingerprint, which resolves the
+# manager by its stable SharedPreferences keys for exactly this reason). Re-pinning
+# isPremiumFeatureAvailable to `p` would reintroduce the fragility the class was chosen to
+# avoid. The right fix is to re-anchor those methods on their own const-strings the way the
+# purchase manager already is. That is a design change, not a version bump, so it is not being
+# smuggled in here.
+
+package: com.jellywatch.app
+appName: JellyWatch Admin
+version: "2.0.REV-1744"
+pinnedVersions: ["2.0.REV-1712"]
+extracted: apks/extracted/jellywatch
+
+fingerprints:
+  # PremiumStatus is a Kotlin data class under a stable package (not obfuscated).
+  - name: PremiumStatusIsPremiumFingerprint
+    definingClass: Lcom/jellywatch/app/billing/model/PremiumStatus;
+    method: isPremium
+    returnType: Z
+
+  # Class-level: resolves the shop purchase manager by its stable SharedPreferences keys
+  # rather than pinning an obfuscated class name (Lyu8 -> Leu8 between versions).
+  - name: PurchaseManagerClassFingerprint
+    strings: [shop_purchases, owned_items]
+    requireBody: true
+    classLevel: true
+    note: >-
+      classLevel means this is a class fingerprint, not a method one - it exists only to feed
+      `classFingerprint` on the two ShopPurchaseManager fingerprints below.
+
+  - name: PremiumStatusHasFeatureFingerprint
+    definingClass: Lcom/jellywatch/app/billing/model/PremiumStatus;
+    method: hasFeature
+    returnType: Z
+    parameters: [Lcom/jellywatch/app/billing/model/PremiumFeature;]
+
+  - name: PremiumStatusIsSubscriptionActiveFingerprint
+    definingClass: Lcom/jellywatch/app/billing/model/PremiumStatus;
+    method: isSubscriptionActive
+    returnType: Z
+
+  - name: BillingRepositoryIsPremiumFeatureAvailableFingerprint
+    definingClass: Lcom/jellywatch/app/billing/BillingRepository;
+    method: isPremiumFeatureAvailable
+    returnType: Z
+    parameters: [Lcom/jellywatch/app/billing/model/PremiumFeature;]
+
+  # PairIP Play Store licensing.
+  - name: PairipCheckLicenseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: checkLicense
+    returnType: V
+    parameters: [Landroid/content/Context;]
+
+  - name: PairipProcessResponseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: processResponse
+    returnType: V
+    parameters: [I, Landroid/os/Bundle;]
+
+  - name: PairipValidateResponseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseResponseHelper;
+    method: validateResponse
+    returnType: V
+    parameters: [Landroid/os/Bundle;, Ljava/lang/String;]
+
+  - name: PairipHandleErrorFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: handleError
+    returnType: V
+    parameters: [Lcom/pairip/licensecheck/LicenseCheckException;]
+
+  # R8-obfuscated shop manager: single-letter names, resolved via the class fingerprint.
+  - name: ShopPurchaseManagerIsOwnedFingerprint
+    classFingerprint: PurchaseManagerClassFingerprint
+    method: a
+    returnType: Z
+    parameters: [Ljava/lang/String;]
+
+  - name: ShopPurchaseManagerReplaceOwnedFingerprint
+    classFingerprint: PurchaseManagerClassFingerprint
+    method: d
+    returnType: V
+    parameters: [Ljava/util/Set;]
+
+  - name: ShopViewModelInitializeBillingOnceFingerprint
+    definingClass: Lcom/jellywatch/app/shop/ShopViewModel;
+    method: initializeBillingOnce
+    returnType: V
+
+compiledLiterals:
+  - fingerprint: PremiumStatusIsPremiumFingerprint
+    literals: [Lcom/jellywatch/app/billing/model/PremiumStatus;]
+  - fingerprint: PurchaseManagerClassFingerprint
+    literals: [shop_purchases, owned_items]
+  - fingerprint: PairipCheckLicenseFingerprint
+    literals: [Lcom/pairip/licensecheck/LicenseClient;]
