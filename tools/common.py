@@ -227,6 +227,39 @@ class Adb:
         out = self.shell("pidof", package, check=False).stdout.strip()
         return bool(out)
 
+    # -- input / capture --------------------------------------------------------------
+
+    def tap(self, x: int, y: int) -> None:
+        self.shell("input", "tap", str(x), str(y), check=False)
+
+    def swipe(self, x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) -> None:
+        self.shell("input", "swipe", str(x1), str(y1), str(x2), str(y2), str(duration_ms),
+                   check=False)
+
+    def keyevent(self, key: str) -> None:
+        self.shell("input", "keyevent", key, check=False)
+
+    def screencap(self, dest: Path) -> Path:
+        """Screenshot to `dest`, the only way that survives PowerShell.
+
+        `adb exec-out screencap -p > file` looks equivalent and is not: PowerShell's `>`
+        re-encodes the byte stream as UTF-16 and the PNG is corrupt on arrival. Take the
+        shot on the device and `adb pull` the file.
+        """
+        remote = "/sdcard/_morphe_shot.png"
+        self.shell("screencap", "-p", remote, check=False)
+        return self.pull(remote, dest)
+
+    def logcat_clear(self) -> None:
+        self.shell("logcat", "-c", check=False)
+
+    def logcat_dump(self, dest: Path) -> Path:
+        out = self.shell("logcat", "-d", "-v", "time", check=False).stdout
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        # logcat's own output is already text; write it as bytes so nothing re-encodes it.
+        dest.write_bytes(out.encode("utf-8", errors="replace"))
+        return dest
+
 
 
 # --------------------------------------------------------------------------------------
