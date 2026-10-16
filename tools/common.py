@@ -89,6 +89,7 @@ def run(
     check: bool = True,
     timeout: int | None = None,
     capture: bool = True,
+    env: dict | None = None,
 ) -> Run:
     """Run a command, raising ToolError with captured output on failure.
 
@@ -105,6 +106,7 @@ def run(
         encoding="utf-8",
         errors="replace",
         timeout=timeout,
+        env=env,
     )
     result = Run(argv, proc.returncode, proc.stdout or "", proc.stderr or "")
     if check and result.returncode != 0:
@@ -182,6 +184,50 @@ class Adb:
         paths = [ln.split(":", 1)[1].strip() for ln in out.splitlines() if ln.startswith("package:")]
         return sorted(paths, key=lambda p: (not p.endswith("/base.apk"), p))
 
+    # -- install / lifecycle ----------------------------------------------------------
+
+    def install_multiple(
+        self,
+        apks: list[Path],
+        *,
+        reinstall: bool = True,
+        incremental: bool = False,
+        timeout: int = 3600,
+    ) -> Run:
+        """Install a split set. Returns the Run so the caller can read Success/Failure.
+
+        `--no-incremental` is deliberate: incremental install streams from the device and
+        gives confusing partial-failure modes on an emulator; a plain push-and-install is
+        what you want when validating a patched build.
+        """
+        argv = self.argv("install-multiple")
+        if reinstall:
+            argv.append("-r")
+        if not incremental:
+            argv.append("--no-incremental")
+        argv += [str(a) for a in apks]
+        return run(argv, check=False, timeout=timeout)
+
+    def uninstall(self, package: str, *, keep_data: bool = False) -> Run:
+        argv = self.argv("uninstall")
+        if keep_data:
+            argv.append("-k")
+        argv.append(package)
+        return run(argv, check=False, timeout=600)
+
+    def force_stop(self, package: str) -> None:
+        self.shell("am", "force-stop", package, check=False)
+
+    def launch(self, package: str) -> None:
+        self.shell(
+            "monkey", "-p", package, "-c", "android.intent.category.LAUNCHER", "1", check=False
+        )
+
+    def is_running(self, package: str) -> bool:
+        out = self.shell("pidof", package, check=False).stdout.strip()
+        return bool(out)
+
+
 
 # --------------------------------------------------------------------------------------
 # Gradle
@@ -239,6 +285,120 @@ def built_bundle() -> Path | None:
         return None
     bundles = sorted(PATCHES_BUILD.glob("*.mpp"), key=lambda p: p.stat().st_mtime, reverse=True)
     return bundles[0] if bundles else None
+
+
+# --------------------------------------------------------------------------------------
+# Android SDK / build tools
+# --------------------------------------------------------------------------------------
+
+
+def jbr_env(base: dict | None = None) -> dict:
+    """An environment with JAVA_HOME pointed at Android Studio's JBR.
+
+    Needed by anything that shells out to `apksigner.bat`/`jlink`: the Oracle JDK 26 on
+    PATH is wrong for Android's build tools and for Gradle, and `apksigner.bat` prefers
+    JAVA_HOME when it is set.
+    """
+    env = dict(base if base is not None else os.environ)
+    if JBR.exists():
+        env["JAVA_HOME"] = str(JBR)
+        env["PATH"] = str(JBR / "bin") + os.pathsep + env.get("PATH", "")
+    return env
+
+
+def java_exe() -> str:
+    """JBR's java, or whatever `java` is on PATH as a fallback."""
+    jbr_java = JBR / "bin" / ("java.exe" if os.name == "nt" else "java")
+    if jbr_java.exists():
+        return str(jbr_java)
+    found = shutil.which("java")
+    if not found:
+        raise ToolError("no JVM found (neither Android Studio's JBR nor `java` on PATH)")
+    return found
+
+
+def sdk_root() -> Path:
+    """The Android SDK, from the environment or the usual install locations."""
+    for var in ("ANDROID_HOME", "ANDROID_SDK_ROOT"):
+        val = os.environ.get(var)
+        if val and Path(val).is_dir():
+            return Path(val)
+    for cand in (
+        Path.home() / "AppData" / "Local" / "Android" / "Sdk",  # Windows default
+        Path.home() / "Android" / "Sdk",                          # Linux default
+        Path("/usr/lib/android-sdk"),
+    ):
+        if cand.is_dir():
+            return cand
+    raise ToolError(
+        "Android SDK not found. Set ANDROID_HOME (or ANDROID_SDK_ROOT) to the SDK root."
+    )
+
+
+_VERSION_NUM_RE = re.compile(r"\d+")
+
+
+def _build_tools_key(name: str) -> tuple:
+    """Sort key for build-tools dir names.
+
+    `37.0.0-rc2` must not outrank the stable `36.1.0` for normal use, so a release
+    candidate sorts below its own release. zipalign/apksigner are version-insensitive
+    enough that "newest stable" is the right default.
+    """
+    nums = [int(n) for n in _VERSION_NUM_RE.findall(name)]
+    stable = 0 if "rc" in name or "beta" in name or "alpha" in name else 1
+    return (*nums, stable)
+
+
+def build_tools(major: int | None = None) -> Path:
+    """The newest build-tools directory (or one matching `major`)."""
+    root = sdk_root() / "build-tools"
+    if not root.is_dir():
+        raise ToolError(f"no build-tools under {root}")
+    dirs = [d for d in root.iterdir() if d.is_dir()]
+    if major is not None:
+        dirs = [d for d in dirs if d.name.startswith(f"{major}.")]
+    if not dirs:
+        raise ToolError(f"no build-tools matching {major!r} under {root}")
+    return max(dirs, key=lambda d: _build_tools_key(d.name))
+
+
+def sdk_tool(name: str) -> str:
+    """Absolute path to a build-tools executable (`zipalign`, `apksigner`, ...)."""
+    bt = build_tools()
+    for cand in (bt / f"{name}.exe", bt / f"{name}.bat", bt / name):
+        if cand.exists():
+            return str(cand)
+    raise ToolError(f"{name} not found in {bt}")
+
+
+_PACKAGE_RE = re.compile(r"^package: name='([^']*)' versionCode='([^']*)' versionName='([^']*)'")
+
+
+def apk_identity(apk: Path) -> dict:
+    """package name / versionCode / versionName, straight out of the binary manifest.
+
+    Uses `aapt dump badging` rather than apktool: it reads the manifest directly and
+    answers in well under a second, where a decode is a multi-minute operation. The
+    patcher keys its compatibility filter on exactly this pair, so the flow reports the
+    same identity it is about to patch against.
+    """
+    result = run([sdk_tool("aapt"), "dump", "badging", str(apk)], check=False, timeout=300)
+    for line in result.stdout.splitlines():
+        m = _PACKAGE_RE.match(line)
+        if m:
+            return {"package": m.group(1), "versionCode": m.group(2), "versionName": m.group(3)}
+    raise ToolError(f"could not read package identity from {apk} (aapt: {result.stderr.strip()[:200]})")
+
+
+
+def zipalign(*argv: str, timeout: int = 600) -> Run:
+    return run([sdk_tool("zipalign"), *argv], timeout=timeout, env=jbr_env())
+
+
+def apksigner(*argv: str, timeout: int = 900) -> Run:
+    return run([sdk_tool("apksigner"), *argv], timeout=timeout, env=jbr_env())
+
 
 
 # --------------------------------------------------------------------------------------
@@ -373,6 +533,52 @@ def zip_read(apk: Path, member: str) -> bytes:
 
     with zipfile.ZipFile(apk) as z:
         return z.read(member)
+
+
+def rebundle_apk(src: Path, dest: Path, replacements: dict[str, bytes]) -> list[str]:
+    """Copy a zip/APK, substituting entries in `replacements`, and return the names changed.
+
+    Byte-editing an APK entry in place is not an option even when the entry is STORED:
+    the CRC-32 recorded in the central directory stops matching and the installer rejects
+    the whole file with `BadZipFile: Bad CRC-32`. Rewriting the archive is the only safe
+    edit, and the rewrite must preserve two things or the resulting APK misbehaves:
+
+      * entry order - the installer and the loader assume `classes*.dex` / resources.arc
+        come before the payload they point at;
+      * per-entry compression - a native `.so` that was STORED must stay STORED (the
+        loader mmaps it and zipalign page-aligns it; deflating it silently changes both).
+
+    Returns the list of entry names that were actually replaced, so a caller can assert
+    that a graft landed instead of trusting it.
+    """
+    import zipfile
+
+    changed: list[str] = []
+    with zipfile.ZipFile(src) as zin, zipfile.ZipFile(
+        dest, "w", zipfile.ZIP_DEFLATED, allowZip64=True
+    ) as zout:
+        for info in zin.infolist():
+            data = b"" if info.is_dir() else zin.read(info.filename)
+            if info.filename in replacements:
+                data = replacements[info.filename]
+                changed.append(info.filename)
+            newinfo = zipfile.ZipInfo(info.filename, date_time=info.date_time)
+            newinfo.compress_type = info.compress_type
+            newinfo.external_attr = info.external_attr
+            newinfo.internal_attr = info.internal_attr
+            newinfo.create_system = info.create_system
+            newinfo.comment = info.comment
+            zout.writestr(newinfo, data, compress_type=info.compress_type)
+    return changed
+
+
+def zip_entry_blob(apk: Path) -> dict[str, bytes]:
+    """Every file entry of an APK as {name: bytes}, for entry-level diffing."""
+    import zipfile
+
+    with zipfile.ZipFile(apk) as z:
+        return {i.filename: z.read(i.filename) for i in z.infolist() if not i.is_dir()}
+
 
 
 def dex_entries(apk: Path) -> list[str]:
