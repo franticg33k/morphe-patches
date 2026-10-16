@@ -136,3 +136,7 @@ docs/
 # Python bytecode from tools/
 __pycache__/
 *.pyc
+
+# Downloaded Morphe Desktop CLI (see tools/desktop.py); *.jar is ignored anyway, this
+# keeps the directory (and any state file) out of `git status` too.
+tools/.morphe/
