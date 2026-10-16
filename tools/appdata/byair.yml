@@ -23,9 +23,10 @@
 package: com.byairapp.android
 appName: byAir
 version: "2.41.0"
-# Package-name-only compatibility (COMPATIBILITY_BYAIR declares no versionCodes), so the
-# AppTarget list is legitimately empty. An empty list is a recorded answer, not a missing key.
-pinnedVersions: []
+# 2.41.0 is pinned in COMPATIBILITY_BYAIR (targets = listOf(AppTarget("2.41.0"))), so the harness
+# cross-checks that the version verified here is one the patch actually offers. Adding a new
+# byAir release means adding its AppTarget there *and* listing it here.
+pinnedVersions: ["2.41.0"]
 extracted: apks/extracted/byair
 
 fingerprints:

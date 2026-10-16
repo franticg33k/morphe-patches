@@ -21,6 +21,11 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
 <br>
 
+**🎯 Supported versions:**
+
+| 2.41.0 |
+| :---: |
+
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Enable Online Pro](#enable-online-pro) | Experimental companion patch that keeps byAir's online Pro gates open without forcing the crash-prone global entitlement refresh path. |  |

@@ -45,7 +45,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": null,
+              "version": "2.41.0",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
@@ -71,7 +71,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": null,
+              "version": "2.41.0",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
@@ -416,7 +416,7 @@
           "signatures": null,
           "targets": [
             {
-              "version": null,
+              "version": "2.41.0",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
