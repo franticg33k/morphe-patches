@@ -1,0 +1,52 @@
+# Native Camera (com.rawcam.app) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/nativecamera/premium/Fingerprints.kt
+# Analysis: docs/nativecamera-premium-analysis.md (written against 1.4.2; re-verified on 1.4.4).
+#
+# The CameraViewModel class and its method names are R8-renamed every build
+# (1.4.2 LQ1/q;->S(Z)V -> 1.4.4 LR1/q;->U(Z)V), so nothing here pins a class or method name
+# except the constructor and the unobfuscated PairIP checkLicense. Anchors are the
+# SharedPreferences file + key and the PairIP log strings, neither of which moved between
+# 1.4.2 and 1.4.4.
+
+package: com.rawcam.app
+appName: Native Camera
+version: "1.4.4"
+pinnedVersions: ["1.4", "1.4.2", "1.4.4"]
+extracted: apks/extracted/nativecamera
+
+fingerprints:
+  # Cold-start read of the premium entitlement: getBoolean("is_premium", false) on the
+  # "rawcam_prefs" file. UnlockPremiumPatch flips the default literal that follows this
+  # const-string, so the two anchors must sit in the same method body.
+  - name: CameraViewModelPremiumInitFingerprint
+    method: "<init>"
+    returnType: V
+    parameters: [Landroid/app/Application;]
+    strings: [is_premium, rawcam_prefs]
+
+  # The only writer of premium state. Forcing its boolean argument true means no later
+  # non-premium billing result can downgrade the local entitlement. Deliberately not pinned by
+  # name - the obfuscated method name rotates.
+  - name: CameraViewModelSetPremiumFingerprint
+    returnType: V
+    parameters: [Z]
+    strings: [is_premium]
+
+  # PairIP Play-Store licensing, fired from Application.attachBaseContext and
+  # LicenseContentProvider.onCreate. No-oping the callee covers both callers.
+  - name: PairipCheckLicenseFingerprint
+    method: checkLicense
+    returnType: V
+    parameters: [Landroid/content/Context;]
+    strings: ["Cannot check license with null context.", "Skipping license check in isolated process."]
+
+compiledLiterals:
+  - fingerprint: CameraViewModelPremiumInitFingerprint
+    literals: [is_premium, rawcam_prefs]
+  - fingerprint: CameraViewModelSetPremiumFingerprint
+    literals: [is_premium]
+  - fingerprint: PairipCheckLicenseFingerprint
+    literals:
+      - "Cannot check license with null context."
+      - "Skipping license check in isolated process."
