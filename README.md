@@ -5,14 +5,14 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.2-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.2-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;27 patches total
+> **[v1.4.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;27 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's interstitial ads. Three byte-asserted edits to libapp.so: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the same length, the interstitial_html dispatch in the ad-queue callback is retargeted so the full-screen page is never pushed, and showHtmlInterstitialAdDialog - the single function that raises the HTML interstitial roadblock - is stubbed out. Also forces the popup/popup_html branch down the app's own 'blocked' return. The host rewrite alone is not enough: the ad URLs are also cached in SharedPreferences under PREF_SLIDER_DATA, and whether to present the shell at all comes from remote config, which the app rewrites on every launch. Pairs with Remove Ads, which stops the ad content itself and the AdMob interstitials. |  |
+| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's ads. Eight byte-asserted edits to libapp.so plus an in-place host rewrite: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the same length; the interstitial_html dispatch in the ad-queue callback is retargeted so the full-screen page is never pushed; showHtmlInterstitialAdDialog - the single function that raises the HTML interstitial roadblock - is stubbed out; the popup/popup_html branch is forced down the app's own 'blocked' return; and the five raster formats (slider, banner, popup, card_view, circular) are dropped to the build's own empty-widget tail, so the image creatives Remove Ads cannot see - they are fetched by Dart through CachedNetworkImage, not by a WebView - are never requested at all. The host rewrite alone is not enough: the ad URLs are also cached in SharedPreferences under PREF_SLIDER_DATA, and whether to present the shell at all comes from remote config, which the app rewrites on every launch. Pairs with Remove Ads, which stops the HTML creatives and the AdMob interstitials. |  |
 | [Remove Ads](#remove-ads) | Disables both ad stacks in Nepali Patro: Google Mobile Ads (AdMob) and the first-party flutter_adserver HTML ad server. AdMob's method-channel entry point is short-circuited for every load and show call so no ad is ever created, and the WebView loaders the ad server uses are neutralised - loadData and loadDataWithBaseUrl become no-ops, while loadUrl only refuses the ads-delivery.nepalipatro.com.np host and data: URLs so normal in-app browsing keeps working. |  |
 
 </details>
