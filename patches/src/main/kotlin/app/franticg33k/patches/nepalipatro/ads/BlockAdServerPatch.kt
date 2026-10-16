@@ -4,10 +4,12 @@ import app.morphe.patcher.patch.rawResourcePatch
 import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALIPATRO
 
 /*
- * The ad content itself is already stopped in RemoveAdsPatch (the WebView HTML loaders and the
- * AdMob method channel). What that leaves behind is the shell: Nepali Patro pushes a full-screen
- * interstitial route and runs a five second countdown on it, and with the content removed you get
- * a blank page for the full timer.
+ * RemoveAdsPatch stops the HTML creatives (the WebView HTML loaders) and the AdMob method channel,
+ * and that is all it stops. What the HTML half leaves behind is the shell: Nepali Patro pushes a
+ * full-screen interstitial route and runs a five second countdown on it, and with the content
+ * removed you get a blank page for the full timer. What it leaves behind on the raster side is
+ * worse - the image creatives keep rendering, because they are fetched by Dart and never touch a
+ * WebView. That half is handled at the bottom of this file.
  *
  * Two independent things drive that overlay, and only one of them is the network:
  *
@@ -62,6 +64,49 @@ import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALI
  *
  * Both are single-instruction, byte-asserted, and confined to ad presentation; `ad_mob` remains
  * covered by Remove Ads' method-channel guard.
+ *
+ * ---
+ *
+ * THE RASTER CREATIVES ARE A THIRD PATH, AND NOTHING ABOVE TOUCHES THEM. SliderType's ten formats
+ * split into three rendering families:
+ *
+ *   raster (CachedNetworkImage, fed an absolute URL out of the ad response)
+ *     0 "slider"      _SliderItemState::build -> cached_network_image
+ *     1 "banner"      BannerView              -> cached_network_image
+ *     2 "popup"       PopUpView               -> cached_network_image
+ *     3 "card_view"   CardView1x1             -> cached_network_image
+ *     4 "circular"    CircularWidget          -> cached_network_image
+ *
+ *   HTML (webview_flutter; already blank, because Remove Ads stubs the loaders)
+ *     5 "circular_html", 6 "banner_html", 8 "popup_html"
+ *
+ *   presenters (a dialog or a pushed route; closed by (a)-(c) above)
+ *     7 "interstitial_html", 9 "ad_mob"
+ *
+ * The raster family is invisible to every earlier edit for two independent reasons: the creative
+ * URL is delivered inside the ad response, so there is nothing in the snapshot to rewrite, and
+ * CachedNetworkImage is a Dart HTTP client rather than a WebView, so the loaders Remove Ads stubs
+ * are never consulted. ads.nepalipatro.com.np - the host the creatives are actually served from -
+ * occurs nowhere in libapp.so at all; it only ever exists in the payload. That is the residual
+ * "the popup is gone but a banner image still shows" report.
+ *
+ * `_SliderViewState::build` (0xc0c4d0) dispatches those formats as a linear chain of SliderType
+ * tests, each shaped
+ *
+ *   r16 = Instance_SliderType   ; the static enum object for this format
+ *   cmp w1, w16
+ *   b.ne <next test>            ; not this format -> keep looking
+ *   <build the creative>
+ *
+ * so replacing a raster format's `cmp` with an unconditional `b` to that same test's `b.ne` target
+ * skips the body without disturbing the chain. The chain has exactly nine tests (every format but
+ * `ad_mob`); the format then matches none of them and falls through to the method's own tail,
+ *
+ *   0xc0dc1c: r0 = SizedBox()   ; return SizedBox()
+ *
+ * which is exactly what the build already returns for the ad_mob format (9) - the app's own answer
+ * for a format it renders nowhere inline. No widget is constructed and no creative is requested.
+ * One edit per raster format.
  */
 
 private const val AD_SERVER_HOST = "ads-delivery.nepalipatro.com.np"
@@ -154,19 +199,51 @@ private fun patchAt(
 
 private fun b(vararg values: Int): ByteArray = ByteArray(values.size) { i -> values[i].toByte() }
 
+/** The `cmp w1, w16` that opens every SliderType test in `_SliderViewState::build`. */
+private val COMPARE_SLIDER_TYPE = b(0x3f, 0x00, 0x10, 0x6b)
+
+private data class RasterFormat(
+    /** SliderType name, for the mismatch message. */
+    val type: String,
+    /** Blutter address of this format's `cmp w1, w16`. */
+    val offset: Long,
+    /** `b` to that same test's `b.ne` target - the next test in the chain. */
+    val replacement: ByteArray,
+)
+
+/**
+ * The five `SliderType` formats that render a raster creative, and the edit that drops each one.
+ *
+ * Every offset is asserted to hold [COMPARE_SLIDER_TYPE] before it is replaced, so an upstream
+ * reshuffle of `_SliderViewState::build` fails on the first format that moved instead of silently
+ * patching the wrong instruction. See the file header for why `b` (rather than a NOP or a branch
+ * into another body) is the right shape: it makes the format match nothing, so the value keeps
+ * running down the test chain to the method's shared `return SizedBox()` tail.
+ */
+private val RASTER_CREATIVE_DISPATCH = listOf(
+    RasterFormat("slider", 0xc0c980L, b(0x78, 0x01, 0x00, 0x14)), // b #0xc0cf60
+    RasterFormat("banner", 0xc0cf74L, b(0x8e, 0x00, 0x00, 0x14)), // b #0xc0d1ac
+    RasterFormat("popup", 0xc0d1b4L, b(0x40, 0x00, 0x00, 0x14)), // b #0xc0d2b4
+    RasterFormat("card_view", 0xc0d2bcL, b(0x7d, 0x00, 0x00, 0x14)), // b #0xc0d4b0
+    RasterFormat("circular", 0xc0d4b8L, b(0x63, 0x00, 0x00, 0x14)), // b #0xc0d644
+)
+
 @Suppress("unused")
 val blockNepalipatroAdServerPatch = rawResourcePatch(
     name = "Block Ad Server",
-    description = "Stops Nepali Patro's interstitial ads. Three byte-asserted edits to libapp.so: " +
-        "the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx " +
-        "domain of the same length, the interstitial_html dispatch in the ad-queue callback is " +
-        "retargeted so the full-screen page is never pushed, and " +
+    description = "Stops Nepali Patro's ads. Eight byte-asserted edits to libapp.so plus an " +
+        "in-place host rewrite: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to " +
+        "an unresolvable .xx domain of the same length; the interstitial_html dispatch in the " +
+        "ad-queue callback is retargeted so the full-screen page is never pushed; " +
         "showHtmlInterstitialAdDialog - the single function that raises the HTML interstitial " +
-        "roadblock - is stubbed out. Also forces the popup/popup_html branch down the app's own " +
-        "'blocked' return. The host rewrite alone is not enough: the ad URLs are also cached in " +
-        "SharedPreferences under PREF_SLIDER_DATA, and whether to present the shell at all comes " +
-        "from remote config, which the app rewrites on every launch. Pairs with Remove Ads, which " +
-        "stops the ad content itself and the AdMob interstitials.",
+        "roadblock - is stubbed out; the popup/popup_html branch is forced down the app's own " +
+        "'blocked' return; and the five raster formats (slider, banner, popup, card_view, " +
+        "circular) are dropped to the build's own empty-widget tail, so the image creatives " +
+        "Remove Ads cannot see - they are fetched by Dart through CachedNetworkImage, not by a " +
+        "WebView - are never requested at all. The host rewrite alone is not enough: the ad URLs " +
+        "are also cached in SharedPreferences under PREF_SLIDER_DATA, and whether to present the " +
+        "shell at all comes from remote config, which the app rewrites on every launch. Pairs " +
+        "with Remove Ads, which stops the HTML creatives and the AdMob interstitials.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_NEPALIPATRO)
@@ -257,6 +334,22 @@ val blockNepalipatroAdServerPatch = rawResourcePatch(
             replacement = b(0xc0, 0x03, 0x5f, 0xd6), // ret
             label = "showHtmlInterstitialAdDialog",
         )
+
+        // (d)-(h) The raster creatives. These five formats build a CachedNetworkImage from a URL
+        // that arrives in the ad response, so neither the host rewrite above nor Remove Ads'
+        // WebView stubs can reach them - and the host the creatives come from is not in libapp.so
+        // to begin with. The ad server hands back an absolute URL, the widget renders it, and the
+        // only place the decision lives is this dispatch. Dropping each format's test sends it to
+        // the method's own `return SizedBox()` tail, the same answer it already gives for ad_mob.
+        for (format in RASTER_CREATIVE_DISPATCH) {
+            patchAt(
+                bytes = bytes,
+                offset = format.offset,
+                expected = COMPARE_SLIDER_TYPE,
+                replacement = format.replacement,
+                label = "raster creative dispatch (${format.type})",
+            )
+        }
 
         lib.writeBytes(bytes)
     }
