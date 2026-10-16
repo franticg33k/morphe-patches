@@ -84,7 +84,10 @@ def run_build(do_clean: bool) -> Path:
     gradle(":patches:buildAndroid")
     bundle = built_bundle()
     if bundle is None:
-        raise ToolError("no .mpp produced in patches/build/libs")
+        raise ToolError(
+            "no .mpp produced in patches/build/libs "
+            "(sources and javadoc artefacts are not bundles)"
+        )
     ok(f"built {bundle.name}  ({bundle.stat().st_size:,} bytes)")
     expected = f"patches-{gradle_version()}.mpp"
     if bundle.name != expected:

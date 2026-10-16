@@ -151,7 +151,7 @@ def _desktop_check() -> tuple[bool, str, str]:
 def _bundle_check() -> tuple[bool, str, str]:
     bundle = built_bundle()
     if bundle is None:
-        return False, "no .mpp in patches/build/libs", "run `python tools/pipeline.py loop --skip-build ...` once, or the gradle build"
+        return False, "no .mpp in patches/build/libs (sources/javadoc excluded)", "run `python tools/pipeline.py loop --skip-build ...` once, or the gradle build"
     return True, f"{bundle.name}  {human(bundle.stat().st_size)} bytes", ""
 
 

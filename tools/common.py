@@ -476,10 +476,31 @@ def gradle(task: str, *, timeout: int = 1800) -> Run:
     return result
 
 
+#: Artefact names that live in patches/build/libs but are not patch bundles. The build
+#: publishes `patches-<version>-sources.mpp` and `patches-<version>-javadoc.mpp` beside the
+#: real bundle, so an unfiltered sort over the directory can hand one of those to the
+#: patcher or to the gate, which then fails with a `no dex entries` that is not the
+#: caller's fault. `util/PatchListGenerator.kt` filters exactly these two names; keep the
+#: two in step.
+_BUNDLE_ARTEFACT_SKIPS = ("sources", "javadoc")
+
+
 def built_bundle() -> Path | None:
+    """The newest real patch bundle in patches/build/libs, or None if there is not one.
+
+    "Real" means a `.mpp` that is neither a sources nor a javadoc artefact. Ties are broken
+    on the name, so which bundle wins never depends on filesystem listing order.
+    """
     if not PATCHES_BUILD.exists():
         return None
-    bundles = sorted(PATCHES_BUILD.glob("*.mpp"), key=lambda p: p.stat().st_mtime, reverse=True)
+    bundles = sorted(
+        (
+            p for p in PATCHES_BUILD.glob("*.mpp")
+            if not any(skip in p.name for skip in _BUNDLE_ARTEFACT_SKIPS)
+        ),
+        key=lambda p: (p.stat().st_mtime, p.name),
+        reverse=True,
+    )
     return bundles[0] if bundles else None
 
 

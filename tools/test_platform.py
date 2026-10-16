@@ -1,4 +1,4 @@
-"""Tests for the platform resolvers in common.py.
+"""Tests for the platform resolvers and artefact selection in common.py.
 
 Run: python tools/test_platform.py
 
@@ -259,6 +259,75 @@ class TestResolveApktool(unittest.TestCase):
     def test_absolute_candidate_is_reachable_without_home(self):
         # `/usr/share/apktool/apktool.jar` is absolute, so it must be in the list verbatim.
         self.assertIn("/usr/share/apktool/apktool.jar", common.APKTOOL_JAR_CANDIDATES)
+
+
+class TestBuiltBundle(unittest.TestCase):
+    """Which file in patches/build/libs counts as "the bundle".
+
+    The build publishes the sources and javadoc artefacts next to the real bundle, and
+    handing one of those to the patcher fails in a confusing way: the gate reports
+    `no dex entries`, which reads like a broken build rather than a mis-selected file.
+    So the selection rules are pinned here rather than left to a directory listing order.
+    """
+
+    @staticmethod
+    def _libs(tmp, artefacts):
+        libs = Path(tmp) / "libs"
+        libs.mkdir()
+        for name, mtime in artefacts:
+            f = libs / name
+            f.write_bytes(b"PK\x03\x04")
+            os.utime(f, (mtime, mtime))
+        return libs
+
+    def test_sources_and_javadoc_are_never_selected(self):
+        # Both artefacts are newer than the real bundle, so an unfiltered mtime sort
+        # would return them.
+        with tempfile.TemporaryDirectory() as tmp:
+            libs = self._libs(tmp, [
+                ("patches-1.4.2.mpp", 100),
+                ("patches-1.4.2-sources.mpp", 200),
+                ("patches-1.4.2-javadoc.mpp", 300),
+            ])
+            with mock.patch.object(common, "PATCHES_BUILD", libs):
+                got = common.built_bundle()
+        self.assertEqual(got.name, "patches-1.4.2.mpp")
+
+    def test_the_newest_bundle_wins(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            libs = self._libs(tmp, [
+                ("patches-1.4.2.mpp", 100),
+                ("patches-1.5.0.mpp", 200),
+            ])
+            with mock.patch.object(common, "PATCHES_BUILD", libs):
+                got = common.built_bundle()
+        self.assertEqual(got.name, "patches-1.5.0.mpp")
+
+    def test_only_artefacts_means_no_bundle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            libs = self._libs(tmp, [
+                ("patches-1.4.2-sources.mpp", 100),
+                ("patches-1.4.2-javadoc.mpp", 200),
+            ])
+            with mock.patch.object(common, "PATCHES_BUILD", libs):
+                self.assertIsNone(common.built_bundle())
+
+    def test_a_missing_directory_is_not_an_error(self):
+        with mock.patch.object(common, "PATCHES_BUILD", Path("/no/such/patches/build/libs")):
+            self.assertIsNone(common.built_bundle())
+
+    def test_a_tie_does_not_depend_on_listing_order(self):
+        # One build writes several bundles with the same timestamp; which one wins must
+        # not change with the order the directory happens to be listed in.
+        names = ["patches-1.4.2.mpp", "patches-1.4.2-dev.2.mpp"]
+        winners = []
+        for order in (names, list(reversed(names))):
+            with tempfile.TemporaryDirectory() as tmp:
+                libs = self._libs(tmp, [(n, 500) for n in order])
+                with mock.patch.object(common, "PATCHES_BUILD", libs):
+                    winners.append(common.built_bundle().name)
+        self.assertEqual(winners[0], winners[1])
+        self.assertNotIn(winners[0], ("patches-1.4.2-sources.mpp", "patches-1.4.2-javadoc.mpp"))
 
 
 if __name__ == "__main__":
