@@ -1,3 +1,9 @@
+## [1.5.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.5.0-dev.1...v1.5.0-dev.2) (2026-10-16)
+
+### 🐛 Bug Fixes
+
+* **tools:** never hand a sources or javadoc .mpp to the patcher or the gate ([7e99531](https://github.com/franticg33k/morphe-patches/commit/7e99531166a9810b07442a96936c5c441080cc27))
+
 ## [1.5.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.2...v1.5.0-dev.1) (2026-10-16)
 
 ### 🐛 Bug Fixes
