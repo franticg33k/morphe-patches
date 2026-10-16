@@ -1,3 +1,19 @@
+## [1.5.0](https://github.com/franticg33k/morphe-patches/compare/v1.4.2...v1.5.0) (2026-10-16)
+
+### 🐛 Bug Fixes
+
+* **nepalipatro:** close every interstitial presenter, not just the popup gate ([58f6b01](https://github.com/franticg33k/morphe-patches/commit/58f6b0191cb958789b8371990d0fc8ea32c9bf0e)), closes [#0x961d78](https://github.com/franticg33k/morphe-patches/issues/0x961d78) [#0x961d68](https://github.com/franticg33k/morphe-patches/issues/0x961d68) [#0x9617a4](https://github.com/franticg33k/morphe-patches/issues/0x9617a4) [#0x9617a4](https://github.com/franticg33k/morphe-patches/issues/0x9617a4) [#-0x10](https://github.com/franticg33k/morphe-patches/issues/-0x10)
+* **tools:** never hand a sources or javadoc .mpp to the patcher or the gate ([7e99531](https://github.com/franticg33k/morphe-patches/commit/7e99531166a9810b07442a96936c5c441080cc27))
+
+### ✨ New Features
+
+* **nepalipatro:** drop the raster ad slots, not just the presenters ([efb504c](https://github.com/franticg33k/morphe-patches/commit/efb504cca6df7337a82c0614c81ed9d22cfa4211))
+* **tools:** make the pipeline run on Linux and macOS, not just Windows ([d167160](https://github.com/franticg33k/morphe-patches/commit/d1671600909acf7c6e048aad9f71bb022e959d3a))
+
+### 🚀 Updated App Support
+
+* **byair:** pin the byAir patches to 2.41.0 ([b8cd5be](https://github.com/franticg33k/morphe-patches/commit/b8cd5be699188155fb3e9d9c6c91ec59cf70b62b))
+
 ## [1.5.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.5.0-dev.2...v1.5.0-dev.3) (2026-10-16)
 
 ### 🚀 Updated App Support
