@@ -44,13 +44,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from common import (  # noqa: E402
-    JBR,
     TOOLS_DIR,
     ToolError,
     fail,
     head,
     human,
     info,
+    java_exe,
     ok,
     run,
     warn,
@@ -110,20 +110,11 @@ def trusted(path: Path) -> bool:
 def java() -> str:
     """The JVM to run the CLI with.
 
-    Prefers Android Studio's JBR, for the same reason gradle does: it is guaranteed
-    present on a machine that can build this repo, and it is the version the CLI was
-    smoke-tested against here. Falls back to whatever `java` is on PATH.
+    Delegates to `common.java_exe()`: the JBR when Android Studio is installed, otherwise
+    `java` on PATH. That is enough for this CLI (it is a plain JVM application, unlike the
+    gradle build which needs a JDK the Android transform accepts).
     """
-    jbr_java = JBR / "bin" / ("java.exe" if os.name == "nt" else "java")
-    if jbr_java.exists():
-        return str(jbr_java)
-    found = shutil.which("java")
-    if not found:
-        raise ToolError(
-            "no JVM found: neither Android Studio's JBR nor `java` on PATH.\n"
-            "Install Android Studio (or a JDK 17+) and retry."
-        )
-    return found
+    return java_exe()
 
 
 # --------------------------------------------------------------------------------------

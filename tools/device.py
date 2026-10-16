@@ -23,8 +23,9 @@ Three device facts are baked in because each one cost time to learn:
     `FlutterSurfaceView` with no accessibility nodes, so node-driven tapping finds nothing.
     The pass taps coordinates and scores the result by pixels + logcat markers.
 
-  * **`adb exec-out screencap -p > file` corrupts the PNG** under PowerShell (the redirect
-    re-encodes as UTF-16). Shots are taken on the device and pulled.
+  * **`adb exec-out screencap -p > file` corrupts the PNG.** When the redirect goes through
+    PowerShell the stream is re-encoded as UTF-16. Shots are taken on the device and pulled,
+    which works the same on every platform.
 
   * **Logcat markers come from the native libraries, not Dart.** Release AOT strips
     `print()`, so the markers that do appear (`555HTML`, `Slider impression send ...`,

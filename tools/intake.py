@@ -26,7 +26,6 @@ Output layout (all gitignored):
 from __future__ import annotations
 
 import argparse
-import re
 import shutil
 import sys
 import zipfile
@@ -35,7 +34,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from common import (
-    APKTOOL_JAR,
     APKS_DIR,
     EXTRACTED_DIR,
     Adb,
@@ -45,8 +43,10 @@ from common import (
     head,
     human,
     info,
+    jbr_env,
     ok,
     rel,
+    resolve_apktool,
     run,
     smali_roots,
     warn,
@@ -126,16 +126,19 @@ def pull_splits(adb: Adb, package: str, dest: Path) -> list[Path]:
 
 
 def apktool(apk: Path, out: Path) -> None:
+    """Decompile `apk` into `out`.
+
+    `resolve_apktool()` decides *how* apktool is invoked: a distro/Homebrew `apktool` on
+    PATH, or a standalone jar through java. Both shapes are common and neither is a
+    Windows-only concern.
+    """
     head(f"apktool {apk.name} -> {rel(out)}")
-    if not APKTOOL_JAR.exists():
-        raise ToolError(f"apktool jar not found at {APKTOOL_JAR}")
+    argv = resolve_apktool()
     if out.exists():
         shutil.rmtree(out)
-    java = shutil.which("java")
-    if not java:
-        raise ToolError("java not on PATH")
-    res = run([java, "-jar", str(APKTOOL_JAR), "d", "-f", "-o", str(out), str(apk)], timeout=3600)
-    m = re.search(r"^I: Using(?: apkanalyzer| resources\.arsc)?.*", res.stdout, re.M)
+    # jbr_env(): a `.bat`/wrapper install of apktool runs java from JAVA_HOME, and the
+    # system JDK can be too new for apktool's dex/resource handling.
+    res = run([*argv, "d", "-f", "-o", str(out), str(apk)], timeout=3600, env=jbr_env())
     for line in res.stdout.splitlines()[-3:]:
         info(line)
     ok(f"extracted to {rel(out)}")

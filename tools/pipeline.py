@@ -37,13 +37,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import common  # noqa: E402
 import desktop  # noqa: E402
 import patch as patch_tool  # noqa: E402
 from common import (  # noqa: E402
     APPDATA_DIR,
     APKS_DIR,
-    APKTOOL_JAR,
-    JBR,
     REPO_ROOT,
     TOOLS_DIR,
     ToolError,
@@ -92,20 +91,25 @@ def _adb_check() -> tuple[bool, str, str]:
 
 
 def _jbr_check() -> tuple[bool, str, str]:
-    java = JBR / "bin" / ("java.exe" if os.name == "nt" else "java")
-    if JBR.exists() and java.exists():
-        return True, str(JBR), ""
+    jbr = common.resolve_jbr()
+    if jbr is not None:
+        return True, str(jbr), ""
+    override_hint = f"set {common.JBR_ENV_VAR} to your JBR/JDK 17-21"
     if shutil.which("java"):
-        return True, "JBR missing; falling back to `java` on PATH", "install Android Studio for a known-good JBR (the system JDK breaks the gradle release build)"
-    return False, "no JBR and no java", "install Android Studio, or a JDK 17+ on PATH"
+        return (
+            True,
+            f"no Android Studio JBR; using `java` on PATH ({shutil.which('java')})",
+            f"fine if that is JDK 17-21; the gradle release build breaks on newer - {override_hint}",
+        )
+    return False, "no JVM found", f"install a JDK 17-21, or {override_hint}"
 
 
 def _apktool_check() -> tuple[bool, str, str]:
-    if shutil.which("apktool"):
-        return True, shutil.which("apktool") or "apktool", ""
-    if APKTOOL_JAR.exists():
-        return True, str(APKTOOL_JAR), ""
-    return False, "apktool not found", f"put apktool.jar at {APKTOOL_JAR}, or add `apktool` to PATH (needed by tools/intake.py)"
+    try:
+        argv = common.resolve_apktool()
+    except ToolError as exc:
+        return False, "not found", str(exc)
+    return True, " ".join(argv), ""
 
 
 def _sdk_check() -> tuple[bool, str, str]:
@@ -128,7 +132,7 @@ def _build_tools_check() -> tuple[bool, str, str]:
 
 
 def _has_tool(bt: Path, name: str) -> bool:
-    return any((bt / c).exists() for c in (f"{name}.exe", f"{name}.bat", name))
+    return any((bt / c).exists() for c in (common.exe(name), f"{name}.bat", name))
 
 
 def _desktop_check() -> tuple[bool, str, str]:
@@ -242,11 +246,11 @@ def loop(args) -> int:
     stages: list[tuple[str, list[str], dict | None]] = []
 
     if not args.skip_build:
-        gradlew = REPO_ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
         stages.append(
             (
                 "build bundle",
-                [str(gradlew), ":patches:generatePatchesList", ":patches:buildAndroid", "--console=plain"],
+                [*common.gradle_wrapper(), ":patches:generatePatchesList",
+                 ":patches:buildAndroid", "--console=plain"],
                 jbr_env(),
             )
         )

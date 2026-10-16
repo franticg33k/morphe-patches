@@ -65,8 +65,16 @@ python tools/verify.py --app nepalipatro --no-build --no-clean   # the pre-commi
 
 Build order is load-bearing: `:patches:generatePatchesList` **before** `:patches:buildAndroid`.
 Reversed, it emits a dex-less bundle that the manager rejects with *"Patch bundle is missing dex
-entries"* and shows `Patches: 0`. Use Android Studio's JBR — the system JDK breaks the release
-build.
+entries"* and shows `Patches: 0`.
+
+**Windows, Linux and macOS all work.** Each platform-specific choice is a candidate list plus an
+override, resolved in `tools/common.py` and printed by `doctor`: the JBR (then `java` on `PATH`),
+the SDK (`ANDROID_HOME` / `ANDROID_SDK_ROOT`), build-tools (newest **stable**, never an `-rc`),
+apktool (`PATH`, else a jar), and `gradlew.bat` vs `./gradlew`. Overrides: `MORPHE_JBR`,
+`ANDROID_HOME`. Prefer the JBR when Android Studio is installed — the *release* build breaks on a
+JDK newer than 21 — but a distro JDK 17/21 is fine, so a missing JBR warns and falls back rather
+than refusing to run. `tools/test_platform.py` is part of the gate and asserts the Linux and macOS
+branches from any host; do not claim Linux support without it passing.
 
 ---
 
@@ -131,8 +139,9 @@ These are not style preferences. Each one exists because breaking it cost a rele
 
 **Evidence**
 
-21. **Never** capture a screenshot with `adb exec-out screencap -p > file` — PowerShell re-encodes
-    the stream to UTF-16 and the PNG is corrupt. Take it on the device and `adb pull`.
+21. **Never** capture a screenshot with `adb exec-out screencap -p > file` — when the redirect goes
+    through PowerShell the stream is re-encoded to UTF-16 and the PNG is corrupt. Take it on the
+    device and `adb pull` (every platform).
 22. `uiautomator dump` finds **nothing** on Flutter: the surface is one `FlutterSurfaceView` with no
     accessibility nodes. Drive by coordinates and score by pixels + logcat markers.
 23. Release AOT strips Dart `print()`. The usable markers come from the native/Java side. A marker

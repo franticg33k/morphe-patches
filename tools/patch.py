@@ -48,11 +48,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import desktop  # noqa: E402
 from common import (  # noqa: E402
     APKS_DIR,
+    JBR,
     Adb,
     ToolError,
     apk_identity,
     apksigner,
     built_bundle,
+    exe,
     fail,
     head,
     human,
@@ -89,9 +91,19 @@ class Signing:
 
 
 def _keytool(*argv: str) -> None:
-    keytool = desktop.JBR / "bin" / ("keytool.exe" if sys.platform == "win32" else "keytool")
-    exe = str(keytool) if keytool.exists() else "keytool"
-    run([exe, *argv], env=None, timeout=300)
+    """Run keytool, preferring the JBR's copy.
+
+    A standalone JRE (as opposed to a JDK) does not ship keytool, so falling back to PATH
+    is not always enough - the error has to say what to do instead.
+    """
+    candidate = JBR / "bin" / exe("keytool")
+    tool = str(candidate) if candidate.exists() else shutil.which("keytool")
+    if not tool:
+        raise ToolError(
+            "keytool not found (looked in the JBR and on PATH).\n"
+            "  install a JDK, or pass --keystore <path> to use an existing key."
+        )
+    run([tool, *argv], timeout=300)
 
 
 def ensure_keystore(explicit: Path | None = None, *, alias: str | None = None,
@@ -448,7 +460,7 @@ def main(argv: list[str]) -> int:
     if mpp is None or not mpp.exists():
         raise ToolError(
             "no patch bundle. Build one first:\n"
-            "  .\\gradlew.bat :patches:generatePatchesList :patches:buildAndroid\n"
+            "  ./gradlew :patches:generatePatchesList :patches:buildAndroid   (gradlew.bat on Windows)\n"
             "or pass --patches <file.mpp>"
         )
     info(f"bundle: {mpp}")

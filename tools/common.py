@@ -26,12 +26,120 @@ EXTRACTED_DIR = APKS_DIR / "extracted"
 APPDATA_DIR = TOOLS_DIR / "appdata"
 PATCHES_BUILD = REPO_ROOT / "patches" / "build" / "libs"
 
-# Android Studio's bundled JBR. The system JDK 26 fails Android's core-for-system-modules
-# transform, so the gradle steps need this explicitly.
-JBR = Path(r"C:\Program Files\Android\Android Studio\jbr")
-APKTOOL_JAR = Path.home() / "Downloads" / "apktool.jar"
+# Android Studio's bundled JBR. Preferred over whatever `java` is on PATH because the
+# system JDK 26 fails Android's core-for-system-modules transform, so the gradle steps need
+# a known-good JVM explicitly.
+#
+# The candidate list is per-platform and evaluated at import; `MORPHE_JBR` overrides it
+# outright. Keeping this a *list* rather than one constant is the whole cross-platform
+# story for the toolchain: the same code has to find the JBR on a Windows install, a Linux
+# tarball, and a macOS .app bundle.
+JBR_ENV_VAR = "MORPHE_JBR"
 
-DEFAULT_SERIAL = "RZCW51E0C5H"
+_JBR_WINDOWS = [
+    r"C:\Program Files\Android\Android Studio\jbr",
+    r"C:\Program Files\Android\Android Studio Preview\jbr",
+]
+_JBR_LINUX = [
+    "/opt/android-studio/jbr",
+    "/usr/local/android-studio/jbr",
+    "/usr/lib/android-studio/jbr",
+    "/snap/android-studio/current/android-studio/jbr",
+    "~/android-studio/jbr",
+    "~/.local/share/JetBrains/Toolbox/apps/AndroidStudio/jbr",
+]
+_JBR_MACOS = [
+    "/Applications/Android Studio.app/Contents/jbr/Contents/Home",
+    "/Applications/Android Studio Preview.app/Contents/jbr/Contents/Home",
+    "~/Applications/Android Studio.app/Contents/jbr/Contents/Home",
+]
+
+
+def _expand(item: str, home: Path) -> Path:
+    """A candidate path as a Path, expanding a leading `~` against `home`.
+
+    Only a *leading* `~` is expanded, and only for the POSIX-style entries; a Windows path
+    never starts with one.
+    """
+    return Path(item.replace("~", str(home), 1)) if item.startswith("~") else Path(item)
+
+
+def platform_candidates(
+    windows: list[str], linux: list[str], macos: list[str], *,
+    windows_flag: bool | None = None,
+    macos_flag: bool | None = None,
+    home: Path | None = None,
+) -> list[Path]:
+    """Pick a platform's candidate paths, expanding `~`.
+
+    The flags are injectable so all three branches are unit-testable from any one host - a
+    resolver that can only be exercised on the platform it targets is a resolver nobody has
+    tested on two thirds of the platforms it claims to support.
+    """
+    if windows_flag is None:
+        windows_flag = os.name == "nt"
+    if macos_flag is None:
+        macos_flag = sys.platform == "darwin"
+    if home is None:
+        home = Path.home()
+    if windows_flag:
+        raw = windows
+    elif macos_flag:
+        raw = macos
+    else:
+        raw = linux
+    return [_expand(item, home) for item in raw]
+
+
+def exe(name: str, *, windows_flag: bool | None = None) -> str:
+    """`name` plus the platform's executable suffix."""
+    if windows_flag is None:
+        windows_flag = os.name == "nt"
+    return f"{name}.exe" if windows_flag else name
+
+
+def _jbr_default() -> Path:
+    """Where we *expect* the JBR, for error messages when no candidate exists."""
+    cands = platform_candidates(_JBR_WINDOWS, _JBR_LINUX, _JBR_MACOS)
+    return cands[0]
+
+
+def resolve_jbr(*, windows_flag: bool | None = None, macos_flag: bool | None = None,
+                home: Path | None = None) -> Path | None:
+    """The first JBR that actually exists, or None."""
+    override = os.environ.get(JBR_ENV_VAR)
+    if override:
+        p = Path(override)
+        return p if p.is_dir() else None
+    for cand in platform_candidates(_JBR_WINDOWS, _JBR_LINUX, _JBR_MACOS,
+                                    windows_flag=windows_flag, macos_flag=macos_flag, home=home):
+        if cand.is_dir():
+            return cand
+    return None
+
+
+#: The JBR that will be used. A Path either way, so `.exists()` checks and messages work.
+JBR: Path = resolve_jbr() or _jbr_default()
+
+#: Where a standalone apktool jar is commonly dropped. A `apktool` on PATH wins over these.
+#: Kept as `~`-strings rather than Paths: they have to resolve against the *caller's* home,
+#: which is also what keeps the resolver testable from any host.
+APKTOOL_JAR_CANDIDATES = [
+    "~/Downloads/apktool.jar",
+    "~/apktool.jar",
+    "~/.local/share/apktool/apktool.jar",
+    "/opt/apktool/apktool.jar",
+    "/usr/local/share/apktool/apktool.jar",
+    "/usr/share/apktool/apktool.jar",
+]
+
+#: The conventional location, kept for messages and for callers that predate the resolver.
+APKTOOL_JAR = _expand(APKTOOL_JAR_CANDIDATES[0], Path.home())
+
+#: Last-resort device serial. Left unset on purpose: `Adb` prefers an explicit --serial,
+#: then $ANDROID_SERIAL, then the only attached device, so no machine-specific serial is
+#: baked into the toolchain.
+DEFAULT_SERIAL: str | None = None
 
 # --------------------------------------------------------------------------------------
 # Output helpers
@@ -96,12 +204,18 @@ def run(
     The whole point is that failures are readable: a bare CalledProcessError hides the
     output that explains it, which is how the "does it apply vs does it fix" gap stays
     invisible.
+
+    stdin is closed rather than inherited. Windows tool wrappers are shell scripts
+    (`apktool.bat` ends in `pause`), and a wrapper that waits for a keypress on an
+    interactive console hangs the pipeline with no output to explain why. Closing stdin
+    makes any such prompt return immediately, on every platform.
     """
     printable = " ".join(str(a) for a in argv)
     proc = subprocess.run(
         [str(a) for a in argv],
         cwd=str(cwd) if cwd else None,
         capture_output=capture,
+        stdin=subprocess.DEVNULL,
         text=True,
         encoding="utf-8",
         errors="replace",
@@ -141,12 +255,26 @@ def adb_devices() -> list[str]:
 
 class Adb:
     def __init__(self, serial: str | None = None) -> None:
-        self.serial = serial or os.environ.get("ANDROID_SERIAL") or DEFAULT_SERIAL
         if not shutil.which("adb"):
             raise ToolError("adb not on PATH")
-        if not self.connected():
+        devices = adb_devices()
+        chosen = serial or os.environ.get("ANDROID_SERIAL") or DEFAULT_SERIAL
+        if chosen is None:
+            if len(devices) == 1:
+                chosen = devices[0]
+            elif not devices:
+                raise ToolError("no device attached. Start an emulator, or plug one in.")
+            else:
+                raise ToolError(
+                    "several devices attached and none selected:\n"
+                    + "\n".join(f"  {d}" for d in devices)
+                    + "\n  pass --serial <serial>, or set ANDROID_SERIAL."
+                )
+        self.serial = chosen
+        if chosen not in devices:
             raise ToolError(
-                f"no device {self.serial!r}. Connect it, or pass --serial / set ANDROID_SERIAL."
+                f"no device {chosen!r} (attached: {', '.join(devices) or 'none'}).\n"
+                "  pass --serial <serial>, or set ANDROID_SERIAL."
             )
 
     def argv(self, *args: str) -> list[str]:
@@ -251,11 +379,12 @@ class Adb:
         self.shell("input", "keyevent", key, check=False)
 
     def screencap(self, dest: Path) -> Path:
-        """Screenshot to `dest`, the only way that survives PowerShell.
+        """Screenshot to `dest`, taken on the device and pulled, never piped.
 
-        `adb exec-out screencap -p > file` looks equivalent and is not: PowerShell's `>`
-        re-encodes the byte stream as UTF-16 and the PNG is corrupt on arrival. Take the
-        shot on the device and `adb pull` the file.
+        `adb exec-out screencap -p > file` looks equivalent and is not: when the redirect
+        goes through PowerShell the byte stream is re-encoded as UTF-16 and the PNG is
+        corrupt on arrival. Taking the shot on the device sidesteps the shell entirely, and
+        is also the only way that works identically on Windows, Linux and macOS.
         """
         remote = "/sdcard/_morphe_shot.png"
         self.shell("screencap", "-p", remote, check=False)
@@ -284,33 +413,56 @@ def gradle_version() -> str:
     return m.group(1).strip() if m else "unknown"
 
 
+def gradle_wrapper(*, windows_flag: bool | None = None) -> list[str]:
+    """The command that runs this repo's gradle wrapper on this platform.
+
+    `gradlew` is committed with the executable bit (mode 100755), so `./gradlew` works on a
+    normal Linux/macOS checkout. The bit can still be lost - a zip download, a copied tree,
+    some mount options - and the resulting EACCES is unhelpful, so fall back to
+    `sh gradlew` instead of making the user diagnose it.
+    """
+    if windows_flag is None:
+        windows_flag = os.name == "nt"
+    if windows_flag:
+        return [str(REPO_ROOT / "gradlew.bat")]
+    wrapper = REPO_ROOT / "gradlew"
+    if os.access(wrapper, os.X_OK):
+        return [str(wrapper)]
+    return ["sh", str(wrapper)]
+
+
 def gradle(task: str, *, timeout: int = 1800) -> Run:
     """Run a gradle task with JAVA_HOME forced to Android Studio's JBR.
 
-    Not optional: the system JDK 26's jlink rejects Android's core-for-system-modules.jar
-    transform, failing :extensions:extension:compileReleaseJavaWithJavac. The env var must be
-    passed to the child process - merely having JBR defined in this module does nothing.
+    Not optional on a machine where the system JDK is newer than 21: its jlink rejects
+    Android's core-for-system-modules.jar transform, failing
+    `:extensions:extension:compileReleaseJavaWithJavac`. The env var must be passed to the
+    child process - merely having JBR defined in this module does nothing.
+
+    On a Linux box without Android Studio this degrades to `java` on PATH rather than
+    refusing to run: a distro JDK 17 or 21 is perfectly good here, and only the *newest*
+    JDKs are the problem. The warning names the override for when it is not.
     """
     if not JBR.exists():
-        raise ToolError(
-            f"Android Studio JBR not found at {JBR}.\n"
-            "It is required: the system JDK 26 breaks Android's jlink transform."
+        warn(
+            f"Android Studio JBR not found (looked in {JBR}); using `java` on PATH.\n"
+            f"  if that is a JDK newer than 21 the release build breaks - set {JBR_ENV_VAR} "
+            "to a JDK 17-21."
         )
-    env = dict(os.environ)
-    env["JAVA_HOME"] = str(JBR)
-    env["PATH"] = str(JBR) + os.pathsep + env.get("PATH", "")
-    wrapper = REPO_ROOT / ("gradlew.bat" if os.name == "nt" else "gradlew")
+    env = jbr_env()
+    argv = [*gradle_wrapper(), task]
     proc = subprocess.run(
-        [str(wrapper), task],
+        argv,
         cwd=str(REPO_ROOT),
         env=env,
         capture_output=True,
+        stdin=subprocess.DEVNULL,
         text=True,
         encoding="utf-8",
         errors="replace",
         timeout=timeout,
     )
-    result = Run([str(wrapper), task], proc.returncode, proc.stdout or "", proc.stderr or "")
+    result = Run(argv, proc.returncode, proc.stdout or "", proc.stderr or "")
     if result.returncode != 0:
         combined = (result.stdout + "\n" + result.stderr)
         interesting = [
@@ -337,11 +489,12 @@ def built_bundle() -> Path | None:
 
 
 def jbr_env(base: dict | None = None) -> dict:
-    """An environment with JAVA_HOME pointed at Android Studio's JBR.
+    """An environment with JAVA_HOME pointed at Android Studio's JBR, when there is one.
 
-    Needed by anything that shells out to `apksigner.bat`/`jlink`: the Oracle JDK 26 on
-    PATH is wrong for Android's build tools and for Gradle, and `apksigner.bat` prefers
-    JAVA_HOME when it is set.
+    Needed by anything that shells out to Android's build tools: `apksigner` is a wrapper
+    around a jar and prefers JAVA_HOME when it is set, and gradle's jlink step needs a JDK
+    the Android transform accepts. A host with a usable `java` already set up keeps its own
+    JAVA_HOME - this only overrides when the JBR is actually present.
     """
     env = dict(base if base is not None else os.environ)
     if JBR.exists():
@@ -352,7 +505,7 @@ def jbr_env(base: dict | None = None) -> dict:
 
 def java_exe() -> str:
     """JBR's java, or whatever `java` is on PATH as a fallback."""
-    jbr_java = JBR / "bin" / ("java.exe" if os.name == "nt" else "java")
+    jbr_java = JBR / "bin" / exe("java")
     if jbr_java.exists():
         return str(jbr_java)
     found = shutil.which("java")
@@ -361,21 +514,72 @@ def java_exe() -> str:
     return found
 
 
+def resolve_apktool(*, home: Path | None = None, java: str | None = None) -> list[str]:
+    """The argv prefix that runs apktool, whichever way it is installed.
+
+    Three shapes occur in practice: an `apktool` wrapper/script on PATH (the Homebrew and
+    distro-package case), a standalone `apktool.jar` run through java, and nothing at all.
+    Returning an argv *prefix* rather than a path keeps the `java -jar` case and the direct
+    case behind one call site.
+
+    `home` and `java` are injectable so the branches are testable without an apktool
+    installation and without a JVM on the test host.
+    """
+    on_path = shutil.which("apktool")
+    if on_path:
+        return [on_path]
+    if home is None:
+        home = Path.home()
+    for cand in [_expand(c, home) for c in APKTOOL_JAR_CANDIDATES]:
+        if cand.exists():
+            return [java or java_exe(), "-jar", str(cand)]
+    raise ToolError(
+        "apktool not found. Either put `apktool` on PATH, or place apktool.jar at one of:\n"
+        + "\n".join(f"  {c}" for c in APKTOOL_JAR_CANDIDATES)
+    )
+
+
+def sdk_candidates(*, home: Path | None = None, windows_flag: bool | None = None,
+                   macos_flag: bool | None = None) -> list[Path]:
+    """The SDK roots we search, most-likely first.
+
+    The flags and `home` are injectable so each platform's list can be asserted from any
+    host. `/usr/lib/android-sdk` and `/opt/android-sdk` cover the distro packages, which is
+    the way the SDK exists on most Linux desktops.
+    """
+    if home is None:
+        home = Path.home()
+    if windows_flag is None:
+        windows_flag = os.name == "nt"
+    if macos_flag is None:
+        macos_flag = sys.platform == "darwin"
+    cands: list[Path] = []
+    if windows_flag:
+        cands.append(home / "AppData" / "Local" / "Android" / "Sdk")   # Windows default
+    if macos_flag:
+        cands.append(home / "Library" / "Android" / "sdk")             # macOS default
+    cands += [
+        home / "Android" / "Sdk",   # Linux default, and a sane fallback elsewhere
+        home / "android-sdk",
+        Path("/usr/lib/android-sdk"),                                  # distro package
+        Path("/opt/android-sdk"),
+    ]
+    return cands
+
+
 def sdk_root() -> Path:
     """The Android SDK, from the environment or the usual install locations."""
     for var in ("ANDROID_HOME", "ANDROID_SDK_ROOT"):
         val = os.environ.get(var)
         if val and Path(val).is_dir():
             return Path(val)
-    for cand in (
-        Path.home() / "AppData" / "Local" / "Android" / "Sdk",  # Windows default
-        Path.home() / "Android" / "Sdk",                          # Linux default
-        Path("/usr/lib/android-sdk"),
-    ):
+    for cand in sdk_candidates():
         if cand.is_dir():
             return cand
     raise ToolError(
-        "Android SDK not found. Set ANDROID_HOME (or ANDROID_SDK_ROOT) to the SDK root."
+        "Android SDK not found. Set ANDROID_HOME (or ANDROID_SDK_ROOT) to the SDK root.\n"
+        "  looked in: ANDROID_HOME, ANDROID_SDK_ROOT, ~/AppData/Local/Android/Sdk,\n"
+        "             ~/Library/Android/sdk, ~/Android/Sdk, /usr/lib/android-sdk"
     )
 
 
@@ -409,9 +613,13 @@ def build_tools(major: int | None = None) -> Path:
 
 
 def sdk_tool(name: str) -> str:
-    """Absolute path to a build-tools executable (`zipalign`, `apksigner`, ...)."""
+    """Absolute path to a build-tools executable (`zipalign`, `apksigner`, ...).
+
+    Tries every shape: `zipalign.exe` (Windows), `apksigner.bat` (older Windows build
+    tools), and the bare name, which is what both exist as on Linux and macOS.
+    """
     bt = build_tools()
-    for cand in (bt / f"{name}.exe", bt / f"{name}.bat", bt / name):
+    for cand in (bt / exe(name), bt / f"{name}.bat", bt / name):
         if cand.exists():
             return str(cand)
     raise ToolError(f"{name} not found in {bt}")

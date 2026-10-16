@@ -46,6 +46,29 @@ hand-found jar — the CLI version changes the patch contract, and a stale jar a
 runtime, is ambiguous about which CLI ran. `python tools/desktop.py --which` prints the exact jar
 that will be used and whether it matches the pin.
 
+**Windows, Linux and macOS are all supported.** Every platform-specific choice is a candidate list
+plus an override, resolved in `tools/common.py` and reported by `doctor`:
+
+| what | order tried | override |
+|---|---|---|
+| JVM | Android Studio's JBR for this platform, then `java` on `PATH` | `MORPHE_JBR` |
+| Android SDK | `ANDROID_HOME`, `ANDROID_SDK_ROOT`, then the platform defaults | either env var |
+| build-tools | newest **stable** dir under `<sdk>/build-tools` (never an `-rc`) | — |
+| apktool | `apktool` on `PATH`, then a standalone jar | `PATH`, or `~/Downloads/apktool.jar` |
+| gradle | `gradlew.bat` (Windows) / `./gradlew` (elsewhere; `sh gradlew` if the exec bit is gone) | — |
+| device | `--serial`, then `ANDROID_SERIAL`, then the only attached device | either |
+
+The JBR is a **preference, not a requirement**: a distro JDK 17 or 21 builds this repo fine, and
+only a JDK *newer* than 21 breaks the jlink transform. A missing JBR therefore warns and falls back
+to `java` instead of refusing to run. `tools/test_platform.py` (part of the gate) asserts the Linux
+and macOS branches from any host, so they are not "supported" on the strength of a code reading
+alone.
+
+Subprocess stdin is deliberately closed. Windows tool wrappers are batch files and some
+(`apktool.bat`) end in `pause`; on an interactive console that would hang the pipeline with no
+output to explain why. Nothing is run through a *shell* either — the argv is built as a list — so
+paths with spaces need no quoting games on any platform.
+
 ### 1. Acquire
 
 ```bash
@@ -131,11 +154,27 @@ Conventions that matter:
 ### 5. Build
 
 ```bash
-JAVA_HOME="C:\Program Files\Android\Android Studio\jbr" \
-  ./gradlew :patches:generatePatchesList :patches:buildAndroid --console=plain
+# Linux / macOS - run from the repo root
+./gradlew :patches:generatePatchesList :patches:buildAndroid --console=plain
+
+# Windows
+gradlew.bat :patches:generatePatchesList :patches:buildAndroid --console=plain
 ```
 
 Order is load-bearing (§2 of AGENTS.md). Artifact: `patches/build/libs/patches-<version>.mpp`.
+
+Running gradle *through the tooling* (`tools/verify.py`, `tools/pipeline.py loop`) needs no setup:
+`common.gradle()` points `JAVA_HOME` at whichever JBR it resolved. Running `./gradlew` by hand does
+not, so if your `java` is newer than 21 set it yourself:
+
+```bash
+JAVA_HOME=/opt/android-studio/jbr ./gradlew :patches:buildAndroid        # Linux
+```
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"; .\gradlew.bat :patches:buildAndroid
+```
+
+`doctor` reports which JVM the tooling will use; `MORPHE_JBR` overrides the search.
 
 ### 6. Static gate
 
@@ -219,7 +258,7 @@ do (fail loudly, then need a fresh blutter run).
 Then regenerate the generated files and commit:
 
 ```bash
-./gradlew :patches:generatePatchesList
+./gradlew :patches:generatePatchesList          # gradlew.bat on Windows
 python .github/scripts/generate_patches_readme.py franticg33k/morphe-patches <branch>
 git add ... && git commit    # conventional-commit message
 ```
@@ -244,7 +283,7 @@ Every entry is a real, expensive mistake from this repo. The rule it produced is
 | Signing only the patched split | `install-multiple` rejects the set | re-sign **every** split with one key |
 | Patching a config split directly | `getVersionName(...) must not be null` | merge first |
 | Driving the UI with `uiautomator` | finds nothing on Flutter, taps land nowhere | coordinates + pixels + markers |
-| `adb exec-out screencap -p > f.png` | corrupt PNG under PowerShell (UTF-16 redirect) | capture on device, `adb pull` |
+| `adb exec-out screencap -p > f.png` | corrupt PNG when the redirect goes through PowerShell (UTF-16) | capture on device, `adb pull` |
 | Expecting Dart `print()` in logcat | a 4.5 MB capture had zero app lines | use native/Java markers and prefs state |
 | Stopping at "content is gone" | blank full-screen page for the whole countdown | check the container too |
 | Verifying only "it applied" | shipped three wrong-target patches | verify the symptom; label static/packaging/runtime |

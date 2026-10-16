@@ -7,9 +7,9 @@ Stdlib-only Python, no Gradle wiring, no third-party packages. Runs on a fresh c
 repo *or* of upstream `MorpheApp/morphe-patches` (this directory is unused there, and the two
 histories are unrelated, so there is nothing to merge around).
 
-Requires `adb` and a JDK on `PATH`, plus `apktool.jar` at `%USERPROFILE%\Downloads`.
-`verify.py` forces `JAVA_HOME` to Android Studio's JBR itself. Run `python tools/pipeline.py
-doctor` to check all of it at once, with the fix for each failure.
+Requires `adb` and a JVM on `PATH`, plus apktool — either an `apktool` on `PATH` or a standalone
+`apktool.jar`. Windows, Linux and macOS are all supported; see **Platform support** below.
+`pipeline.py doctor` checks all of it at once and prints the fix for each failure.
 
 ## The loop
 
@@ -68,11 +68,42 @@ python tools/pipeline.py loop --package com.hamropatro --install --ab
 | `verify.py --all` | parser tests, clean, `buildAndroid` (last), bundle/dex checks, all fingerprints |
 | `verify.py --all --no-build` | same checks against the newest existing bundle |
 | `blutter_stage.py --package P` | stage natives, write `BLUTTER.md`, summarise existing blutter output |
-| `test_dexdesc.py`, `test_miniyaml.py` | unit tests for the two hand-rolled parsers |
+| `test_dexdesc.py`, `test_miniyaml.py`, `test_platform.py` | unit tests: the two hand-rolled parsers, and the per-platform resolvers |
 
 App keys (`--app`) are the stems of `tools/appdata/*.yml`; `intake.py` and
 `blutter_stage.py` take `--package` and resolve the key from there, so `--package
 com.hamropatro` lands in `apks/hamropatro/` and lines up with the existing analysis dirs.
+
+## Platform support
+
+Windows, Linux and macOS. Nothing here is Windows-only, and `test_platform.py` — which the gate
+runs — asserts the Linux and macOS answers directly, so those branches are tested on whatever host
+runs the suite rather than being "supported" on the strength of a code reading.
+
+Everything platform-specific is a **candidate list plus an override**, resolved in `common.py` and
+printed by `doctor`:
+
+| what | order tried | override |
+|---|---|---|
+| JVM | this platform's Android Studio JBR locations, then `java` on `PATH` | `MORPHE_JBR` |
+| Android SDK | `ANDROID_HOME`, `ANDROID_SDK_ROOT`, then the platform defaults | either env var |
+| build-tools | newest **stable** directory under `<sdk>/build-tools` | — |
+| apktool | `apktool` on `PATH`, then a standalone jar | `PATH`, or `~/Downloads/apktool.jar` |
+| gradle | `gradlew.bat` on Windows, `./gradlew` elsewhere (`sh gradlew` if the exec bit is gone) | — |
+| device | `--serial`, then `ANDROID_SERIAL`, then the only attached device | either |
+
+Three things that are not obvious:
+
+- **The JBR is a preference, not a requirement.** A distro JDK 17 or 21 builds this repo fine;
+  only a JDK *newer* than 21 breaks the release build (its jlink rejects Android's
+  core-for-system-modules transform). A missing JBR therefore warns and falls back to `java`.
+- **Subprocess stdin is closed.** Windows tool wrappers are batch files and some (`apktool.bat`)
+  end in `pause`, which blocks forever on an interactive console. Closing stdin turns any such
+  prompt into an immediate no-op on every platform.
+- **No shell.** Every command is an argv list handed to `subprocess`, so nothing depends on
+  quoting rules, path separators, or a particular shell. The one wrapper that must be named
+  differently per platform is gradle's, and `common.gradle_wrapper()` is the only place that
+  knows.
 
 ## Adding an app
 
@@ -139,9 +170,10 @@ From `docs/writing-update-resilient-patches.md`, the short version:
 
 ```
 tools/
-  common.py          shared helpers: paths, adb, gradle (forces JBR), SDK/build-tools, smali, zip
+  common.py          shared helpers: paths, platform resolvers, adb, gradle (forces JBR), SDK/build-tools, smali, zip
   dexdesc.py         dex descriptor tokeniser          <- tested
   miniyaml.py        tiny YAML subset (no pyyaml dep) <- tested
+  test_platform.py   JBR / SDK / apktool / gradlew per-platform branches <- tested
   fingerprints.py    the one harness; app data from appdata/*.yml
   intake.py          device -> analysed tree + ad census
   blutter_stage.py   stage natives, write BLUTTER.md
