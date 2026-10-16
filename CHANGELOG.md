@@ -1,3 +1,14 @@
+## [1.5.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.4.2...v1.5.0-dev.1) (2026-10-16)
+
+### 🐛 Bug Fixes
+
+* **nepalipatro:** close every interstitial presenter, not just the popup gate ([58f6b01](https://github.com/franticg33k/morphe-patches/commit/58f6b0191cb958789b8371990d0fc8ea32c9bf0e)), closes [#0x961d78](https://github.com/franticg33k/morphe-patches/issues/0x961d78) [#0x961d68](https://github.com/franticg33k/morphe-patches/issues/0x961d68) [#0x9617a4](https://github.com/franticg33k/morphe-patches/issues/0x9617a4) [#0x9617a4](https://github.com/franticg33k/morphe-patches/issues/0x9617a4) [#-0x10](https://github.com/franticg33k/morphe-patches/issues/-0x10)
+
+### ✨ New Features
+
+* **nepalipatro:** drop the raster ad slots, not just the presenters ([efb504c](https://github.com/franticg33k/morphe-patches/commit/efb504cca6df7337a82c0614c81ed9d22cfa4211))
+* **tools:** make the pipeline run on Linux and macOS, not just Windows ([d167160](https://github.com/franticg33k/morphe-patches/commit/d1671600909acf7c6e048aad9f71bb022e959d3a))
+
 ## [1.4.2](https://github.com/franticg33k/morphe-patches/compare/v1.4.1...v1.4.2) (2026-09-29)
 
 ### 🐛 Bug Fixes
