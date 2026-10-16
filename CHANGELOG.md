@@ -1,3 +1,9 @@
+## [1.5.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.5.0-dev.2...v1.5.0-dev.3) (2026-10-16)
+
+### 🚀 Updated App Support
+
+* **byair:** pin the byAir patches to 2.41.0 ([b8cd5be](https://github.com/franticg33k/morphe-patches/commit/b8cd5be699188155fb3e9d9c6c91ec59cf70b62b))
+
 ## [1.5.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.5.0-dev.1...v1.5.0-dev.2) (2026-10-16)
 
 ### 🐛 Bug Fixes
