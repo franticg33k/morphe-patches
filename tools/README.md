@@ -1,17 +1,22 @@
 # Patching tooling
 
-Helper scripts for the loop: **device -> analysed tree -> fingerprints -> patch -> verify**.
+Helper scripts for the loop: **device -> analysed tree -> fingerprints -> build -> apply ->
+install -> A/B -> verify**.
 
 Stdlib-only Python, no Gradle wiring, no third-party packages. Runs on a fresh clone of this
 repo *or* of upstream `MorpheApp/morphe-patches` (this directory is unused there, and the two
 histories are unrelated, so there is nothing to merge around).
 
 Requires `adb` and a JDK on `PATH`, plus `apktool.jar` at `%USERPROFILE%\Downloads`.
-`verify.py` forces `JAVA_HOME` to Android Studio's JBR itself.
+`verify.py` forces `JAVA_HOME` to Android Studio's JBR itself. Run `python tools/pipeline.py
+doctor` to check all of it at once, with the fix for each failure.
 
 ## The loop
 
 ```bash
+# 0. is this machine ready? (and fetch the pinned Morphe desktop CLI)
+python tools/pipeline.py doctor --fix
+
 # 1. pull + decompile + census (needs a device)
 python tools/intake.py --package com.hamropatro
 
@@ -25,18 +30,41 @@ python tools/blutter_stage.py --package com.hamropatro --check   # see layout ag
 # 4. write the patch, update tools/appdata/<key>.yml
 
 # 5. gate before committing
-python tools/verify.py --all
+python tools/verify.py --app <key> --no-build --no-clean
+
+# 6. apply it for real: merge/patch/graft/align/sign into an installable split set
+python tools/patch.py --package com.hamropatro
+
+# 7. install it and prove it changed the symptom (stock vs patched, marker diff)
+python tools/device.py ab --plan <key> --stock apks/<key> --patched apks/<key>-patched
+```
+
+Steps 5-7 in one command, plus the build:
+
+```bash
+python tools/pipeline.py loop --package com.hamropatro --install --ab
 ```
 
 ## Commands
 
 | command | does |
 |---|---|
+| `pipeline.py doctor [--fix]` | environment readiness check, with the fix for each failure; `--fix` fetches the pinned desktop CLI |
+| `pipeline.py loop --package P [--install] [--ab]` | build -> static gate -> apply -> install -> A/B, in order (`--dry-run` to just print the stages) |
 | `intake.py --package P` | pull all splits, apktool the base, stage `libapp.so`/`libflutter.so`, locate the AOT magic, count methods, print an ad-SDK census |
 | `intake.py --package P --census-only` | just the census; no device needed |
 | `fingerprints.py --list` | list known apps and their fingerprint counts |
 | `fingerprints.py --app K` | assert each fingerprint resolves to exactly one method |
 | `fingerprints.py --app K --bundle x.mpp` | also check compiled literals in a built bundle |
+| `desktop.py --setup` / `--which` | download + sha256-verify the pinned Morphe desktop CLI / print what will run |
+| `desktop.py run <args...>` | run the desktop CLI directly (e.g. `run list-patches --patches x.mpp`) |
+| `patch.py --package P` | merge splits, patch (merged + base), graft changed entries back, align, sign into an installable set |
+| `patch.py --apk A` / `--splits D` | the same for a single APK / an arbitrary split directory |
+| `patch.py --package P --list` | list the patches compatible with that APK, without patching |
+| `device.py ab --plan K --stock D --patched D2` | install stock, run the scripted pass, install patched, run it again, diff the markers |
+| `device.py pass --plan K --label L` | one scripted pass against whatever is installed |
+| `device.py install --dir D [--fresh]` | install an APK or split set |
+| `device.py shot` / `markers --plan K --log F` | one screenshot / count markers in an existing logcat dump |
 | `verify.py --all` | parser tests, clean, `buildAndroid` (last), bundle/dex checks, all fingerprints |
 | `verify.py --all --no-build` | same checks against the newest existing bundle |
 | `blutter_stage.py --package P` | stage natives, write `BLUTTER.md`, summarise existing blutter output |
@@ -50,10 +78,14 @@ com.hamropatro` lands in `apks/hamropatro/` and lines up with the existing analy
 
 1. `python tools/intake.py --package <pkg>` — device must be connected.
 2. Copy `apks/extracted/<key>/AndroidManifest.xml` details into a new
-   `tools/appdata/<key>.yml` (see the existing two for the shape).
+   `tools/appdata/<key>.yml` (see the existing ones for the shape).
 3. Find the chokepoint. No script does this; see the checklist below.
 4. Write the patch under `patches/src/main/kotlin/.../<app>/`.
-5. Add the fingerprints to the yml, then `python tools/verify.py --all`.
+5. Add the fingerprints to the yml, then `python tools/verify.py --app <key> --no-build --no-clean`.
+6. Write `tools/testplans/<key>.json` — the package, launch wait, scroll geometry, tab taps, marker
+   substrings and slot prefixes — so the A/B in step 7 drives the app the same way twice.
+7. `python tools/patch.py --package <pkg>` then
+   `python tools/device.py ab --plan <key> --stock apks/<key> --patched apks/<key>-patched`.
 
 ## What `verify.py` checks, and why each exists
 
@@ -74,12 +106,20 @@ target is engineering, and only the device answers that. The two wasted release 
 Patro were both well-formed, byte-verified patches aimed at the wrong function - undetectable by
 any of the above.
 
-Two habits that would have caught them:
+That gap now has an instrument: `device.py ab` installs the stock build, runs a scripted pass,
+installs the patched build, runs the *identical* pass, and diffs the logcat markers - the observable
+symptom, recorded the same way twice. The bare requirement for a useful A/B is that **stock is
+non-zero**: a marker that is 0 on both builds means the pass never triggered the code path, and the
+experiment proved nothing.
+
+Three habits that catch the rest:
 
 - **Enumerate callers repo-wide before patching a caller.** `grep` scoped to one file feels
   thorough and is not: it reported 1 caller where there were 24.
 - **If the symptom persists, diff the installed binary against stock** to separate "never
   applied" from "applied, wrong target".
+- **Read the fall-through target before retargeting a branch.** "It falls through to nothing" is a
+  claim about a specific instruction sequence; go and read it.
 
 ## Reverse-engineering checklist
 
@@ -99,15 +139,23 @@ From `docs/writing-update-resilient-patches.md`, the short version:
 
 ```
 tools/
-  common.py          shared helpers: paths, adb, gradle (forces JBR), smali, zip
+  common.py          shared helpers: paths, adb, gradle (forces JBR), SDK/build-tools, smali, zip
   dexdesc.py         dex descriptor tokeniser          <- tested
   miniyaml.py        tiny YAML subset (no pyyaml dep) <- tested
   fingerprints.py    the one harness; app data from appdata/*.yml
   intake.py          device -> analysed tree + ad census
   blutter_stage.py   stage natives, write BLUTTER.md
+  desktop.py         locate/verify/download the pinned Morphe desktop CLI, and drive it
+  patch.py           merge splits -> patch -> graft -> zipalign -> sign -> (install)
+  device.py          scripted device pass + stock/patched A/B marker diff
+  pipeline.py        doctor + the whole loop as one command
   verify.py          pre-commit gate
   appdata/<key>.yml  per-app fingerprints + notes
+  testplans/<key>.json  per-app scripted device pass
+  .morphe/           downloaded CLI + local signing key   (gitignored)
 ```
 
-`apks/`, `docs/` and `.opencode` are gitignored, so pulled APKs, analysis output and per-app
-docs stay local.
+`apks/`, `docs/` and `.opencode` are gitignored, so pulled APKs, analysis output, verification
+evidence and per-app docs stay local. `tools/.morphe/` is gitignored too: a 50 MB jar never
+travelled with the repo anyway, which is why `desktop.py` fetches a *pinned* release by sha256
+instead of asking you to find one.

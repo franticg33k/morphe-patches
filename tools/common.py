@@ -122,6 +122,23 @@ def run(
 # --------------------------------------------------------------------------------------
 
 
+def adb_devices() -> list[str]:
+    """Attached device serials - needs no device to be selected first.
+
+    `Adb()` deliberately refuses to construct without a live device; `doctor` needs to
+    *report* that state rather than raise on it, so the listing lives outside the class.
+    """
+    if not shutil.which("adb"):
+        raise ToolError("adb not on PATH")
+    out = run(["adb", "devices"], check=True).stdout
+    found = []
+    for line in out.splitlines()[1:]:
+        parts = line.split()
+        if len(parts) >= 2 and parts[1] == "device":
+            found.append(parts[0])
+    return found
+
+
 class Adb:
     def __init__(self, serial: str | None = None) -> None:
         self.serial = serial or os.environ.get("ANDROID_SERIAL") or DEFAULT_SERIAL
@@ -136,13 +153,7 @@ class Adb:
         return ["adb", "-s", self.serial, *args]
 
     def devices(self) -> list[str]:
-        out = run(["adb", "devices"], check=True).stdout
-        found = []
-        for line in out.splitlines()[1:]:
-            parts = line.split()
-            if len(parts) >= 2 and parts[1] == "device":
-                found.append(parts[0])
-        return found
+        return adb_devices()
 
     def connected(self) -> bool:
         try:
@@ -372,15 +383,16 @@ _VERSION_NUM_RE = re.compile(r"\d+")
 
 
 def _build_tools_key(name: str) -> tuple:
-    """Sort key for build-tools dir names.
+    """Sort key for build-tools dir names, stable-first.
 
-    `37.0.0-rc2` must not outrank the stable `36.1.0` for normal use, so a release
-    candidate sorts below its own release. zipalign/apksigner are version-insensitive
-    enough that "newest stable" is the right default.
+    A release candidate must never outrank an older *stable* just because its number is
+    higher: `37.0.0-rc2` is not a better default than `36.1.0`, it is a different one that
+    moves under you. So the stable flag is the primary key and the version is secondary,
+    which picks the newest stable whenever one exists.
     """
     nums = [int(n) for n in _VERSION_NUM_RE.findall(name)]
     stable = 0 if "rc" in name or "beta" in name or "alpha" in name else 1
-    return (*nums, stable)
+    return (stable, *nums)
 
 
 def build_tools(major: int | None = None) -> Path:
