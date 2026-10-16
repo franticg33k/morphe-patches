@@ -4,10 +4,12 @@ import app.morphe.patcher.patch.rawResourcePatch
 import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALIPATRO
 
 /*
- * The ad content itself is already stopped in RemoveAdsPatch (the WebView HTML loaders and the
- * AdMob method channel). What that leaves behind is the shell: Nepali Patro pushes a full-screen
- * interstitial route and runs a five second countdown on it, and with the content removed you get
- * a blank page for the full timer.
+ * RemoveAdsPatch stops the HTML creatives (the WebView HTML loaders) and the AdMob method channel,
+ * and that is all it stops. What the HTML half leaves behind is the shell: Nepali Patro pushes a
+ * full-screen interstitial route and runs a five second countdown on it, and with the content
+ * removed you get a blank page for the full timer. What it leaves behind on the raster side is
+ * worse - the image creatives keep rendering, because they are fetched by Dart and never touch a
+ * WebView. That half is handled at the bottom of this file.
  *
  * Two independent things drive that overlay, and only one of them is the network:
  *
@@ -19,18 +21,92 @@ import app.franticg33k.patches.nepalipatro.shared.Constants.COMPATIBILITY_NEPALI
  *     so patching the host alone does not stop the overlay - a device test confirmed the overlay
  *     still opens with the ad server unreachable, it just has nothing to show.
  *
- * So the host rewrite handles (1) and a one-instruction retarget inside
- * featureInterstitialAdWithHtmlPopup handles (2), which is the part that actually produces the
- * five second page.
+ * So the host rewrite handles (1) and three one-instruction retargets in the Dart snapshot handle
+ * (2), which is the part that actually produces the visible shell.
  *
- * A device test is what separated the two. The overlay still opened with this patch applied and
- * the ad server unreachable, and the app had cached the full ad URL list in SharedPreferences
- * under PREF_SLIDER_DATA - so the snapshot rewrite never even got consulted, and the decision to
- * push the route was being made from remote config, not from the network.
+ * A device test is what separated the two. The overlay still opened with the ad server unreachable,
+ * and the app had cached the full ad URL list in SharedPreferences under PREF_SLIDER_DATA - so the
+ * snapshot rewrite never even got consulted, and the decision to present the shell was being made
+ * from remote config, not from the network.
  *
  * Confirmed empirically before writing this: blocking only 157.10.100.114 (the address of
  * ads-delivery.nepalipatro.com.np) removed the overlay with no other loss of function, which is
  * what identified the ad server host in the first place.
+ *
+ * ---
+ *
+ * THE SHELL HAS MORE THAN ONE PRESENTER. `AdsBloc::checkAdsQueueLoadable`'s per-item callback
+ * (closure `0x961380`) switches on `SliderType` (enum values read out of `objs.txt`):
+ *
+ *   @11cbde1 "popup"           -> showDialog(PopUpAdsDialog)          via shouldShowPopupUsingFrequencyCap
+ *   @11cbd01 "popup_html"      -> showDialog(PopUpAdsDialog)          via shouldShowPopupUsingFrequencyCap
+ *   @11cbd81 "ad_mob"          -> showInterstitialAd()                (AdMob; already dead via Remove Ads)
+ *   @11cbd21 "interstitial_html" -> Navigator.push(page)              NOT gated by the frequency cap at all
+ *
+ * and the pushed page renders `HtmlInterstitialAdLauncher`, whose State.initState schedules a timer
+ * that calls `showHtmlInterstitialAdDialog()` -> `showGeneralDialog(HtmlInterstitialAd)`.
+ *
+ * The original single retarget only forced `shouldShowPopupUsingFrequencyCap` false, i.e. it closed
+ * the popup/popup_html branch. The calendar-tab interstitial is the "interstitial_html" variant
+ * (its cached URL list entry is literally `calendar_interstitial -> interstitial_html`), and that
+ * branch never consults the frequency cap - so the full-screen shell still came up. That is the
+ * "popup shows, ad does not load" residual: the container is opened from cached remote config, and
+ * only its content (the HTML creative) is network-gated.
+ *
+ * The fix therefore closes both remaining presenters:
+ *
+ *   * the interstitial_html dispatch in the callback is retargeted to fall through to the
+ *     ad_mob/popup tests (which then reject the item, since its type matches neither), so the page
+ *     is never pushed; and
+ *   * `showHtmlInterstitialAdDialog` itself is stubbed to an immediate `ret`, so no caller -
+ *     launcher timer, inline SliderView slot, or anything added later - can raise the roadblock
+ *     dialog.
+ *
+ * Both are single-instruction, byte-asserted, and confined to ad presentation; `ad_mob` remains
+ * covered by Remove Ads' method-channel guard.
+ *
+ * ---
+ *
+ * THE RASTER CREATIVES ARE A THIRD PATH, AND NOTHING ABOVE TOUCHES THEM. SliderType's ten formats
+ * split into three rendering families:
+ *
+ *   raster (CachedNetworkImage, fed an absolute URL out of the ad response)
+ *     0 "slider"      _SliderItemState::build -> cached_network_image
+ *     1 "banner"      BannerView              -> cached_network_image
+ *     2 "popup"       PopUpView               -> cached_network_image
+ *     3 "card_view"   CardView1x1             -> cached_network_image
+ *     4 "circular"    CircularWidget          -> cached_network_image
+ *
+ *   HTML (webview_flutter; already blank, because Remove Ads stubs the loaders)
+ *     5 "circular_html", 6 "banner_html", 8 "popup_html"
+ *
+ *   presenters (a dialog or a pushed route; closed by (a)-(c) above)
+ *     7 "interstitial_html", 9 "ad_mob"
+ *
+ * The raster family is invisible to every earlier edit for two independent reasons: the creative
+ * URL is delivered inside the ad response, so there is nothing in the snapshot to rewrite, and
+ * CachedNetworkImage is a Dart HTTP client rather than a WebView, so the loaders Remove Ads stubs
+ * are never consulted. ads.nepalipatro.com.np - the host the creatives are actually served from -
+ * occurs nowhere in libapp.so at all; it only ever exists in the payload. That is the residual
+ * "the popup is gone but a banner image still shows" report.
+ *
+ * `_SliderViewState::build` (0xc0c4d0) dispatches those formats as a linear chain of SliderType
+ * tests, each shaped
+ *
+ *   r16 = Instance_SliderType   ; the static enum object for this format
+ *   cmp w1, w16
+ *   b.ne <next test>            ; not this format -> keep looking
+ *   <build the creative>
+ *
+ * so replacing a raster format's `cmp` with an unconditional `b` to that same test's `b.ne` target
+ * skips the body without disturbing the chain. The chain has exactly nine tests (every format but
+ * `ad_mob`); the format then matches none of them and falls through to the method's own tail,
+ *
+ *   0xc0dc1c: r0 = SizedBox()   ; return SizedBox()
+ *
+ * which is exactly what the build already returns for the ad_mob format (9) - the app's own answer
+ * for a format it renders nowhere inline. No widget is constructed and no creative is requested.
+ * One edit per raster format.
  */
 
 private const val AD_SERVER_HOST = "ads-delivery.nepalipatro.com.np"
@@ -45,12 +121,28 @@ private const val BLOCKED_AD_SERVER_HOST = "ads-delivery.nepalipatro.com.xx"
 private const val LIBAPP = "lib/arm64-v8a/libapp.so"
 
 /**
- * Blutter address of the "premium / removal type" branch inside
- * `AdsBloc::featureInterstitialAdWithHtmlPopup` (async wrapper 0x9619fc, state machine 0x961b88).
- * Blutter's per-function `addr` is the file offset in libapp.so, confirmed by the AArch64
- * prologue landing exactly on `stp x29, x30, [sp, #-0x10]!`.
+ * Blutter address of the `b.ne` in `AdsBloc::shouldShowPopupUsingFrequencyCap` (0x961b88) that the
+ * popup/popup_html branch takes when ads are not disabled. Retargeted to the function's own
+ * `false` return at 0x961d68 so the branch never shows its dialog. Blutter's per-function `addr` is
+ * the file offset in libapp.so, confirmed by the AArch64 prologue landing exactly on
+ * `stp x29, x30, [sp, #-0x10]!`.
  */
-private const val INTERSTITIAL_GATE_OFFSET = 0x961d1cL
+private const val POPUP_GATE_OFFSET = 0x961d1cL
+
+/**
+ * Blutter address of the `cmp w2, SliderType.interstitial_html` dispatch inside the callback at
+ * `0x961380`. Its `b.ne` is what lets an interstitial_html item reach the `Navigator.push` at
+ * `0x9616f8`; retargeted to an unconditional `b` the item falls through to the ad_mob/popup tests
+ * and is dropped, so the route is never pushed.
+ */
+private const val INTERSTITIAL_HTML_DISPATCH_OFFSET = 0x96160cL
+
+/**
+ * `[package:flutter_adserver/html_interstitial_page.dart] ::showHtmlInterstitialAdDialog` - the
+ * only function that raises the HTML interstitial roadblock (`showGeneralDialog(HtmlInterstitialAd)`).
+ * Its sole caller is the launcher's timer callback, which ignores the (void) result.
+ */
+private const val SHOW_HTML_INTERSTITIAL_DIALOG_OFFSET = 0xebdcd8L
 
 private fun ByteArray.matchesAt(offset: Int, needle: ByteArray): Boolean {
     if (offset < 0 || offset + needle.size > size) return false
@@ -107,18 +199,51 @@ private fun patchAt(
 
 private fun b(vararg values: Int): ByteArray = ByteArray(values.size) { i -> values[i].toByte() }
 
+/** The `cmp w1, w16` that opens every SliderType test in `_SliderViewState::build`. */
+private val COMPARE_SLIDER_TYPE = b(0x3f, 0x00, 0x10, 0x6b)
+
+private data class RasterFormat(
+    /** SliderType name, for the mismatch message. */
+    val type: String,
+    /** Blutter address of this format's `cmp w1, w16`. */
+    val offset: Long,
+    /** `b` to that same test's `b.ne` target - the next test in the chain. */
+    val replacement: ByteArray,
+)
+
+/**
+ * The five `SliderType` formats that render a raster creative, and the edit that drops each one.
+ *
+ * Every offset is asserted to hold [COMPARE_SLIDER_TYPE] before it is replaced, so an upstream
+ * reshuffle of `_SliderViewState::build` fails on the first format that moved instead of silently
+ * patching the wrong instruction. See the file header for why `b` (rather than a NOP or a branch
+ * into another body) is the right shape: it makes the format match nothing, so the value keeps
+ * running down the test chain to the method's shared `return SizedBox()` tail.
+ */
+private val RASTER_CREATIVE_DISPATCH = listOf(
+    RasterFormat("slider", 0xc0c980L, b(0x78, 0x01, 0x00, 0x14)), // b #0xc0cf60
+    RasterFormat("banner", 0xc0cf74L, b(0x8e, 0x00, 0x00, 0x14)), // b #0xc0d1ac
+    RasterFormat("popup", 0xc0d1b4L, b(0x40, 0x00, 0x00, 0x14)), // b #0xc0d2b4
+    RasterFormat("card_view", 0xc0d2bcL, b(0x7d, 0x00, 0x00, 0x14)), // b #0xc0d4b0
+    RasterFormat("circular", 0xc0d4b8L, b(0x63, 0x00, 0x00, 0x14)), // b #0xc0d644
+)
+
 @Suppress("unused")
 val blockNepalipatroAdServerPatch = rawResourcePatch(
     name = "Block Ad Server",
-    description = "Stops Nepali Patro's interstitial ads. Two edits to libapp.so: the ad-only " +
-        "host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the " +
-        "same length, and AdsBloc::featureInterstitialAdWithHtmlPopup - the single callee behind " +
-        "all 24 interstitial call sites - is forced down its existing 'popup blocked' return, so " +
-        "the full-screen ad page and its countdown never open. The host rewrite alone is not " +
-        "enough: the ad URLs are also cached in SharedPreferences under PREF_SLIDER_DATA, and " +
-        "whether to show the page at all comes from remote config, which the app rewrites on " +
-        "every launch. Pairs with Remove Ads, which stops the ad content itself and the AdMob " +
-        "interstitials.",
+    description = "Stops Nepali Patro's ads. Eight byte-asserted edits to libapp.so plus an " +
+        "in-place host rewrite: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to " +
+        "an unresolvable .xx domain of the same length; the interstitial_html dispatch in the " +
+        "ad-queue callback is retargeted so the full-screen page is never pushed; " +
+        "showHtmlInterstitialAdDialog - the single function that raises the HTML interstitial " +
+        "roadblock - is stubbed out; the popup/popup_html branch is forced down the app's own " +
+        "'blocked' return; and the five raster formats (slider, banner, popup, card_view, " +
+        "circular) are dropped to the build's own empty-widget tail, so the image creatives " +
+        "Remove Ads cannot see - they are fetched by Dart through CachedNetworkImage, not by a " +
+        "WebView - are never requested at all. The host rewrite alone is not enough: the ad URLs " +
+        "are also cached in SharedPreferences under PREF_SLIDER_DATA, and whether to present the " +
+        "shell at all comes from remote config, which the app rewrites on every launch. Pairs " +
+        "with Remove Ads, which stops the HTML creatives and the AdMob interstitials.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_NEPALIPATRO)
@@ -149,40 +274,82 @@ val blockNepalipatroAdServerPatch = rawResourcePatch(
         }
         replacement.forEachIndexed { i, byte -> bytes[at + i] = byte }
 
-        // featureInterstitialAdWithHtmlPopup is the single callee behind all 24
-        // `bl #0x9619fc` call sites in the app (calendar tab, my_calendar, home, weather, forex,
-        // blog, petroleum, rashifal, suya_sait, vegetable, government holiday, date conversion,
-        // radio, bullion, kundali, unit conversion, dashboard, app_web_view, app_utils, and the
-        // bottom-menu navigation handler), so one edit here covers every HTML interstitial.
-        // Patching the callers instead would mean 24 fragile offsets.
+        // The callback at 0x961380 is the single consumer of the interstitial queue: whatever
+        // `bl #0x9619fc` (featureInterstitialAdWithHtmlPopup) is awaited from, the queue items
+        // reach this closure. Both of the shell presenters it can reach are closed here.
         //
-        // Its state machine opens with the app's own "should I show this?" decision:
+        // (a) The popup/popup_html branch asks the app's own "should I show this?" gate:
         //
-        //   0x961d10: ldur  x0, [fp, #-0xd8]     ; the premium / removal-type flag
+        //   0x961d10: ldur  x0, [fp, #-0xd8]     ; isAdsDisabled
         //   0x961d18: cmp   w0, true
-        //   0x961d1c: b.ne  #0x961d78            ; not premium -> carry on and show the ad
+        //   0x961d1c: b.ne  #0x961d78            ; not disabled -> carry on and show
         //   0x961d20: ldur  x0, [fp, #-0xe8]     ; build the log line
         //   0x961d24: tbz   w0, #4, #0x961d70
         //   0x961d28: ...   "POPUP_ADS: scope=... blocked due to premium/removal-type rules"
         //   0x961d68: add   x0, xzr, #0x30        ; false
         //   0x961d6c: b     ReturnAsyncNotFutureStub
         //
-        // The app is not premium, so control always takes the `b.ne`. Retargeting that one branch
-        // at 0x961d68 sends every interstitial down the app's own "blocked" return, which is
-        // already the well-trodden path whenever there is nothing to show - it completes the
-        // future with `false` and the route is simply never pushed, so no page and no countdown.
-        //
-        // Branching to 0x961d68 rather than NOPing the instruction matters: the fall-through
-        // contains a `tbz` that rejoins the show path, so a NOP would not reliably block. Jumping
-        // straight to the return skips the log string as a side effect, and the print it would
-        // have emitted is the only thing lost.
+        // Retargeting that one branch to 0x961d68 sends every popup down the app's own "blocked"
+        // return. Branching to 0x961d68 rather than NOPing matters: the fall-through contains a
+        // `tbz` that rejoins the show path, so a NOP would not reliably block. Jumping straight to
+        // the return skips the log string as a side effect, and the print it would have emitted is
+        // the only thing lost.
         patchAt(
             bytes = bytes,
-            offset = INTERSTITIAL_GATE_OFFSET,
+            offset = POPUP_GATE_OFFSET,
             expected = b(0xe1, 0x02, 0x00, 0x54), // b.ne #0x961d78
             replacement = b(0x13, 0x00, 0x00, 0x14), // b #0x961d68
-            label = "interstitial gate",
+            label = "popup gate",
         )
+
+        // (b) The interstitial_html branch never consults the gate above. Its dispatch is:
+        //
+        //   0x961600: r16 = Instance_SliderType    ; Obj!SliderType@11cbd21 "interstitial_html"
+        //   0x961608: cmp   w2, w16
+        //   0x96160c: b.ne  #0x9617a4              ; anything else -> the ad_mob test
+        //   ...                                    ; interstitial_html -> push the full-screen page
+        //   0x9616f8: Navigator.of().push(PageRouteBuilder(...))
+        //
+        // Making the branch unconditional sends interstitial_html down the ad_mob test too, where
+        // it matches nothing and is dropped (b.ne -> 0x961854 -> b.ne -> return), so the page - and
+        // with it the five second countdown - is never pushed.
+        patchAt(
+            bytes = bytes,
+            offset = INTERSTITIAL_HTML_DISPATCH_OFFSET,
+            expected = b(0xc1, 0x0c, 0x00, 0x54), // b.ne #0x9617a4
+            replacement = b(0x66, 0x00, 0x00, 0x14), // b #0x9617a4
+            label = "interstitial_html dispatch",
+        )
+
+        // (c) Belt and braces for the shell itself. Even with (b) in place, an interstitial_html
+        // queue item placed inline in a SliderView slot still renders HtmlInterstitialAdLauncher,
+        // whose State.initState schedules a timer that calls showHtmlInterstitialAdDialog()
+        // -> showGeneralDialog(HtmlInterstitialAd). Stubbing the function to an immediate `ret`
+        // removes the roadblock no matter which caller asks for it. It is void and its only caller
+        // discards the result, so an early return is safe; nothing else in the snapshot calls it.
+        patchAt(
+            bytes = bytes,
+            offset = SHOW_HTML_INTERSTITIAL_DIALOG_OFFSET,
+            expected = b(0xfd, 0x79, 0xbf, 0xa9), // stp fp, lr, [sp, #-0x10]!
+            replacement = b(0xc0, 0x03, 0x5f, 0xd6), // ret
+            label = "showHtmlInterstitialAdDialog",
+        )
+
+        // (d)-(h) The raster creatives. These five formats build a CachedNetworkImage from a URL
+        // that arrives in the ad response, so neither the host rewrite above nor Remove Ads'
+        // WebView stubs can reach them - and the host the creatives come from is not in libapp.so
+        // to begin with. The ad server hands back an absolute URL, the widget renders it, and the
+        // only place the decision lives is this dispatch. Dropping each format's test sends it to
+        // the method's own `return SizedBox()` tail, the same answer it already gives for ad_mob.
+        for (format in RASTER_CREATIVE_DISPATCH) {
+            patchAt(
+                bytes = bytes,
+                offset = format.offset,
+                expected = COMPARE_SLIDER_TYPE,
+                replacement = format.replacement,
+                label = "raster creative dispatch (${format.type})",
+            )
+        }
 
         lib.writeBytes(bytes)
     }

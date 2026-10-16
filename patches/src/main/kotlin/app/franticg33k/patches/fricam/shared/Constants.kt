@@ -28,6 +28,11 @@ object Constants {
                 isExperimental = false,
                 minSdk = null,
             ),
+            AppTarget(
+                version = "1.7.0",
+                isExperimental = false,
+                minSdk = null,
+            ),
         ),
     )
 }

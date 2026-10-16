@@ -21,6 +21,11 @@ object Constants {
                 isExperimental = false,
                 minSdk = null,
             ),
+            AppTarget(
+                version = "1.4.4",
+                isExperimental = false,
+                minSdk = null,
+            ),
         ),
     )
 }

@@ -47,7 +47,7 @@ from common import (
     warn,
 )
 
-TESTS = ["test_dexdesc.py", "test_miniyaml.py"]
+TESTS = ["test_dexdesc.py", "test_miniyaml.py", "test_platform.py"]
 
 
 def run_tests() -> bool:
@@ -84,7 +84,10 @@ def run_build(do_clean: bool) -> Path:
     gradle(":patches:buildAndroid")
     bundle = built_bundle()
     if bundle is None:
-        raise ToolError("no .mpp produced in patches/build/libs")
+        raise ToolError(
+            "no .mpp produced in patches/build/libs "
+            "(sources and javadoc artefacts are not bundles)"
+        )
     ok(f"built {bundle.name}  ({bundle.stat().st_size:,} bytes)")
     expected = f"patches-{gradle_version()}.mpp"
     if bundle.name != expected:
@@ -126,7 +129,7 @@ def check_generated(bundle: Path) -> bool:
         fail(f"{len(missing)} app(s) in source but absent from patches-list.json:")
         for p in missing:
             info(p)
-        info("run `./gradlew :patches:generatePatchesList` and "
+        info("run `./gradlew :patches:generatePatchesList` (gradlew.bat on Windows) and "
              "`.github/scripts/generate_patches_readme.py`, then rebuild "
              "(buildAndroid must stay last)")
         return False

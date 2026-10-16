@@ -1,0 +1,104 @@
+# byAir (com.byairapp.android) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/byair/{premium,update}/...
+# Verified against 2.41.0 (versionCode 224). See docs/byair-premium-bypass.md and
+# docs/byair-remove-update-prompt.md.
+#
+# byAir's own module classes under ru/wearemad/... are NOT R8-obfuscated, so these anchors
+# pin definingClass + name freely. Only the internals they call (kotlin.Result, Play Core's
+# AppUpdateManager, ...) are renamed, and the Kotlin patches resolve those structurally.
+#
+# =====================================================================================
+# KNOWN PRE-EXISTING FAILURE ON 2.41.0: UpdateSubscriptionUserIdUseCaseFingerprint
+# =====================================================================================
+# The class ru/wearemad/i_subscriptions/use_case/UpdateSubscriptionUserIdUseCase is gone from
+# 2.41.0 entirely (the whole use_case package was reshuffled). The "Enable Online Pro" patch
+# (default=false, experimental) still references it, so that patch cannot apply to 2.41.0 and
+# fails closed with a fingerprint mismatch. Left failing here on purpose, exactly like the
+# JellyWatch entries: a red gate is the honest signal, a guessed re-pin would be worse. This is
+# unrelated to "Remove Update Prompt"; fix it by re-anchoring the seam, not by deleting the row.
+
+# --- premium/Fingerprints.kt (2.41.0 note: one entry no longer resolves, see above) ---
+
+package: com.byairapp.android
+appName: byAir
+version: "2.41.0"
+# 2.41.0 is pinned in COMPATIBILITY_BYAIR (targets = listOf(AppTarget("2.41.0"))), so the harness
+# cross-checks that the version verified here is one the patch actually offers. Adding a new
+# byAir release means adding its AppTarget there *and* listing it here.
+pinnedVersions: ["2.41.0"]
+extracted: apks/extracted/byair
+
+fingerprints:
+  # --- premium/Fingerprints.kt ---
+  - name: NeedShowPaywallAppLaunchDecisionFingerprint
+    definingClass: Lru/wearemad/i_subscriptions/use_case/show_paywall/commands/NeedShowPaywallAppLaunchCommand;
+    method: invoke$lambda$0
+    returnType: Z
+    parameters: [Z, I, Lru/wearemad/i_subscriptions/data/user_actions/PaywallUserActionsDTO;]
+
+  - name: NeedShowPaywallOnboardingDecisionFingerprint
+    definingClass: Lru/wearemad/i_subscriptions/use_case/show_paywall/commands/NeedShowPaywallOnboardingCommand;
+    method: invoke$lambda$0
+    returnType: Z
+    parameters: [Z, Z]
+
+  - name: BuildAppProBannerResultFingerprint
+    definingClass: Lru/wearemad/byair/domain/common/BuildAppProBannerStateUseCase$invoke$2;
+    method: invokeSuspend
+    returnType: Ljava/lang/Object;
+    parameters: [Ljava/lang/Object;]
+
+  - name: UserInfoIsSubscriberFingerprint
+    definingClass: Lru/wearemad/domain/user/UserInfo;
+    method: isSubscriber
+    returnType: Z
+
+  # Declared but not referenced by any patch; kept so the set mirrors the Kotlin source.
+  - name: UserInfoGetSignedInFingerprint
+    definingClass: Lru/wearemad/domain/user/UserInfo;
+    method: getSignedIn
+    returnType: Z
+
+  # --- premium/OnlineFingerprints.kt ---
+  - name: HasProEntitlementRequestFingerprint
+    definingClass: Lru/wearemad/byair/domain/mediator/banners/HasProEntitlementRequestImpl;
+    method: invoke
+    returnType: Ljava/lang/Object;
+    parameters: [Lkotlin/coroutines/Continuation;]
+
+  - name: UpdateSubscriptionUserIdUseCaseFingerprint
+    definingClass: Lru/wearemad/i_subscriptions/use_case/UpdateSubscriptionUserIdUseCase;
+    method: invoke
+    returnType: Ljava/lang/Object;
+    parameters: [Lkotlin/coroutines/Continuation;]
+    note: >-
+      KNOWN FAILURE on 2.41.0 - the class no longer exists (see the file header). Only used by
+      the experimental, default-off "Enable Online Pro" patch.
+
+  - name: UpdateRemoteProStatusUseCaseFingerprint
+    definingClass: Lru/wearemad/i_subscriptions/use_case/UpdateRemoteProStatusUseCase;
+    method: invoke
+    returnType: Ljava/lang/Object;
+    parameters: [Lkotlin/coroutines/Continuation;]
+
+  - name: UpdateUserSubscriptionStatusRequestFingerprint
+    definingClass: Lru/wearemad/byair/domain/mediator/common/UpdateUserSubscriptionStatusRequestImpl;
+    method: invoke
+    returnType: Ljava/lang/Object;
+    parameters: [Z, Lkotlin/coroutines/Continuation;]
+
+  # --- update/UpdateFingerprints.kt (Remove Update Prompt) ---
+  # Primary: the forced-update gate entry, a suspend use case typed Result<Boolean>.
+  - name: CheckNeedForceUpdateUseCaseInvokeFingerprint
+    definingClass: Lru/wearemad/i_app_update/use_case/CheckNeedForceUpdateUseCase;
+    method: invoke
+    returnType: Ljava/lang/Object;
+    parameters: [Lkotlin/coroutines/Continuation;]
+
+  # Secondary: the app's own version-code reader, matched by shape (class + I + no params)
+  # rather than by name, since R8 may rename a private method.
+  - name: CurrentAppVersionCodeFingerprint
+    definingClass: Lru/wearemad/i_app_update/use_case/CheckNeedForceUpdateUseCase;
+    returnType: I
+    parameters: []

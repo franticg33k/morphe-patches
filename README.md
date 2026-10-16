@@ -5,26 +5,32 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.4.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.4.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;26 patches total
+> **[v1.5.0-dev.3](https://github.com/franticg33k/morphe-patches/releases/tag/v1.5.0-dev.3)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;27 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's interstitial ads. Two edits to libapp.so: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the same length, and AdsBloc::featureInterstitialAdWithHtmlPopup - the single callee behind all 24 interstitial call sites - is forced down its existing 'popup blocked' return, so the full-screen ad page and its countdown never open. The host rewrite alone is not enough: the ad URLs are also cached in SharedPreferences under PREF_SLIDER_DATA, and whether to show the page at all comes from remote config, which the app rewrites on every launch. Pairs with Remove Ads, which stops the ad content itself and the AdMob interstitials. |  |
+| [Block Ad Server](#block-ad-server) | Stops Nepali Patro's ads. Eight byte-asserted edits to libapp.so plus an in-place host rewrite: the ad-only host ads-delivery.nepalipatro.com.np is rewritten to an unresolvable .xx domain of the same length; the interstitial_html dispatch in the ad-queue callback is retargeted so the full-screen page is never pushed; showHtmlInterstitialAdDialog - the single function that raises the HTML interstitial roadblock - is stubbed out; the popup/popup_html branch is forced down the app's own 'blocked' return; and the five raster formats (slider, banner, popup, card_view, circular) are dropped to the build's own empty-widget tail, so the image creatives Remove Ads cannot see - they are fetched by Dart through CachedNetworkImage, not by a WebView - are never requested at all. The host rewrite alone is not enough: the ad URLs are also cached in SharedPreferences under PREF_SLIDER_DATA, and whether to present the shell at all comes from remote config, which the app rewrites on every launch. Pairs with Remove Ads, which stops the HTML creatives and the AdMob interstitials. |  |
 | [Remove Ads](#remove-ads) | Disables both ad stacks in Nepali Patro: Google Mobile Ads (AdMob) and the first-party flutter_adserver HTML ad server. AdMob's method-channel entry point is short-circuited for every load and show call so no ad is ever created, and the WebView loaders the ad server uses are neutralised - loadData and loadDataWithBaseUrl become no-ops, while loadUrl only refuses the ads-delivery.nepalipatro.com.np host and data: URLs so normal in-app browsing keeps working. |  |
 
 </details>
 
 <details open>
-<summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<summary>📦 byAir&nbsp;&nbsp;•&nbsp;&nbsp;3 patches</summary>
 <br>
+
+**🎯 Supported versions:**
+
+| 2.41.0 |
+| :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Enable Online Pro](#enable-online-pro) | Experimental companion patch that keeps byAir's online Pro gates open without forcing the crash-prone global entitlement refresh path. |  |
 | [Enable Pro](#enable-pro) | Suppresses the main byAir paywall, unlock banners, local user gating, and the notifications preferences "All" gate. |  |
+| [Remove Update Prompt](#remove-update-prompt) | Removes byAir's forced-update screen ("Pack up for Update! 🚀" / "Update Now") by pinning its version gate to "no update required". byAir fetches a server-side minimum version code on launch and, if your build is older, blocks the whole app behind a non-dismissible screen whose only action opens Google Play. With the gate closed a patched older build keeps running and never calls the min-version endpoint, so you no longer have to re-patch every time byAir ships a release. |  |
 
 </details>
 
@@ -73,8 +79,8 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 1.6.5 |
-| :---: |
+| 1.6.5 | 1.7.0 |
+| :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
@@ -160,8 +166,8 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 1.4 | 1.4.2 |
-| :---: | :---: |
+| 1.4 | 1.4.2 | 1.4.4 |
+| :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|

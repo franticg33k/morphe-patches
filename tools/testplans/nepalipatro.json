@@ -1,0 +1,38 @@
+{
+  "name": "nepalipatro",
+  "package": "np.com.nepalipatro",
+  "launchWaitSeconds": 40,
+  "settleSeconds": 3,
+  "prewarmScrolls": 6,
+  "scroll": { "x": 540, "yFrom": 1800, "yTo": 600, "durationMs": 280, "settleMs": 900 },
+  "steps": [
+    { "name": "home", "tap": [107, 2250], "waitSeconds": 12, "scrolls": 3 },
+    { "name": "rashifal", "tap": [321, 2250], "waitSeconds": 12, "scrolls": 3 },
+    { "name": "calendar", "tap": [538, 2250], "waitSeconds": 12, "scrolls": 3 },
+    { "name": "news", "tap": [754, 2250], "waitSeconds": 12, "scrolls": 3 },
+    { "name": "more", "tap": [974, 2250], "waitSeconds": 12, "scrolls": 3 }
+  ],
+  "markers": [
+    "555HTML: ================= SLIDERWIDGET",
+    "Slider impression send banner",
+    "Slider impression send circular",
+    "Slider impression send slider",
+    "Slider impression send",
+    "Slider html banner",
+    "Slider html circular",
+    "Slider html roadblock",
+    "Slider html interstitial",
+    "fetchAds",
+    "Loaded Successfully",
+    "BADS GG",
+    "NADS FB",
+    "IADS GG",
+    "POPUP_ADS",
+    "popup allowed"
+  ],
+  "slots": [
+    { "label": "SLIDERWIDGET slots", "prefix": "SLIDERWIDGET " },
+    { "label": "impression slots", "prefix": "Slider impression send " },
+    { "label": "html slots", "prefix": "Slider html " }
+  ]
+}
