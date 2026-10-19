@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/franticg33k/morphe-patches/compare/v1.5.0...v1.5.1) (2026-10-19)
+
+### 🐛 Bug Fixes
+
+* **atlasphoto:** locate the branching setIsProMember setter in 2.7.9 ([cd3b267](https://github.com/franticg33k/morphe-patches/commit/cd3b267c5d7a7a43e4b945c807f62012a3e5486f))
+* **byair:** drop the dead UpdateSubscriptionUserId stub from Enable Online Pro ([2990578](https://github.com/franticg33k/morphe-patches/commit/2990578ef0628db348ddddfe6a1d1290f3d0495c)), closes [#51](https://github.com/franticg33k/morphe-patches/issues/51)
+
 ## [1.5.1-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.5.1-dev.1...v1.5.1-dev.2) (2026-10-19)
 
 ### 🐛 Bug Fixes
