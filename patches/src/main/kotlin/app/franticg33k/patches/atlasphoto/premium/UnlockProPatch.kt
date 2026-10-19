@@ -81,6 +81,26 @@ private val KNOWN_SIGNATURES = listOf(
     "3401003b02010001019318f719890301" to "2.6.2",
 )
 
+// 2.7.9 reshaped the setter: it now reads the previous state and keeps the flag only while the dev
+// free-override is off, so LoadParam moved to +3 and the NewObjectWithBuffer operands sit after the
+// branch. The jump offset (wildcard, +11) is build-relative, so it is not pinned.
+//
+//   GetParentEnvironment r1, 0          34 01 00
+//   LoadParam         r3, 1             89 03 01            <- patch target (+3)
+//   LoadFromEnvironment r2, r1, 0       3b 02 01 00
+//   JmpFalse          L1, r3            b2 ?? 03
+//   LoadFromEnvironment r1, r1, 1       3b 01 01 01
+//   LoadConstUndefined r0               93 00
+//   Call1             r1, r1, r0        6c 01 01 00
+//   (GetById "isDevFreeOverride"; Not r3, r1)
+//   L1: NewObjectWithBuffer ...; PutOwnBySlotIdx r1, r3, 0; ...
+//
+// Forcing r3 = 1 makes the branch fall through, so r3 = !isDevFreeOverride = true.
+private val BRANCHING_HEAD = hexToBytes("3401008903013b020100b2") // [0..10], target at +3
+private val BRANCHING_HEAD_PATCHED = hexToBytes("3401008b03013b020100b2")
+private val BRANCHING_TAIL = hexToBytes("3b01010193006c010100") // [13..], after jmp offset + r3
+private const val BRANCHING_REG_AT = 12 // JmpFalse's register operand must be r3
+
 private class SetterCandidate(val offset: Int, val keyOperand: Int)
 
 // Locator B scan: every function in the bundle with the setter shape above (operands wild).
@@ -140,6 +160,9 @@ val unlockAtlasPhotoProPatch = rawResourcePatch(
         if (bytes.occurrencesOf(PROLOGUE).any { bytes.matchesAt(it + 13, PATCHED_LOAD) }) {
             fail("the bundle appears to be patched already")
         }
+        if (bytes.occurrencesOf(BRANCHING_HEAD_PATCHED).any { bytes.matchesAt(it + 13, BRANCHING_TAIL) }) {
+            fail("the bundle appears to be patched already")
+        }
 
         // Locator A - exact per-release signatures. Each must match exactly once; the first
         // one that does wins. This is the fast, precise path for all known releases.
@@ -154,6 +177,21 @@ val unlockAtlasPhotoProPatch = rawResourcePatch(
                 bundleFile.writeBytes(bytes)
                 return@execute
             }
+        }
+
+        // Locator A2 - the 2.7.9+ branching setter. Exactly one function has this shape.
+        val branching = bytes.occurrencesOf(BRANCHING_HEAD).filter {
+            bytes.size > it + BRANCHING_REG_AT && bytes[it + BRANCHING_REG_AT] == 0x03.toByte() &&
+                bytes.matchesAt(it + 13, BRANCHING_TAIL)
+        }
+        if (branching.size > 1) fail("the 2.7.9 setter shape matches ${branching.size} locations")
+        if (branching.size == 1) {
+            val target = branching.single() + 3
+            bytes[target] = PATCHED_LOAD[0]
+            bytes[target + 1] = PATCHED_LOAD[1]
+            bytes[target + 2] = PATCHED_LOAD[2]
+            bundleFile.writeBytes(bytes)
+            return@execute
         }
 
         // Locator B - structural fallback for future releases: same instruction shape with

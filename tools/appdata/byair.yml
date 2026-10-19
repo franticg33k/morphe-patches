@@ -8,15 +8,10 @@
 # pin definingClass + name freely. Only the internals they call (kotlin.Result, Play Core's
 # AppUpdateManager, ...) are renamed, and the Kotlin patches resolve those structurally.
 #
-# =====================================================================================
-# KNOWN PRE-EXISTING FAILURE ON 2.41.0: UpdateSubscriptionUserIdUseCaseFingerprint
-# =====================================================================================
-# The class ru/wearemad/i_subscriptions/use_case/UpdateSubscriptionUserIdUseCase is gone from
-# 2.41.0 entirely (the whole use_case package was reshuffled). The "Enable Online Pro" patch
-# (default=false, experimental) still references it, so that patch cannot apply to 2.41.0 and
-# fails closed with a fingerprint mismatch. Left failing here on purpose, exactly like the
-# JellyWatch entries: a red gate is the honest signal, a guessed re-pin would be worse. This is
-# unrelated to "Remove Update Prompt"; fix it by re-anchoring the seam, not by deleting the row.
+# 2.41.0 note: UpdateSubscriptionUserIdUseCase (ru/wearemad/i_subscriptions/use_case/) no longer
+# exists -- the user-id sync moved into RevenueCatIdentity.ensureAttached, a different shape. The
+# "Enable Online Pro" patch (issue #51) therefore stubs only the two seams that still resolve:
+# UpdateRemoteProStatusUseCase and UpdateUserSubscriptionStatusRequestImpl.
 
 # --- premium/Fingerprints.kt (2.41.0 note: one entry no longer resolves, see above) ---
 
@@ -66,15 +61,6 @@ fingerprints:
     method: invoke
     returnType: Ljava/lang/Object;
     parameters: [Lkotlin/coroutines/Continuation;]
-
-  - name: UpdateSubscriptionUserIdUseCaseFingerprint
-    definingClass: Lru/wearemad/i_subscriptions/use_case/UpdateSubscriptionUserIdUseCase;
-    method: invoke
-    returnType: Ljava/lang/Object;
-    parameters: [Lkotlin/coroutines/Continuation;]
-    note: >-
-      KNOWN FAILURE on 2.41.0 - the class no longer exists (see the file header). Only used by
-      the experimental, default-off "Enable Online Pro" patch.
 
   - name: UpdateRemoteProStatusUseCaseFingerprint
     definingClass: Lru/wearemad/i_subscriptions/use_case/UpdateRemoteProStatusUseCase;

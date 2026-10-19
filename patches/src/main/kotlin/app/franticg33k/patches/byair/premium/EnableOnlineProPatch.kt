@@ -32,7 +32,6 @@ val enableByAirOnlineProPatch = bytecodePatch(
     execute {
         val successUnit = successUnitReturn()
 
-        UpdateSubscriptionUserIdUseCaseFingerprint.method.addInstructions(0, successUnit)
         UpdateRemoteProStatusUseCaseFingerprint.method.addInstructions(0, successUnit)
         UpdateUserSubscriptionStatusRequestFingerprint.method.addInstructions(0, successUnit)
     }
