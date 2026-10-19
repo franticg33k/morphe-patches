@@ -1,3 +1,9 @@
+## [1.5.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.5.0...v1.5.1-dev.1) (2026-10-19)
+
+### 🐛 Bug Fixes
+
+* **byair:** drop the dead UpdateSubscriptionUserId stub from Enable Online Pro ([2990578](https://github.com/franticg33k/morphe-patches/commit/2990578ef0628db348ddddfe6a1d1290f3d0495c)), closes [#51](https://github.com/franticg33k/morphe-patches/issues/51)
+
 ## [1.5.0](https://github.com/franticg33k/morphe-patches/compare/v1.4.2...v1.5.0) (2026-10-16)
 
 ### 🐛 Bug Fixes
