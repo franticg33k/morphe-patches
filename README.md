@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.5.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.5.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;27 patches total
+> **[v1.6.0-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.6.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;29 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -147,6 +147,22 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity from AndroidManifest.xml. |  |
 | [Remove License Check](#remove-license-check) | Bypasses the PairIP Google Play Licensing check so the app runs without a valid Play Store license. |  |
 | [Remove Watermark](#remove-watermark) | Patches the procedural GLSL shader in libharwin_native.so to disable the "PRISMATICA" watermark in the video player and exported videos. |  |
+
+</details>
+
+<details open>
+<summary>📦 Marriage&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 2.8.45 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Reward when the ad fails to load](#reward-when-the-ad-fails-to-load) | The reward for a rewarded ad is granted by one branch of the ad listener, and the redemption call it makes (a/redeemAdReward) never checks that an ad was actually shown. This routes the ad-load-failure branch into that same reward call, so pressing "Watch ad" with no ad available pays out instead of showing "Ad Error". |  |
+| [Skip hourly gift cooldown](#skip-hourly-gift-cooldown) | Removes the one-hour countdown gate on the lobby gift button, so the gift screen opens on every press instead of after the timer. The window is computed on the device (account.giftTimeStamp + 1 h) - this only removes that gate; whether the server accepts a claim inside the hour is up to the server. |  |
 
 </details>
 

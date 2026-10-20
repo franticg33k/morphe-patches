@@ -1,3 +1,9 @@
+## [1.6.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.5.1...v1.6.0-dev.1) (2026-10-20)
+
+### ✨ New Features
+
+* **marriage:** skip hourly gift cooldown and pay out on ad-load failure ([7811ecb](https://github.com/franticg33k/morphe-patches/commit/7811ecb1079f0f26731adfb0ad8f1eb71c42d8cb))
+
 ## [1.5.1](https://github.com/franticg33k/morphe-patches/compare/v1.5.0...v1.5.1) (2026-10-19)
 
 ### 🐛 Bug Fixes
