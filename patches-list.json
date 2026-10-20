@@ -454,6 +454,58 @@
       "options": []
     },
     {
+      "name": "Reward when the ad fails to load",
+      "description": "The reward for a rewarded ad is granted by one branch of the ad listener, and the redemption call it makes (a/redeemAdReward) never checks that an ad was actually shown. This routes the ad-load-failure branch into that same reward call, so pressing \"Watch ad\" with no ad available pays out instead of showing \"Ad Error\".",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.bhoos.marriage",
+          "name": "Marriage",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#E0457B",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "2.8.45",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Skip hourly gift cooldown",
+      "description": "Removes the one-hour countdown gate on the lobby gift button, so the gift screen opens on every press instead of after the timer. The window is computed on the device (account.giftTimeStamp + 1 h) - this only removes that gate; whether the server accepts a claim inside the hour is up to the server.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.bhoos.marriage",
+          "name": "Marriage",
+          "description": null,
+          "apkFileType": null,
+          "appIconColor": "#E0457B",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "2.8.45",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
       "name": "Unlock Edge",
       "description": "Unlocks the Fricam Edge feature for free. Edge is a self-hosted companion sidecar that runs beside your Frigate NVR and streams low-latency + AI-detection frames into the app over WebRTC. Unlike Pro there is no local persistence for Edge: on every RevenueCat sync the app recomputes the \"fricam_edge\" entitlement and publishes it into an in-memory StateFlow that drives the pairing/settings/diagnostics UI. The patch forces that published flag true so the Edge UI and the self-hosted (edge-local / Frigate-direct) routes open without a subscription. Note: Fricam's managed Cloudflare relay (edge-remote, monthly allowance) is authenticated server-side and is not bypassed - run the open-source sidecar yourself to get the full value.",
       "default": true,
