@@ -1,0 +1,62 @@
+# Marriage 2.8.45 (com.bhoos.marriage) - Hermes bundle site table.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/marriage/economy/.
+#
+# This app has NO usable dex fingerprints for these two patches. The economy, the ad flow and
+# the gift timer are JavaScript compiled ahead of time into assets/index.android.bundle (Hermes
+# bytecode, HBC v96) - there is no Kotlin/Java layer to anchor on, and the app is R8 full-mode
+# obfuscated where it does have one. So the "fingerprint" here is a byte signature inside the
+# bundle: a hex needle that must match exactly once, with a length-preserving edit at a fixed
+# offset inside it.
+#
+# The patch enforces the same rules itself (see bundle/HermesBundle.kt): header magic + HBC
+# version + declared file length are asserted, each signature must resolve exactly once, the
+# expected bytes at the edit offset are asserted, and an already-patched bundle is recognised by
+# the post-edit signature instead of failing. What this file adds is the human-readable mirror,
+# so a future version can be re-pinned without re-deriving which function each site belongs to.
+#
+# Upgrade path when the app updates: `python tools/intake.py --package com.bhoos.marriage`, then
+# disassemble assets/index.android.bundle with hermes-dec and re-locate the two functions
+# (AnimatedGiftIcon.handlePress and the rewarded-ad event listener); take fresh signatures that
+# match once, update the Site entries and this table, then append an AppTarget to Constants.kt.
+
+package: com.bhoos.marriage
+appName: Marriage
+version: "2.8.45"
+pinnedVersions: ["2.8.45"]
+extracted: apks/extracted/marriage
+
+# Intentionally empty: neither patch anchors on a dex method. tools/fingerprints.py reports
+# "0 fingerprint(s)" for this app and the real gate is the byte assertion in the patch.
+fingerprints: []
+
+# Hermes bundle sites. `signature` is searched verbatim (hex); `editOffset` is the byte offset of
+# the edit inside it; `expected` is asserted before writing and `replacement` must be the same
+# length. Both non-negotiable: Hermes has no re-layout pass.
+hermesSites:
+  - name: GiftCountdownGate
+    function: Function #12720 AnimatedGiftIcon.handlePress
+    bundleOffset: "0x23434b"
+    signature: "2e01000a9036012901012e0401002e050101"
+    editOffset: 4
+    expected: "903601"
+    replacement: "8e3600"
+    note: >-
+      JmpTrue r1,+0x36 becomes Jmp +0x36, so the press no longer waits for the
+      account.giftTimeStamp + 1 h countdown computed by Label (Function #12727). The third byte
+      is JmpTrue's register operand and becomes 0x00 Unreachable, keeping the instruction length
+      and every later offset intact.
+
+  - name: AdErrorReward
+    function: Function #17581 rewarded-ad event listener
+    bundleOffset: "0x5036ec"
+    signature: "510202032e03010336020311"
+    editOffset: 4
+    expected: "2e030103"
+    replacement: "8ed60000"
+    note: >-
+      In the AdEventType.ERROR branch, after modal.hide(), jump to the EARNED_REWARD body at
+      0x164 (which loads closure slot 12 = rewardUser and calls it) instead of building the
+      "Ad Error" message. rewardUser ignores its argument (its generator has no LoadParam), so
+      passing the environment object in place of the ad payload is harmless. The redemption
+      itself is POST a/redeemAdReward, which does not check that an ad was shown.
