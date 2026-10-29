@@ -1,3 +1,9 @@
+## [1.6.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.6.0...v1.6.1-dev.1) (2026-10-29)
+
+### 🚀 Updated App Support
+
+* byAir 2.42.0, Atlas Photo 2.8.2, Fricam 1.7.4, Native Camera 1.4.5 ([3a5974d](https://github.com/franticg33k/morphe-patches/commit/3a5974daed7b3ec25324902c9912d196fba90f22))
+
 ## [1.6.0](https://github.com/franticg33k/morphe-patches/compare/v1.5.1...v1.6.0) (2026-10-21)
 
 ### ✨ New Features
