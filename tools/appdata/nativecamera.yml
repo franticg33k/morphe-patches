@@ -1,18 +1,19 @@
 # Native Camera (com.rawcam.app) - fingerprint set.
 #
 # Mirrors patches/src/main/kotlin/app/franticg33k/patches/nativecamera/premium/Fingerprints.kt
-# Analysis: docs/nativecamera-premium-analysis.md (written against 1.4.2; re-verified on 1.4.4).
+# Analysis: docs/nativecamera-premium-analysis.md (written against 1.4.2; re-verified on 1.4.4
+# and again on 1.4.5 with the same fingerprint set).
 #
 # The CameraViewModel class and its method names are R8-renamed every build
-# (1.4.2 LQ1/q;->S(Z)V -> 1.4.4 LR1/q;->U(Z)V), so nothing here pins a class or method name
-# except the constructor and the unobfuscated PairIP checkLicense. Anchors are the
-# SharedPreferences file + key and the PairIP log strings, neither of which moved between
-# 1.4.2 and 1.4.4.
+# (1.4.2 LQ1/q;->S(Z)V -> 1.4.4 LR1/q;->U(Z)V -> 1.4.5 LR1/r;->W(Z)V), so nothing here pins a
+# class or method name except the constructor and the unobfuscated PairIP checkLicense. Anchors
+# are the SharedPreferences file + key and the PairIP log strings, none of which moved between
+# 1.4.2 and 1.4.5.
 
 package: com.rawcam.app
 appName: Native Camera
-version: "1.4.4"
-pinnedVersions: ["1.4", "1.4.2", "1.4.4"]
+version: "1.4.5"
+pinnedVersions: ["1.4", "1.4.2", "1.4.4", "1.4.5"]
 extracted: apks/extracted/nativecamera
 
 fingerprints:

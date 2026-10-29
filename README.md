@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.6.0](https://github.com/franticg33k/morphe-patches/releases/tag/v1.6.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;29 patches total
+> **[v1.6.0](https://github.com/franticg33k/morphe-patches/releases/tag/v1.6.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;29 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -23,13 +23,13 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 2.41.0 |
-| :---: |
+| 2.41.0 | 2.42.0 |
+| :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Enable Online Pro](#enable-online-pro) | Experimental companion patch that keeps byAir's online Pro gates open without forcing the crash-prone global entitlement refresh path. |  |
-| [Enable Pro](#enable-pro) | Suppresses the main byAir paywall, unlock banners, local user gating, and the notifications preferences "All" gate. |  |
+| [Enable Online Pro](#enable-online-pro) | Experimental companion patch that keeps byAir's online Pro status from being downgraded: forces the pro-status sync to always persist isSubscriber = true into the local user table, so a later RevenueCat refresh or a failed network round-trip cannot turn Pro back off. |  |
+| [Enable Pro](#enable-pro) | Unlocks byAir Pro: forces the RevenueCat entitlement to "subscriber" and marks the local user as a subscriber, which is what the pro banner, flight-details and flight-time gates read. |  |
 | [Remove Update Prompt](#remove-update-prompt) | Removes byAir's forced-update screen ("Pack up for Update! 🚀" / "Update Now") by pinning its version gate to "no update required". byAir fetches a server-side minimum version code on launch and, if your build is older, blocks the whole app behind a non-dismissible screen whose only action opens Google Play. With the gate closed a patched older build keeps running and never calls the min-version endpoint, so you no longer have to re-patch every time byAir ships a release. |  |
 
 </details>
@@ -69,7 +69,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 |----------|----------------|-----------|
 | [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity from AndroidManifest.xml. |  |
 | [Remove License Check](#remove-license-check) | Bypasses the PairIP Google Play Licensing check so Atlas Photo runs without a valid Play Store license. |  |
-| [Unlock Pro](#unlock-pro) | Forces Atlas Photo's Hermes (React Native) JS runtime to treat every session as a Pro subscriber by patching the setIsProMember reducer so its isPro field is always truthy. Unlocks all Pro features and removes the Pro paywall. |  |
+| [Unlock Pro](#unlock-pro) | Forces Atlas Photo's Hermes (React Native) JS runtime to treat every session as a Pro subscriber by patching the setIsProMember store writer, so the isProMember flag is always truthy. Unlocks all Pro features and removes the Pro paywall. |  |
 
 </details>
 
@@ -79,8 +79,8 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 1.6.5 | 1.7.0 |
-| :---: | :---: |
+| 1.6.5 | 1.7.0 | 1.7.4 |
+| :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
@@ -182,8 +182,8 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 **🎯 Supported versions:**
 
-| 1.4 | 1.4.2 | 1.4.4 |
-| :---: | :---: | :---: |
+| 1.4 | 1.4.2 | 1.4.4 | 1.4.5 |
+| :---: | :---: | :---: | :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|

@@ -6,15 +6,18 @@ import app.morphe.patcher.patch.bytecodePatch
 import app.franticg33k.patches.byair.shared.Constants.COMPATIBILITY_BYAIR
 import app.franticg33k.patches.byair.shared.KotlinResultBox
 
-private const val TRUE_RETURN = """
-    const/4 v0, 0x1
-    return v0
-"""
+/**
+ * The `UserInfo` constructor's `isSubscriber` argument is the *second* parameter, so it lives
+ * in `p2` (`p0` = this, `p1` = id). The constructor's own `iput-boolean p2, ... ->b:Z` then
+ * stores it, and `p2` is only re-used as a scratch register afterwards.
+ */
+private const val FORCE_SUBSCRIBER = "const/4 p2, 0x1"
 
-private const val FALSE_RETURN = """
-    const/4 v0, 0x0
-    return v0
-"""
+private val TRUE_VALUE = """
+    const/4 v0, 0x1
+    invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
+    move-result-object v0
+""".trimIndent()
 
 /**
  * Wraps the instructions in [value] (which must leave the success value in `v0`) in a real
@@ -30,37 +33,31 @@ private fun BytecodePatchContext.successReturn(value: String): String {
         "return-object v1"
 }
 
-private const val NULL_VALUE = "const/4 v0, 0x0"
-
-private val TRUE_VALUE = """
-    const/4 v0, 0x1
-    invoke-static {v0}, Ljava/lang/Boolean;->valueOf(Z)Ljava/lang/Boolean;
-    move-result-object v0
-""".trimIndent()
-
 @Suppress("unused")
 val enableByAirProPatch = bytecodePatch(
     name = "Enable Pro",
-    description = "Suppresses the main byAir paywall, unlock banners, local user gating, and the notifications preferences \"All\" gate.",
+    description = "Unlocks byAir Pro: forces the RevenueCat entitlement to \"subscriber\" and marks the local user as a subscriber, which is what the pro banner, flight-details and flight-time gates read.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_BYAIR)
 
     execute {
-        // Login-safe: only force the RevenueCat entitlement (isSubscriber).
-        // Do NOT force UserInfo.getSignedIn() — the login/session handshake
-        // (RevenueCat + byAir OAuth) reads getSignedIn to decide whether to run,
-        // so forcing TRUE there breaks login. (Bug: login fails with Enable Pro only.)
-        UserInfoIsSubscriberFingerprint.method.addInstructions(0, TRUE_RETURN)
+        // Login-safe: only force the RevenueCat-derived isSubscriber flag.
+        // Do NOT force the constructor's `j` field (the signed-in flag) -- the login/session
+        // handshake (RevenueCat + byAir OAuth) reads it to decide whether to run, so forcing
+        // TRUE there breaks login. That was the 2.41.0 lesson and it still holds in 2.42.0.
+        val ctor = UserInfoIsSubscriberFingerprint.method
+        require(ctor.parameterTypes.size == 8 && ctor.parameterTypes[1] == "Z") {
+            "UserInfo constructor is no longer (String, Z, ...): got ${ctor.parameterTypes}. " +
+                "The isSubscriber argument moved -- do NOT patch this build; re-locate the " +
+                "seam first (see docs/byair-2.42.0-premium-analysis.md)."
+        }
+        ctor.addInstructions(0, FORCE_SUBSCRIBER)
 
-        // Notifications preferences "All" gate: handled by HasProEntitlementRequestImpl.invoke
-        // (the entitlement seam that NotificationsPreferencesProBannerCommandHandler awaits).
-        // This is what keeps "All" locked when only the default patch is enabled.
-        HasProEntitlementRequestFingerprint.method.addInstructions(0, successReturn(TRUE_VALUE))
-
-        BuildAppProBannerResultFingerprint.method.addInstructions(0, successReturn(NULL_VALUE))
-
-        NeedShowPaywallAppLaunchDecisionFingerprint.method.addInstructions(0, FALSE_RETURN)
-        NeedShowPaywallOnboardingDecisionFingerprint.method.addInstructions(0, FALSE_RETURN)
+        // The entitlement seam. Everything that asks "is this user a subscriber?" goes through
+        // this one method: the pro-status sync (m4j), both paywall commands (suc / wuc) and the
+        // four remaining feature gates. Returning Result.success(true) is the 2.42.0 equivalent
+        // of 2.41.0's HasProEntitlementRequestImpl patch.
+        SubscriberCheckFingerprint.method.addInstructions(0, successReturn(TRUE_VALUE))
     }
 }

@@ -88,18 +88,53 @@ private val KNOWN_SIGNATURES = listOf(
 //   GetParentEnvironment r1, 0          34 01 00
 //   LoadParam         r3, 1             89 03 01            <- patch target (+3)
 //   LoadFromEnvironment r2, r1, 0       3b 02 01 00
-//   JmpFalse          L1, r3            b2 ?? 03
+//   JmpFalse          L1, r3            b2 ?? 03            ?? = jump distance, drifts every build
 //   LoadFromEnvironment r1, r1, 1       3b 01 01 01
 //   LoadConstUndefined r0               93 00
 //   Call1             r1, r1, r0        6c 01 01 00
-//   (GetById "isDevFreeOverride"; Not r3, r1)
-//   L1: NewObjectWithBuffer ...; PutOwnBySlotIdx r1, r3, 0; ...
+//   (GetById + Not)                     .. "isDevFreeOverride"; Not r3, r1
+//   L1: NewObjectWithBuffer r1, K, V    01 01 KK KK VV VV    K,V are build constants that drift
+//       PutOwnBySlotIdx   r1, r3, 0     52 01 03 00         <- the write that makes this the setter
+//       LoadConstUndefined r0           93 00
+//       Call2             r1, r2, r0, r1 6e 01 02 00 01     <- hand {isProMember: r3} to the store
+//       Ret               r0            76 00
 //
 // Forcing r3 = 1 makes the branch fall through, so r3 = !isDevFreeOverride = true.
+//
+// 2.8.2 still compiles this shape; it is the only function in the bundle with it, and the hit
+// (0xdb6167) is the byte-for-byte body hermesc prints as NCFunction<setIsProMember> (operands
+// K=8588, V=7109, jump distance 0x16, Ret at 0xdb6198, followed immediately by
+// setIsDevProOverrideEnabled). See docs/atlas-photo-pro-analysis-2.8.2.md.
+//
+// BRANCHING_TAIL alone is not evidence: on a later build a *sibling* branching setter could
+// satisfy it by accident (2.8.2 already has setIsDevProOverrideEnabled / setIsDevFreeOverrideEnabled
+// branching one instruction later), and the uniqueness of the whole head+tail pair was accidental
+// rather than semantic. BRANCHING_WRITE therefore demands the function actually write r3 into slot
+// 0 and return through the store setter, which is what "this sets isProMember" means.
 private val BRANCHING_HEAD = hexToBytes("3401008903013b020100b2") // [0..10], target at +3
 private val BRANCHING_HEAD_PATCHED = hexToBytes("3401008b03013b020100b2")
 private val BRANCHING_TAIL = hexToBytes("3b01010193006c010100") // [13..], after jmp offset + r3
 private const val BRANCHING_REG_AT = 12 // JmpFalse's register operand must be r3
+
+// The store write that closes the setter: PutOwnBySlotIdx r1, r3, 0 / LoadConstUndefined r0 /
+// Call2 r1, r2, r0, r1 / Ret r0. Everything between BRANCHING_TAIL and here is the
+// isDevFreeOverride read, whose property index and GetById cache index both drift, so it is
+// searched as a window rather than pinned. 2.8.2 places it at +38.
+private val BRANCHING_WRITE = hexToBytes("5201030093006e0102000176")
+private const val BRANCHING_WRITE_WINDOW = 48
+
+// How far past BRANCHING_TAIL the store write may sit. A real body is 15-20 bytes; the window is
+// loose enough for a wider GetById cache operand and tight enough that the next function's own
+// setters cannot be reached.
+private fun writesIsProMemberAt(bytes: ByteArray, head: Int): Boolean {
+    val from = head + 13 + BRANCHING_TAIL.size
+    val to = minOf(bytes.size, from + BRANCHING_WRITE_WINDOW)
+    if (from >= to) return false
+    for (i in from until to - BRANCHING_WRITE.size + 1) {
+        if (bytes.matchesAt(i, BRANCHING_WRITE)) return true
+    }
+    return false
+}
 
 private class SetterCandidate(val offset: Int, val keyOperand: Int)
 
@@ -141,8 +176,8 @@ private fun selectIsProMemberFromClusters(candidates: List<SetterCandidate>): In
 val unlockAtlasPhotoProPatch = rawResourcePatch(
     name = "Unlock Pro",
     description = "Forces Atlas Photo's Hermes (React Native) JS runtime to treat every " +
-        "session as a Pro subscriber by patching the setIsProMember reducer so its isPro " +
-        "field is always truthy. Unlocks all Pro features and removes the Pro paywall.",
+        "session as a Pro subscriber by patching the setIsProMember store writer, so the " +
+        "isProMember flag is always truthy. Unlocks all Pro features and removes the Pro paywall.",
     default = true
 ) {
     compatibleWith(COMPATIBILITY_ATLASPHOTO)
@@ -179,10 +214,12 @@ val unlockAtlasPhotoProPatch = rawResourcePatch(
             }
         }
 
-        // Locator A2 - the 2.7.9+ branching setter. Exactly one function has this shape.
+        // Locator A2 - the 2.7.9+ branching setter. Head, JmpFalse register and the store write
+        // together must identify exactly one function; anything else fails closed below.
         val branching = bytes.occurrencesOf(BRANCHING_HEAD).filter {
             bytes.size > it + BRANCHING_REG_AT && bytes[it + BRANCHING_REG_AT] == 0x03.toByte() &&
-                bytes.matchesAt(it + 13, BRANCHING_TAIL)
+                bytes.matchesAt(it + 13, BRANCHING_TAIL) &&
+                writesIsProMemberAt(bytes, it)
         }
         if (branching.size > 1) fail("the 2.7.9 setter shape matches ${branching.size} locations")
         if (branching.size == 1) {
@@ -194,9 +231,16 @@ val unlockAtlasPhotoProPatch = rawResourcePatch(
             return@execute
         }
 
-        // Locator B - structural fallback for future releases: same instruction shape with
-        // the drifting NewObjectWithBuffer operands treated as wildcards, then disambiguated
-        // by the paywall store's consecutive-key setter cluster (see selectIsProMemberFromClusters).
+        // Locator B - structural fallback for the pre-2.7.9 plain setter shape: same instruction
+        // shape with the drifting NewObjectWithBuffer operands treated as wildcards, then
+        // disambiguated by the paywall store's consecutive-key setter cluster
+        // (see selectIsProMemberFromClusters).
+        //
+        // This is a fail-closed safety net, not a general locator. On 2.8.2 it deliberately
+        // returns null: the plain shape now also matches setIsDevTrialUsedOverrideEnabled/
+        // setHasEverStartedPro (keys 8593..8596) and the unrelated 8288..8290 cluster, so two
+        // clusters qualify and the "exactly one" rule refuses to guess. Refusing is correct -
+        // patching a sibling setter applies cleanly and fixes nothing.
         val candidates = findSetterShapeCandidates(bytes)
         val chosen = selectIsProMemberFromClusters(candidates)
         if (chosen == null) {
@@ -204,11 +248,14 @@ val unlockAtlasPhotoProPatch = rawResourcePatch(
                 "0x${it.offset.toString(16)}(key=${it.keyOperand})"
             }
             fail(
-                "setIsProMember could not be located: no known signature matched and the " +
-                    "structural fallback found ${candidates.size} setter-shaped candidates " +
-                    "without a unique consecutive-key store cluster [$dump]. Disassemble the " +
-                    "bundle (docs/atlas-photo-pro-analysis-2.7.3.md, section 12), locate " +
-                    "NCFunction<setIsProMember>, and add its 16-byte prologue to KNOWN_SIGNATURES."
+                "setIsProMember could not be located: no known signature matched, the 2.7.9+ " +
+                    "branching shape did not match, and the structural fallback found " +
+                    "${candidates.size} setter-shaped candidates without a unique " +
+                    "consecutive-key store cluster [$dump]. Disassemble the bundle " +
+                    "(docs/atlas-photo-pro-analysis-2.7.3.md section 12), find " +
+                    "NCFunction<setIsProMember> in the dump, and re-anchor BRANCHING_HEAD/" +
+                    "BRANCHING_TAIL/BRANCHING_WRITE on the observed body - or, if it went back " +
+                    "to the plain shape, add its 16-byte prologue to KNOWN_SIGNATURES."
             )
         }
         bytes[chosen + 13] = PATCHED_LOAD[0]

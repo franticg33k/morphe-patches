@@ -1,0 +1,55 @@
+# Atlas Photo (com.ensembleai.scoutai) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/atlasphoto/{premium,manifest}/...
+# Verified against 2.8.2 (versionCode 157). See docs/atlas-photo-pro-analysis-2.8.2.md.
+#
+# ---------------------------------------------------------------------------------------
+# READ THIS BEFORE TRUSTING THIS FILE FOR THE PRO PATCH
+#
+# Atlas Photo is a Hermes / React Native app. Two of its three patches do NOT operate on
+# dex at all:
+#
+#   * "Unlock Pro"      rewrites 3 bytes inside assets/index.android.bundle (an HBC v98
+#                       bytecode blob). It is a rawResourcePatch and has no dex fingerprint.
+#   * "Remove License Activity"  deletes <activity> entries from AndroidManifest.xml.
+#
+# The harness below resolves *dex* fingerprints only, so it cannot see the Pro patch's
+# anchor. The Hermes locators are checked by the patch itself at apply time (exactly-one
+# rule, three separate locators, fail-closed) - that is a packaging-time check, not a
+# pre-commit one. Do not read a green run of this file as evidence that "Unlock Pro" still
+# aims at the right function; run tools/patch.py and read the output back instead.
+#
+# The Pro patch's 2.8.2 target, recorded here so it is not lost:
+#   file offset  0xdb6167   NCFunction<setIsProMember>
+#   patch        +3: 89 03 01 (LoadParam r3,1) -> 8b 03 01 (LoadConstUInt8 r3,1)
+#   body         GetParentEnvironment r1,0 / LoadParam r3,1 / LoadFromEnvironment r2,r1,0 /
+#                JmpFalse +0x16,r3 / LoadFromEnvironment r1,r1,1 / LoadConstUndefined r0 /
+#                Call1 r1,r1,r0 / GetById "isDevFreeOverride" / Not r3,r1 /
+#                NewObjectWithBuffer r1,8588,7109 / PutOwnBySlotIdx r1,r3,0 /
+#                LoadConstUndefined r0 / Call2 r1,r2,r0,r1 / Ret r0
+# ---------------------------------------------------------------------------------------
+
+package: com.ensembleai.scoutai
+appName: Atlas Photo
+version: "2.8.2"
+# 2.8.2 is what the Pro patch was re-aimed and packaged against. Constants.kt deliberately
+# carries no AppTarget list (package-name-only compatibility, per AGENTS.md rule 14), so
+# this list documents the verified build; it is not a compatibility gate.
+pinnedVersions: ["2.8.2"]
+extracted: apks/extracted/atlas
+
+fingerprints:
+  # --- premium/Fingerprints.kt ---
+  # PairIP Play-Store licensing. Fired from Application.attachBaseContext and
+  # LicenseContentProvider.onCreate, so RemoveLicenseCheckPatch stubs the CALLEE
+  # (checkLicense) with `return-void` instead of touching either caller.
+  # Class and method names are NOT obfuscated - pairip ships as a fixed SDK - which is
+  # why this fingerprint is pinned by name and needs no string anchor.
+  - name: PairipCheckLicenseFingerprint
+    definingClass: "Lcom/pairip/licensecheck/LicenseClient;"
+    method: checkLicense
+    returnType: V
+    parameters: [Landroid/content/Context;]
+    note: >-
+      The single checkLicense(Context)V in the bundle. RemoveLicenseCheckPatch prepends
+      return-void, which covers both call sites at once.

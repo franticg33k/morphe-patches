@@ -26,6 +26,15 @@ object Constants {
                 isExperimental = false,
                 minSdk = null,
             ),
+            // 1.4.5 re-verified: the fingerprints still resolve exactly once even though R8
+            // renamed the view model again (1.4.4 LR1/q;->U(Z)V -> 1.4.5 LR1/r;->W(Z)V), which
+            // is the whole point of anchoring on the prefs file/key and the PairIP strings
+            // instead of a name. No patch source changed. See tools/appdata/nativecamera.yml.
+            AppTarget(
+                version = "1.4.5",
+                isExperimental = false,
+                minSdk = null,
+            ),
         ),
     )
 }

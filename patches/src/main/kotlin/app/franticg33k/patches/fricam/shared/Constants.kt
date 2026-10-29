@@ -33,6 +33,16 @@ object Constants {
                 isExperimental = false,
                 minSdk = null,
             ),
+            // 1.7.4 re-verified with the 1.7.0 fingerprint set, unchanged: all four resolve
+            // exactly once (Lua0;->b/a for the entitlement + persist writer, Lt19;->j for the
+            // master gate) and the methodShape assertions still hold - the sync method has
+            // exactly 2 Boolean.valueOf calls and the first still consumes p1, which is what
+            // UnlockEdgePatch forces. See tools/appdata/fricam.yml.
+            AppTarget(
+                version = "1.7.4",
+                isExperimental = false,
+                minSdk = null,
+            ),
         ),
     )
 }
