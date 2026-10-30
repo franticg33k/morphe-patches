@@ -85,20 +85,24 @@ fingerprints:
 
   # --- update/UpdateFingerprints.kt (Remove Update Prompt) ---
   #
-  # ALL DEAD IN 2.42.0, deliberately not re-pinned here. CheckNeedForceUpdateUseCase and its
-  # version-code reader both live in `ru/wearemad.i_app_update`, which is now minified, so the
-  # anchors cannot be expressed by class name any more. The patch is kept on 2.41.0 only via
-  # COMPATIBILITY_BYAIR_UPDATE so the manager does not offer it where it cannot apply.
-  # Re-aiming it is a separate piece of work -- find the seam by its min-version endpoint and
-  # the "no update required" Result.success(false) fallback, not by these names.
-  #
-  #   - name: CheckNeedForceUpdateUseCaseInvokeFingerprint
-  #     definingClass: Lru/wearemad/i_app_update/use_case/CheckNeedForceUpdateUseCase;
-  #     method: invoke
-  #     returnType: Ljava/lang/Object;
-  #     parameters: [Lkotlin/coroutines/Continuation;]
-  #
-  #   - name: CurrentAppVersionCodeFingerprint
-  #     definingClass: Lru/wearemad/i_app_update/use_case/CheckNeedForceUpdateUseCase;
-  #     returnType: I
-  #     parameters: []
+  # Both are name-free `custom` predicates in Kotlin (the harness cannot evaluate those, so the
+  # entries pin what they resolve to in 2.42.0). 2.42.0 minified `ru.wearemad.i_app_update`; the
+  # use case is now `Lt43;`. The reader is the one int-returning method calling
+  # PackageInfo.getLongVersionCode with shape static(own class) or instance(); invoke is the
+  # non-static one-argument Object-returning method on that same class.
+  - name: CheckNeedForceUpdateUseCaseInvokeFingerprint
+    definingClass: "Lt43;"
+    method: "W"
+    returnType: "Ljava/lang/Object;"
+    parameters: ["Ld84;"]
+    note: >-
+      Suspend entry of the force-update gate. Error fallback is Ls43 case 0 =
+      Ljcf;(Boolean.FALSE), i.e. the Result.Success(false) the patch returns.
+
+  - name: CurrentAppVersionCodeFingerprint
+    definingClass: "Lt43;"
+    method: "V"
+    returnType: "I"
+    parameters: ["Lt43;"]
+    note: >-
+      Static in 2.42.0 (instance, zero-arg in 2.41.0); the predicate accepts both.

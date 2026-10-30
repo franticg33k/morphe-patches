@@ -35,13 +35,8 @@ internal object Constants {
     )
 
     /**
-     * "Remove Update Prompt" only.
-     *
-     * 2.42.0 introduced module minification of every `ru.wearemad.*` library module, which is
-     * exactly where this patch's anchors live: `CheckNeedForceUpdateUseCase` and its
-     * version-code reader are both in `ru.wearemad.i_app_update`, now obfuscated. Re-aiming it
-     * is a separate piece of work, so it is deliberately kept on 2.41.0 only -- the manager then
-     * does not offer a patch that could not apply.
+     * "Remove Update Prompt" only. Its anchors are name-free (see `UpdateFingerprints.kt`), so
+     * it follows the premium target list.
      */
     val COMPATIBILITY_BYAIR_UPDATE = Compatibility(
         name = "byAir",
@@ -50,6 +45,11 @@ internal object Constants {
         targets = listOf(
             AppTarget(
                 version = "2.41.0",
+                isExperimental = false,
+                minSdk = null,
+            ),
+            AppTarget(
+                version = "2.42.0",
                 isExperimental = false,
                 minSdk = null,
             ),
