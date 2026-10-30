@@ -162,7 +162,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 |----------|----------------|-----------|
 | [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity from AndroidManifest.xml. |  |
 | [Remove License Check](#remove-license-check) | Bypasses the PairIP Google Play Licensing check so the app runs without a valid Play Store license. |  |
-| [Remove Watermark](#remove-watermark) | Patches the procedural GLSL shader in libharwin_native.so to disable the "PRISMATICA" watermark in the video player and exported videos. |  |
+| [Remove Watermark](#remove-watermark) | Removes the "PRISMATICA" watermark from the live preview and GPU exports by retargeting the free-tier gate of the procedural GLSL fragment shader embedded in libharwin_native.so: `if (uIsPro == 0)` becomes `if (uIsPro == 2)`, a value the renderer can never pass because the uniform is filled from one native field that only holds 0 or 1. Builds that already gate on `uIsPro == 2` (1.5.8 and later) have the branch unreachable and are reported as already watermark-free instead of failing. |  |
 
 </details>
 
