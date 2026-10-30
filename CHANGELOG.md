@@ -1,3 +1,9 @@
+## [1.6.1-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.6.1-dev.1...v1.6.1-dev.2) (2026-10-30)
+
+### 🐛 Bug Fixes
+
+* **byair:** re-aim Remove Update Prompt at 2.42.0 with name-free fingerprints ([0cf8a60](https://github.com/franticg33k/morphe-patches/commit/0cf8a60eb5714d6356c262e135fc39fdfa341295))
+
 ## [1.6.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.6.0...v1.6.1-dev.1) (2026-10-29)
 
 ### 🚀 Updated App Support
