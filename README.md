@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.6.1-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.6.1-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;29 patches total
+> **[v1.7.0-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;31 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -58,6 +58,22 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | [Remove Ads](#remove-ads) | Blocks all ad display in Provide Lite by forcing the app's central ad gate (in libapp.so) to always take its 'skip' path. Two branch instructions are rewritten to unconditional skips: the global 'ad enabled' flag check (tbz -> b #skip) and the interstitial/rewarded cooldown gate (b.ge -> b #skip). Verified on v1.4.6 (Dart 3.7.0, arm64, obfuscated) — no ad-show invocation is reached. |  |
 | [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity and LicenseContentProvider from AndroidManifest.xml and the com.android.vending.CHECK_LICENSE permission, so the app runs without a valid Play Store license (required because the APK is re-signed during patching). |  |
 | [Unlock Premium](#unlock-premium) | Patches the Dart AOT-compiled libapp.so to unlock all premium / VIP features. Forces the VIP state to always be true by rewriting the constant-pool loads (add xN, x22, #0x30 -> add xN, x22, #0x20) inside the cacheIsVipKey readers (getter + 3 callers). Verified on v1.4.6 (Dart 3.7.0, arm64, obfuscated) — flutter.cacheIsVipKey=true on device. |  |
+
+</details>
+
+<details open>
+<summary>📦 Marriage Card Game&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 15.6 |
+| :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Remove Interstitial Ads](#remove-interstitial-ads) | Stops the between-games Unity LevelPlay/IronSource interstitial from being loaded or shown. The app's own `mm_noads_new` purchase sets `Settings.playWithJokerOld` to suppress it, so this also gives that paid behaviour to builds without the purchase. |  |
+| [Skip Public Zone Rewarded Ad](#skip-public-zone-rewarded-ad) | Skips the rewarded Unity LevelPlay video that gates the Public Zone matchmaker and reports it as watched immediately, so the room search starts at once. The app's `mm_noads_new` purchase does not cover this ad. |  |
 
 </details>
 

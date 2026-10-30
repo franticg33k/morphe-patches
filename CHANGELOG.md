@@ -1,3 +1,9 @@
+## [1.7.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.6.1-dev.2...v1.7.0-dev.1) (2026-10-30)
+
+### ✨ New Features
+
+* **marriage:** add interstitial and rewarded ad removal patches ([45ba8eb](https://github.com/franticg33k/morphe-patches/commit/45ba8eb1f1b88cdeff18f3b908df5b958bb51ad2))
+
 ## [1.6.1-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.6.1-dev.1...v1.6.1-dev.2) (2026-10-30)
 
 ### 🐛 Bug Fixes
