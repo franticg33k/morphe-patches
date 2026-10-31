@@ -96,11 +96,19 @@ val scanToJoinPatch = bytecodePatch(
         "menu's \"Connect only via Wi-Fi\". The prompt offers: Reconnect to the last camera (saved after a " +
         "successful join, no scan needed), Scan the camera's QR code, or Already connected. Android's own " +
         "Wi-Fi approval prompt still appears each time.\n\n" +
-        "SUPPORTED: the Wi-Fi QR of Sony cameras that use the \"W01:S:…;P:…;C:…;M:…;\" format; Remote " +
-        "Shooting after the connection (tested on a ZV-E10, app 3.6.0, Wi-Fi Direct / Smartphone Connect).\n" +
-        "NOT SUPPORTED: Bluetooth pairing; cameras without a Wi-Fi QR; joining while a VPN is on. The camera " +
-        "must still be showing its Smartphone Connect screen each time. Adds the CAMERA permission. " +
-        "Import, other cameras and the reconnect-after-camera-restart case were not checked.",
+        "WORKS: the Wi-Fi QR of Sony cameras that use the \"W01:S:…;P:…;C:…;M:…;\" format; Remote " +
+        "Shooting after the connection (tested on a ZV-E10, app 3.6.0, Wi-Fi Direct / Smartphone Connect).\n\n" +
+        "CAMERA LIMITS (the ZV-E10 itself; no patch can change these):\n" +
+        "- The Wi-Fi QR only exists on the camera's Smartphone Connect screen, so the camera must be " +
+        "showing it every time you connect.\n" +
+        "- Bluetooth pairing does not work on the ZV-E10 (its Bluetooth service lacks what the app " +
+        "needs). This patch replaces it with the QR.\n" +
+        "- Movies are not copied automatically, and Import and Send to Smartphone only work with PC " +
+        "Remote off (see ZV-E10 Wi-Fi support).\n\n" +
+        "ANDROID LIMITS: Android's own Wi-Fi approval prompt appears every time, Location must be on, " +
+        "and joining does not work while a VPN is on.\n\n" +
+        "NOT COVERED BY THIS PATCH: Import, other cameras, and reconnecting after the camera was " +
+        "restarted were not checked. It adds the CAMERA permission.",
     default = false,
 ) {
     compatibleWith(COMPATIBILITY_CREATORSAPP)

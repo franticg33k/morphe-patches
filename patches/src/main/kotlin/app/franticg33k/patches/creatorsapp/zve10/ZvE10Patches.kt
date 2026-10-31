@@ -87,14 +87,24 @@ val zvE10WifiPatch = bytecodePatch(
         "Lets Creators' App list, connect to and use the original ZV-E10 over Wi-Fi " +
         "(PC Remote and Smartphone Connect): accepts its protocol version, keeps a PC Remote " +
         "session in remote-control mode, and enables Import / camera-initiated transfer.\n\n" +
-        "SUPPORTED over Wi-Fi: connection, live view and exposure controls, photo capture, " +
-        "automatic copy of photos to the phone, movie recording. With Smartphone Connect (PC " +
-        "Remote OFF on the camera) also: Send to Smartphone from the camera, and Import " +
-        "(browse the card from the phone).\n" +
-        "NOT SUPPORTED: Send to Smartphone and Import while PC Remote is ON (the camera exposes " +
-        "no storage then); automatic copy of movies (stills only); Smartphone Connect over an " +
-        "access point (Wi-Fi Direct only); Bluetooth pairing / adding the camera over Bluetooth " +
-        "(the app stops right after bonding, so use the Wi-Fi search list instead).\n\n" +
+        "WORKS over Wi-Fi: connection, live view and exposure controls, photo capture, automatic " +
+        "copy of photos to the phone, movie recording. With Smartphone Connect (PC Remote OFF on " +
+        "the camera) also Send to Smartphone from the camera and Import (browse the card from the " +
+        "phone). Upstream saw all of this on 3.5.0; this patch's own device test on 3.6.0 covered " +
+        "connection and Remote Shooting.\n\n" +
+        "CAMERA LIMITS (the ZV-E10 itself; no patch can change these):\n" +
+        "- It offers two Wi-Fi services with different abilities: PC Remote (remote control) and " +
+        "Smartphone Connect / Send to Smartphone (file transfer).\n" +
+        "- While PC Remote is on, the camera exposes no storage and refuses to send images, so " +
+        "Import and Send to Smartphone cannot work then. Turn PC Remote off to transfer.\n" +
+        "- Smartphone Connect works over Wi-Fi Direct only (the camera's own hotspot), not through " +
+        "a router. PC Remote also works through a router (access point).\n" +
+        "- A movie is never copied automatically after recording: the camera's save-destination " +
+        "setting covers still images only. Use Import or send it from the camera.\n" +
+        "- Bluetooth pairing does not work: the ZV-E10's Bluetooth service lacks what the app's " +
+        "pairing flow needs (it stops right after bonding). Use the Wi-Fi search list, or the QR " +
+        "patch, instead.\n\n" +
+        "NOT COVERED BY THIS PATCH: other firmware versions, other app versions, other cameras.\n\n" +
         "SETUP (from upstream's testing on 3.5.0): for remote control set the camera's Network > " +
         "PC Remote Function to PC Remote: On, with Cnct Method Wi-Fi Access Point or Wi-Fi " +
         "Direct; in the app use Cameras > gear icon > Connect only via Wi-Fi. For transfer / " +
@@ -183,14 +193,20 @@ val zvE10UsbPatch = bytecodePatch(
         "supported-camera list and forces USB sessions into remote-control mode. NOTE: this " +
         "applies to every camera on USB, so other cameras lose USB contents transfer with it " +
         "(the app cannot know the model before it connects).\n\n" +
-        "SUPPORTED over USB (camera set to PC Remote: On, Cnct Method: USB): connection, live " +
-        "view and exposure controls, photo capture, automatic copy of photos to the phone, " +
-        "movie recording.\n" +
-        "NOT SUPPORTED over USB: Send to Smartphone and Import / browsing the card (the camera " +
-        "exposes no storage in PC Remote mode); automatic copy of movies; Bluetooth pairing " +
-        "(the camera appears on its own over USB, there is no Add camera step). The Import button " +
-        "is still shown on the USB camera card and fails with a storage error if tapped; that is " +
-        "expected.\n\n" +
+        "WORKS over USB (camera set to PC Remote: On, Cnct Method: USB): connection, live view and " +
+        "exposure controls, photo capture, automatic copy of photos to the phone, movie recording.\n\n" +
+        "CAMERA LIMITS (the ZV-E10 itself; no patch can change these):\n" +
+        "- Over USB the camera only offers PC Remote, and in PC Remote it exposes no storage and " +
+        "refuses to send images. So Import and Send to Smartphone cannot work over USB. Use Wi-Fi " +
+        "with PC Remote off to transfer.\n" +
+        "- A movie is never copied automatically after recording: the camera's save-destination " +
+        "setting covers still images only.\n" +
+        "- Bluetooth pairing does not work on the ZV-E10, but over USB it is not needed: the camera " +
+        "appears by itself, there is no Add camera step.\n\n" +
+        "NOT COVERED BY THIS PATCH:\n" +
+        "- The Import button is not hidden on the USB camera card (upstream hides it; that part is " +
+        "not ported). Tapping it shows a storage error, which is expected.\n" +
+        "- Other firmware versions, other app versions, other cameras.\n\n" +
         "HOW TO USE: on the camera set Network > PC Remote Function to PC Remote: On and PC Remote " +
         "Cnct Method: USB. Plug the camera into the phone with a data-capable USB-C cable and allow " +
         "USB access for Creators' App when Android asks. The ZV-E10 then appears by itself on the " +
