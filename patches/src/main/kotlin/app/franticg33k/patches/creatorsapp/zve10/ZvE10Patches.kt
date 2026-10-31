@@ -90,7 +90,14 @@ val zvE10WifiPatch = bytecodePatch(
         "(browse the card from the phone).\n" +
         "NOT SUPPORTED: Send to Smartphone and Import while PC Remote is ON (the camera exposes " +
         "no storage then); automatic copy of movies (stills only); Smartphone Connect over an " +
-        "access point (Wi-Fi Direct only).\n" +
+        "access point (Wi-Fi Direct only).\n\n" +
+        "SETUP (from upstream's testing on 3.5.0): for remote control set the camera's Network > " +
+        "PC Remote Function to PC Remote: On, with Cnct Method Wi-Fi Access Point or Wi-Fi " +
+        "Direct; in the app use Cameras > gear icon > Connect only via Wi-Fi. For transfer / " +
+        "Import turn PC Remote OFF, start Send to Smartphone or Smartphone Connect on the " +
+        "camera, join its DIRECT-... hotspot, then Connect only via Wi-Fi. Set Still Img. Save " +
+        "Dest. to PC+Camera (or Phone+Camera) so photos also stay on the card. Uninstall the " +
+        "original app first (different signing key).\n" +
         "Support list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has " +
         "not been re-tested on 3.6.0.",
     default = false,
@@ -174,7 +181,13 @@ val zvE10UsbPatch = bytecodePatch(
         "view and exposure controls, photo capture, automatic copy of photos to the phone, " +
         "movie recording.\n" +
         "NOT SUPPORTED over USB: Send to Smartphone and Import / browsing the card (the camera " +
-        "exposes no storage in PC Remote mode); automatic copy of movies.\n" +
+        "exposes no storage in PC Remote mode); automatic copy of movies.\n\n" +
+        "SETUP (from upstream's testing on 3.5.0): on the camera set Network > PC Remote " +
+        "Function to PC Remote: On and PC Remote Cnct Method: USB. Connect the cable, allow USB " +
+        "access for Creators' App, then open Remote Shooting from the Cameras tab. If another " +
+        "app (e.g. Gallery) asks for USB access, tap Cancel. Set Still Img. Save Dest. to " +
+        "PC+Camera so photos also stay on the card. Uninstall the original app first " +
+        "(different signing key).\n" +
         "Support list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has " +
         "not been re-tested on 3.6.0.",
     default = false,
@@ -231,7 +244,8 @@ val skipMandatorySignInPatch = bytecodePatch(
         "regions. This makes that check always answer \"not required\", so no region workaround " +
         "is needed. Sign-in stays available and optional.\n\n" +
         "SUPPORTED: connecting a first camera without signing in, on any region. First-launch " +
-        "sign-in was already skippable.\n" +
+        "sign-in was already skippable. With this on, the upstream tip of choosing Hong Kong as " +
+        "the region is not needed.\n" +
         "NOT SUPPORTED: Creators' Cloud features (cloud upload, cloud registration) still need " +
         "an account. Not tested on a device.",
     default = false,
