@@ -379,6 +379,12 @@ def patch_split_set(splits: list[Path], work: Path, out_dir: Path, mpp: Path,
     for split in [base, *others]:
         src = base_patched if split is base else split
         owned = {n: b for n, b in changed.items() if n in set(zip_entries(split))}
+        if split is not base:
+            # A split's own manifest (it carries `split="config.x"`) and resource table are its
+            # identity; the merged copies describe the whole app. Grafting them turned every split
+            # into a second base -> "INSTALL_FAILED_INVALID_APK: Split null was defined multiple
+            # times". Manifest / resource edits belong to the base's own patch run only.
+            owned = {n: b for n, b in owned.items() if n not in ("AndroidManifest.xml", "resources.arsc")}
         if split is not base and owned:
             staged = work / (split.stem + ".grafted.apk")
             rebundle_apk(split, staged, owned)

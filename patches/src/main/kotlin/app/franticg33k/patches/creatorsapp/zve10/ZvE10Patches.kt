@@ -27,7 +27,7 @@ private fun MutableMethod.indicesOfRef(needle: String): List<Int> =
     }.map { it.index }
 
 /** The single such index; anything else means the app changed -- fail with a recovery step. */
-private fun MutableMethod.indexOfRef(needle: String, what: String): Int {
+internal fun MutableMethod.indexOfRef(needle: String, what: String): Int {
     val hits = indicesOfRef(needle)
     check(hits.size == 1) {
         "Creators' App: $what: expected exactly one '$needle' in $definingClass->$name, found ${hits.size}. " +

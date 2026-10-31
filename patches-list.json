@@ -534,6 +534,41 @@
       "options": []
     },
     {
+      "name": "Scan camera QR to join Wi-Fi",
+      "description": "One-step Wi-Fi connection for the original ZV-E10. Scan the QR code the camera shows (Network > Smartphone Connect / Ctrl w/ Smartphone) and the app joins the camera's hotspot, runs its own search, and selects the ZV-E10 for you, so you land on the connected page with Remote Shooting and Import. No typing the password into Android's Wi-Fi settings.\n\nHOW: adds a \"ZV-E10\" row to the first-time model picker (the stock guide for the Mark II is a Bluetooth pairing that does not work on the ZV-E10) and puts the same prompt in front of the gear menu's \"Connect only via Wi-Fi\". The prompt offers: Reconnect to the last camera (saved after a successful join, no scan needed), Scan the camera's QR code, or Already connected. Android's own Wi-Fi approval prompt still appears each time.\n\nSUPPORTED: the Wi-Fi QR of Sony cameras that use the \"W01:S:…;P:…;C:…;M:…;\" format; Remote Shooting after the connection (tested on a ZV-E10, app 3.6.0, Wi-Fi Direct / Smartphone Connect).\nNOT SUPPORTED: Bluetooth pairing; cameras without a Wi-Fi QR; joining while a VPN is on. The camera must still be showing its Smartphone Connect screen each time. Adds the CAMERA permission. Import, other cameras and the reconnect-after-camera-restart case were not checked.",
+      "default": false,
+      "dependencies": [
+        "ResourcePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "jp.co.sony.ips.portalapp",
+          "name": "Creators' App",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#1F1F1F",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.5.0",
+              "versionCodes": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "3.6.0",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
       "name": "Skip Public Zone Rewarded Ad",
       "description": "Skips the rewarded Unity LevelPlay video that gates the Public Zone matchmaker and reports it as watched immediately, so the room search starts at once. The app's `mm_noads_new` purchase does not cover this ad.",
       "default": true,
@@ -1000,6 +1035,39 @@
     {
       "name": "ZV-E10 core",
       "description": "Shared fixes for using the original ZV-E10 with Creators' App: skips the SDIO_GetDeviceLog request the camera rejects (which poisons the session), keeps a remote-control session out of contents-transfer mode, and starts live view when it is already running. Enabled automatically by the Wi-Fi and USB patches; does nothing on its own.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "jp.co.sony.ips.portalapp",
+          "name": "Creators' App",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#1F1F1F",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.5.0",
+              "versionCodes": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "3.6.0",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "ZV-E10 debug trace",
+      "description": "Debug only. Logs the app's PTP/IP session with the camera (every operation it sends, whether the camera answered, failed or timed out, and who closed the session) to logcat under the tag ZVPATCH. Use it to find out why a connected camera does not open Remote Shooting or Import: `adb logcat -s ZVPATCH`. Not for everyday use.",
       "default": false,
       "dependencies": [],
       "compatiblePackages": [

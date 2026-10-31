@@ -18,11 +18,14 @@ fingerprints:
     method: onDeviceInfoChanged
   - name: UsbInsertedStateFingerprint
     definingClass: "Ljp/co/sony/ips/portalapp/usb/statemachine/UsbInsertedState;"
+    method: onEnter
     note: custom - the method that reads EnumFunction.CONTENTS_TRANSFER_PULL
   - name: UsbInsertedStateLambdaExecutedFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/usb/statemachine/UsbInsertedState$onEnter$1$1;"
     method: onExecuted
     note: custom - UsbInsertedState$onEnter* method that reads EnumFunction.CONTENTS_TRANSFER_PULL
   - name: UsbInsertedStateLambdaFailedFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/usb/statemachine/UsbInsertedState$onEnter$1$1;"
     method: onExecutionFailed
     note: custom - UsbInsertedState$onEnter* method that reads EnumFunction.CONTENTS_TRANSFER_PULL
   - name: FunctionModeControllerOnResumeFingerprint
@@ -44,6 +47,8 @@ fingerprints:
     definingClass: "Ljp/co/sony/ips/portalapp/common/device/DeviceDescription;"
     method: getControlModel
   - name: SelectedConnectDeviceFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/toppage/devicetab/wificonnect/SearchedDeviceListController$selectedConnectDevice$1;"
+    method: invokeSuspend
     note: custom - SearchedDeviceListController$selectedConnectDevice* calling isContentsTransferAvailable
   - name: PtpIpCameraInitializeFingerprint
     definingClass: "Ljp/co/sony/ips/portalapp/camera/PtpIpCamera;"
@@ -61,3 +66,23 @@ fingerprints:
   - name: IsNeedSignInForMandatoryFingerprint
     definingClass: "Ljp/co/sony/ips/portalapp/auth/AuthUtil$Companion;"
     method: isNeedSignInForMandatory
+  - name: OnetimeConnectionFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/toppage/devicetab/menu/DeviceMenuSettingsController;"
+    method: onetimeConnection
+  - name: SupportCameraListBuildFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/bluetooth/pairing/SupportCameraListAdapter;"
+    method: "<init>"
+    note: custom - SupportCameraListAdapter method that calls CloudInfoDb.getSupportedCameraObject (the first-time model picker)
+  - name: SupportCameraItemClickFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/bluetooth/pairing/fragment/SupportCameraFragment$itemClickListener$1;"
+    method: onItemClicked
+  # debug trace patch (default off): TransactionExecutor.{onOperationRequested,onOperationRequestFailed(3 args),onOperationTimeOut,onProbeReceiveFailed,tearDown}
+  - name: TraceTransactionExecutorFingerprints
+    definingClass: "Ljp/co/sony/ips/portalapp/ptpip/ptpip/base/transaction/TransactionExecutor;"
+    method: onOperationRequested
+  - name: SearchedDeviceListStartFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/toppage/devicetab/wificonnect/SearchedDeviceListController;"
+    method: onStart
+  - name: DeviceMenuControllerPrepareFingerprint
+    definingClass: "Ljp/co/sony/ips/portalapp/toppage/devicetab/controller/DeviceMenuController;"
+    method: onPrepareOptionsMenu
