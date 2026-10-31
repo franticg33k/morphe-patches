@@ -90,7 +90,10 @@ val zvE10WifiPatch = bytecodePatch(
         "(browse the card from the phone).\n" +
         "NOT SUPPORTED: Send to Smartphone and Import while PC Remote is ON (the camera exposes " +
         "no storage then); automatic copy of movies (stills only); Smartphone Connect over an " +
-        "access point (Wi-Fi Direct only).\n\n" +
+        "access point (Wi-Fi Direct only); Bluetooth pairing / adding the camera over Bluetooth " +
+        "(the app stops right after bonding, so use the Wi-Fi search list instead).
+
+" +
         "SETUP (from upstream's testing on 3.5.0): for remote control set the camera's Network > " +
         "PC Remote Function to PC Remote: On, with Cnct Method Wi-Fi Access Point or Wi-Fi " +
         "Direct; in the app use Cameras > gear icon > Connect only via Wi-Fi. For transfer / " +
