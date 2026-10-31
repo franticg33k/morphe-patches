@@ -177,7 +177,9 @@ val zvE10WifiPatch = bytecodePatch(
 
 val zvE10UsbPatch = bytecodePatch(
     name = "ZV-E10 USB support",
-    description = "Lets Creators' App use the original ZV-E10 over USB (PC Remote): adds it to the " +
+    description = "EXPERIMENTAL. Not yet tested on a device with app 3.6.0; the behaviour below is what " +
+        "the upstream project saw on 3.5.0 with the same changes.\n\n" +
+        "Lets Creators' App use the original ZV-E10 over USB (PC Remote): adds it to the " +
         "supported-camera list and forces USB sessions into remote-control mode. NOTE: this " +
         "applies to every camera on USB, so other cameras lose USB contents transfer with it " +
         "(the app cannot know the model before it connects).\n\n" +
@@ -186,13 +188,16 @@ val zvE10UsbPatch = bytecodePatch(
         "movie recording.\n" +
         "NOT SUPPORTED over USB: Send to Smartphone and Import / browsing the card (the camera " +
         "exposes no storage in PC Remote mode); automatic copy of movies; Bluetooth pairing " +
-        "(the camera appears on its own over USB, there is no Add camera step).\n\n" +
-        "SETUP (from upstream's testing on 3.5.0): on the camera set Network > PC Remote " +
-        "Function to PC Remote: On and PC Remote Cnct Method: USB. Connect the cable, allow USB " +
-        "access for Creators' App, then open Remote Shooting from the Cameras tab. If another " +
-        "app (e.g. Gallery) asks for USB access, tap Cancel. Set Still Img. Save Dest. to " +
-        "PC+Camera so photos also stay on the card. Uninstall the original app first " +
-        "(different signing key).\n" +
+        "(the camera appears on its own over USB, there is no Add camera step). The Import button " +
+        "is still shown on the USB camera card and fails with a storage error if tapped; that is " +
+        "expected.\n\n" +
+        "HOW TO USE: on the camera set Network > PC Remote Function to PC Remote: On and PC Remote " +
+        "Cnct Method: USB. Plug the camera into the phone with a data-capable USB-C cable and allow " +
+        "USB access for Creators' App when Android asks. The ZV-E10 then appears by itself on the " +
+        "Cameras tab (no scan, no picker) with a Remote Shooting button. If another app (e.g. " +
+        "Gallery) asks for USB access, tap Cancel, or live view stops until you reconnect. Set Still " +
+        "Img. Save Dest. to PC+Camera so photos also stay on the card. Uninstall the original app " +
+        "first (different signing key).\n" +
         "Support list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has " +
         "not been re-tested on 3.6.0.",
     default = false,
