@@ -1,3 +1,9 @@
+## [1.7.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.2...v1.7.0-dev.3) (2026-10-31)
+
+### 🐛 Bug Fixes
+
+* **creatorsapp:** repair broken string literal in the Wi-Fi patch description ([f77c168](https://github.com/franticg33k/morphe-patches/commit/f77c16867b3beba729c70275f92f1e5dd99154f1))
+
 ## [1.7.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.1...v1.7.0-dev.2) (2026-10-31)
 
 ### 🐛 Bug Fixes
