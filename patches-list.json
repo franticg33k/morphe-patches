@@ -586,6 +586,39 @@
       "options": []
     },
     {
+      "name": "Skip mandatory sign-in",
+      "description": "Creators' App forces a Creators' Cloud sign-in before connecting a first camera when the region is mainland China, or when a Sony server flag turns it on for other regions. This makes that check always answer \"not required\", so no region workaround is needed. Sign-in stays available and optional.\n\nSUPPORTED: connecting a first camera without signing in, on any region. First-launch sign-in was already skippable.\nNOT SUPPORTED: Creators' Cloud features (cloud upload, cloud registration) still need an account. Not tested on a device.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "jp.co.sony.ips.portalapp",
+          "name": "Creators' App",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#1F1F1F",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.5.0",
+              "versionCodes": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "3.6.0",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
       "name": "Unlock Edge",
       "description": "Unlocks the Fricam Edge feature for free. Edge is a self-hosted companion sidecar that runs beside your Frigate NVR and streams low-latency + AI-detection frames into the app over WebRTC. Unlike Pro there is no local persistence for Edge: on every RevenueCat sync the app recomputes the \"fricam_edge\" entitlement and publishes it into an in-memory StateFlow that drives the pairing/settings/diagnostics UI. The patch forces that published flag true so the Edge UI and the self-hosted (edge-local / Frigate-direct) routes open without a subscription. Note: Fricam's managed Cloudflare relay (edge-remote, monthly allowance) is authenticated server-side and is not bypassed - run the open-source sidecar yourself to get the full value.",
       "default": true,
@@ -884,6 +917,109 @@
           "targets": [
             {
               "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "ZV-E10 USB support",
+      "description": "Lets Creators' App use the original ZV-E10 over USB (PC Remote): adds it to the supported-camera list and forces USB sessions into remote-control mode. NOTE: this applies to every camera on USB, so other cameras lose USB contents transfer with it (the app cannot know the model before it connects).\n\nSUPPORTED over USB (camera set to PC Remote: On, Cnct Method: USB): connection, live view and exposure controls, photo capture, automatic copy of photos to the phone, movie recording.\nNOT SUPPORTED over USB: Send to Smartphone and Import / browsing the card (the camera exposes no storage in PC Remote mode); automatic copy of movies.\nSupport list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has not been re-tested on 3.6.0.",
+      "default": false,
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "jp.co.sony.ips.portalapp",
+          "name": "Creators' App",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#1F1F1F",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.5.0",
+              "versionCodes": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "3.6.0",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "ZV-E10 Wi-Fi support",
+      "description": "Lets Creators' App list, connect to and use the original ZV-E10 over Wi-Fi (PC Remote and Smartphone Connect): accepts its protocol version, keeps a PC Remote session in remote-control mode, and enables Import / camera-initiated transfer.\n\nSUPPORTED over Wi-Fi: connection, live view and exposure controls, photo capture, automatic copy of photos to the phone, movie recording. With Smartphone Connect (PC Remote OFF on the camera) also: Send to Smartphone from the camera, and Import (browse the card from the phone).\nNOT SUPPORTED: Send to Smartphone and Import while PC Remote is ON (the camera exposes no storage then); automatic copy of movies (stills only); Smartphone Connect over an access point (Wi-Fi Direct only).\nSupport list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has not been re-tested on 3.6.0.",
+      "default": false,
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "jp.co.sony.ips.portalapp",
+          "name": "Creators' App",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#1F1F1F",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.5.0",
+              "versionCodes": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "3.6.0",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "ZV-E10 core",
+      "description": "Shared fixes for using the original ZV-E10 with Creators' App: skips the SDIO_GetDeviceLog request the camera rejects (which poisons the session), keeps a remote-control session out of contents-transfer mode, and starts live view when it is already running. Enabled automatically by the Wi-Fi and USB patches; does nothing on its own.",
+      "default": false,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "jp.co.sony.ips.portalapp",
+          "name": "Creators' App",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#1F1F1F",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "3.5.0",
+              "versionCodes": null,
+              "isExperimental": true,
+              "minSdk": null,
+              "description": null
+            },
+            {
+              "version": "3.6.0",
               "versionCodes": null,
               "isExperimental": false,
               "minSdk": null,
