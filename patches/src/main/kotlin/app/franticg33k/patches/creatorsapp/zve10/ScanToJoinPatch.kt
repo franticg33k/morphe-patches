@@ -83,7 +83,11 @@ private val cameraPermissionPatch = resourcePatch(
 
 val scanToJoinPatch = bytecodePatch(
     name = "Scan camera QR to join Wi-Fi",
-    description = "One-step Wi-Fi connection for the original ZV-E10. Scan the QR code the camera shows " +
+    description = "EXPERIMENTAL. Only one setup has been tested: a ZV-E10 on app 3.6.0 over Wi-Fi Direct " +
+        "(Smartphone Connect). It hooks several internal screens of Sony's app, so a Sony update can " +
+        "break it, and some failures fall back to the stock behaviour without an error. Works together " +
+        "with ZV-E10 Wi-Fi support, which you need to enable as well.\n\n" +
+        "One-step Wi-Fi connection for the original ZV-E10. Scan the QR code the camera shows " +
         "(Network > Smartphone Connect / Ctrl w/ Smartphone) and the app joins the camera's hotspot, runs " +
         "its own search, and selects the ZV-E10 for you, so you land on the connected page with Remote " +
         "Shooting and Import. No typing the password into Android's Wi-Fi settings.\n\n" +

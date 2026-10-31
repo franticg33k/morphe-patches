@@ -81,7 +81,10 @@ val zvE10CorePatch = bytecodePatch(
 
 val zvE10WifiPatch = bytecodePatch(
     name = "ZV-E10 Wi-Fi support",
-    description = "Lets Creators' App list, connect to and use the original ZV-E10 over Wi-Fi " +
+    description = "EXPERIMENTAL. Only one setup has been tested: a ZV-E10 on app 3.6.0 over Wi-Fi Direct " +
+        "(Smartphone Connect). PC Remote over Wi-Fi, Import, other firmware and other app versions are " +
+        "untested, and it may stop working when Sony updates the app.\n\n" +
+        "Lets Creators' App list, connect to and use the original ZV-E10 over Wi-Fi " +
         "(PC Remote and Smartphone Connect): accepts its protocol version, keeps a PC Remote " +
         "session in remote-control mode, and enables Import / camera-initiated transfer.\n\n" +
         "SUPPORTED over Wi-Fi: connection, live view and exposure controls, photo capture, " +
