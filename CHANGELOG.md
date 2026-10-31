@@ -1,3 +1,9 @@
+## [1.7.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.3...v1.7.0-dev.4) (2026-10-31)
+
+### ✨ New Features
+
+* **creatorsapp:** connect the ZV-E10 by scanning the camera's Wi-Fi QR ([c13e14d](https://github.com/franticg33k/morphe-patches/commit/c13e14d087aa80841b205ebeaca481b5decfbad8))
+
 ## [1.7.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.2...v1.7.0-dev.3) (2026-10-31)
 
 ### 🐛 Bug Fixes
