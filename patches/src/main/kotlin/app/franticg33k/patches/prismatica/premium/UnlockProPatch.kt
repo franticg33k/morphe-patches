@@ -30,10 +30,12 @@ import java.util.logging.Logger
  *     tbz   w1, #4, <pro path>      ; bit clear == true == Pro
  *
  * so "Pro" is bit 4 clear. The four gated sites in `projects_page.dart` (0x5d7588, 0x5d7b8c,
- * 0x5e3320, 0x5f5e3c) are the Batch Export and cross-project grade copy/paste paywalls, plus
- * an unconditional "Buy Pro" button; the two remaining `showProOfferSheet` call sites
- * (0x5c8aa4, 0x603b9c) are plain buttons that are not gated at all. All grading tools are free
- * and are not touched by this patch.
+ * 0x5e3320, 0x5f5e3c) are the Batch Export and cross-project grade copy/paste paywalls, plus the
+ * "Pro" menu entry. `showProOfferSheet` itself has seven call sites; the other three are plain
+ * buttons that never test the flag (0x5c8aa4, 0x5d19bc, 0x603b9c). The only other reader of the
+ * field in the whole snapshot is a `() => PurchaseService._instance.field_27` closure installed by
+ * `BatchVideoExportPreparer` (0x5f1ce8, called at 0x5ef2bc) - a reader, not a gate. All grading
+ * tools are free and are not touched by this patch.
  *
  * Why the writer, not the readers
  * -------------------------------
