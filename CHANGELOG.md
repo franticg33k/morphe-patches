@@ -1,3 +1,9 @@
+## [1.7.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.4...v1.7.0-dev.5) (2026-10-31)
+
+### ✨ New Features
+
+* **prismatica:** unlock Pro by pinning the Dart isPro flag at its single writer ([4affd16](https://github.com/franticg33k/morphe-patches/commit/4affd168d70dc9b626d0e2c31668e1acc5eaf3ca)), closes [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30) [#0x20](https://github.com/franticg33k/morphe-patches/issues/0x20) [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30)
+
 ## [1.7.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.3...v1.7.0-dev.4) (2026-10-31)
 
 ### ✨ New Features

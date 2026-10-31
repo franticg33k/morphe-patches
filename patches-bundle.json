@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-31T14:51:41",
-  "description": "## [1.7.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.3...v1.7.0-dev.4) (2026-10-31)\n\n### ✨ New Features\n\n* **creatorsapp:** connect the ZV-E10 by scanning the camera's Wi-Fi QR ([c13e14d](https://github.com/franticg33k/morphe-patches/commit/c13e14d087aa80841b205ebeaca481b5decfbad8))",
-  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.7.0-dev.4/patches-1.7.0-dev.4.mpp",
+  "created_at": "2026-10-31T15:47:08",
+  "description": "## [1.7.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.4...v1.7.0-dev.5) (2026-10-31)\n\n### ✨ New Features\n\n* **prismatica:** unlock Pro by pinning the Dart isPro flag at its single writer ([4affd16](https://github.com/franticg33k/morphe-patches/commit/4affd168d70dc9b626d0e2c31668e1acc5eaf3ca)), closes [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30) [#0x20](https://github.com/franticg33k/morphe-patches/issues/0x20) [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30)",
+  "download_url": "https://github.com/franticg33k/morphe-patches/releases/download/v1.7.0-dev.5/patches-1.7.0-dev.5.mpp",
   "signature_download_url": "",
-  "version": "1.7.0-dev.4"
+  "version": "1.7.0-dev.5"
 }
