@@ -1,90 +1,108 @@
 # byAir (com.byairapp.android) - fingerprint set.
 #
 # Mirrors patches/src/main/kotlin/app/franticg33k/patches/byair/{premium,update}/...
-# Verified against 2.41.0 (versionCode 224). See docs/byair-premium-bypass.md and
-# docs/byair-remove-update-prompt.md.
+# Verified against 2.42.0 (versionCode 225). See docs/byair-2.42.0-premium-analysis.md.
 #
-# byAir's own module classes under ru/wearemad/... are NOT R8-obfuscated, so these anchors
-# pin definingClass + name freely. Only the internals they call (kotlin.Result, Play Core's
-# AppUpdateManager, ...) are renamed, and the Kotlin patches resolve those structurally.
+# --- 2.42.0: what changed structurally ------------------------------------------------
 #
-# 2.41.0 note: UpdateSubscriptionUserIdUseCase (ru/wearemad/i_subscriptions/use_case/) no longer
-# exists -- the user-id sync moved into RevenueCatIdentity.ensureAttached, a different shape. The
-# "Enable Online Pro" patch (issue #51) therefore stubs only the two seams that still resolve:
-# UpdateRemoteProStatusUseCase and UpdateUserSubscriptionStatusRequestImpl.
-
-# --- premium/Fingerprints.kt (2.41.0 note: one entry no longer resolves, see above) ---
+# 2.41.0 pinned `ru/wearemad/...` class and member NAMES on the assumption that byAir does
+# not obfuscate its own code. 2.42.0 breaks that: R8 now minifies every `ru.wearemad.*`
+# LIBRARY module (the `i_*` modules, `ru.wearemad.domain`, `ru.wearemad.i_subscriptions`).
+# All ten 2.41.0 fingerprints resolved to 0 methods. Only the app module
+# `ru/wearemad/byair/**` still has readable names.
+#
+# The premium patch therefore no longer names an obfuscated class. It anchors on:
+#   * a Kotlin data-class `toString` literal, which resolves the CLASS, and
+#   * a structural predicate over the method body, which resolves the METHOD.
+#
+# The `definingClass:` values in the SubscriberCheckFingerprint entry below are the names those
+# anchors resolve to *in 2.42.0 only*. The Kotlin fingerprint does not use them -- it is
+# name-free. If a future release renames `Lcnh;`/`Lm4j;`, this file will fail while the patch
+# still applies: re-pin this file, not the patch.
 
 package: com.byairapp.android
 appName: byAir
-version: "2.41.0"
-# 2.41.0 is pinned in COMPATIBILITY_BYAIR (targets = listOf(AppTarget("2.41.0"))), so the harness
+version: "2.42.0"
+# 2.42.0 is pinned in COMPATIBILITY_BYAIR (premium: 2.41.0 + 2.42.0), so the harness
 # cross-checks that the version verified here is one the patch actually offers. Adding a new
 # byAir release means adding its AppTarget there *and* listing it here.
-pinnedVersions: ["2.41.0"]
+pinnedVersions: ["2.42.0"]
 extracted: apks/extracted/byair
 
 fingerprints:
   # --- premium/Fingerprints.kt ---
-  - name: NeedShowPaywallAppLaunchDecisionFingerprint
-    definingClass: Lru/wearemad/i_subscriptions/use_case/show_paywall/commands/NeedShowPaywallAppLaunchCommand;
-    method: invoke$lambda$0
-    returnType: Z
-    parameters: [Z, I, Lru/wearemad/i_subscriptions/data/user_actions/PaywallUserActionsDTO;]
-
-  - name: NeedShowPaywallOnboardingDecisionFingerprint
-    definingClass: Lru/wearemad/i_subscriptions/use_case/show_paywall/commands/NeedShowPaywallOnboardingCommand;
-    method: invoke$lambda$0
-    returnType: Z
-    parameters: [Z, Z]
-
-  - name: BuildAppProBannerResultFingerprint
-    definingClass: Lru/wearemad/byair/domain/common/BuildAppProBannerStateUseCase$invoke$2;
-    method: invokeSuspend
-    returnType: Ljava/lang/Object;
-    parameters: [Ljava/lang/Object;]
+  # Class-level: resolves the domain UserInfo class from its data-class toString literal.
+  # "UserInfo(id=" is unique; UserDTO prints "UserDTO(id=" and both print ", isSubscriber=".
+  # Feeds UserInfoIsSubscriberFingerprint below.
+  - name: UserInfoClassFingerprint
+    classLevel: true
+    strings: ["UserInfo(id="]
+    note: >-
+      classLevel means this resolves a CLASS, not a method. 2.42.0: Lu0k;
 
   - name: UserInfoIsSubscriberFingerprint
-    definingClass: Lru/wearemad/domain/user/UserInfo;
-    method: isSubscriber
-    returnType: Z
-
-  # Declared but not referenced by any patch; kept so the set mirrors the Kotlin source.
-  - name: UserInfoGetSignedInFingerprint
-    definingClass: Lru/wearemad/domain/user/UserInfo;
-    method: getSignedIn
-    returnType: Z
+    classFingerprint: UserInfoClassFingerprint
+    method: "<init>"
+    returnType: "V"
+    note: >-
+      The single UserInfo constructor. The patch prepends `const/4 p2, 0x1` so the ctor's own
+      `iput-boolean p2, ... ->b:Z` stores true. `j` (the signed-in flag) is derived by the ctor
+      itself from the authType sealed class and is deliberately NOT forced -- doing so breaks
+      the RevenueCat + byAir OAuth login handshake. 2.42.0: Lu0k;-><init>(String,Z,String,
+      String,String,Lk0k$b,Lk0k$a,Lk0k$c)V
 
   # --- premium/OnlineFingerprints.kt ---
-  - name: HasProEntitlementRequestFingerprint
-    definingClass: Lru/wearemad/byair/domain/mediator/banners/HasProEntitlementRequestImpl;
-    method: invoke
-    returnType: Ljava/lang/Object;
-    parameters: [Lkotlin/coroutines/Continuation;]
+  # The app's single "does this user have Pro?" answer. Only three classes read RevenueCat
+  # entitlements and all three are multi-purpose packed-switch dispatchers, so this is the
+  # choke point: eight callers (m4j, suc, wuc, wdh, x43, z43, lzi, yamh) all come here.
+  #
+  # The KOTLIN fingerprint is a name-free structural predicate: static, returns Object, three
+  # parameters whose second is Z, and the body invokes a static method of its OWN defining class
+  # with an identical parameter list and return type. That separates it from the signature-
+  # identical `cnh.c` (which calls no sibling and fetches the real CustomerInfo). The harness
+  # cannot evaluate a `custom` predicate, so the entry below pins the name the predicate
+  # resolves to in 2.42.0 so there is something concrete to assert.
+  - name: SubscriberCheckFingerprint
+    definingClass: "Lcnh;"
+    method: "a"
+    returnType: "Ljava/lang/Object;"
+    parameters: ["Ljoh;", "Z", "Lf84;"]
+    note: >-
+      Do NOT patch the sibling cnh.c -- it feeds the real CustomerInfo that cnh.b turns into
+      subscription kind/lifetime.
 
-  - name: UpdateRemoteProStatusUseCaseFingerprint
-    definingClass: Lru/wearemad/i_subscriptions/use_case/UpdateRemoteProStatusUseCase;
-    method: invoke
-    returnType: Ljava/lang/Object;
-    parameters: [Lkotlin/coroutines/Continuation;]
-
-  - name: UpdateUserSubscriptionStatusRequestFingerprint
-    definingClass: Lru/wearemad/byair/domain/mediator/common/UpdateUserSubscriptionStatusRequestImpl;
-    method: invoke
-    returnType: Ljava/lang/Object;
-    parameters: [Z, Lkotlin/coroutines/Continuation;]
+  # Owned by "Enable Online Pro". Both literals live in this one method, so the pair is unique
+  # without any class name. 2.42.0: Lm4j;->a(ZZ Lf84;) -- an INSTANCE method, so p1 = isSubscriber
+  # and p2 = forceRemote; p1 is read exactly once, into v4, on the first pass.
+  - name: ProStatusSyncFingerprint
+    returnType: "Ljava/lang/Object;"
+    strings:
+      - "ProStatus. rc check ok. forceRemote="
+      - "ProStatus. saving to db. isSubscriber="
+    note: >-
+      The compare-and-save step of the pro-status sync. Replaces 2.41.0's
+      UpdateRemoteProStatusUseCase seam.
 
   # --- update/UpdateFingerprints.kt (Remove Update Prompt) ---
-  # Primary: the forced-update gate entry, a suspend use case typed Result<Boolean>.
+  #
+  # Both are name-free `custom` predicates in Kotlin (the harness cannot evaluate those, so the
+  # entries pin what they resolve to in 2.42.0). 2.42.0 minified `ru.wearemad.i_app_update`; the
+  # use case is now `Lt43;`. The reader is the one int-returning method calling
+  # PackageInfo.getLongVersionCode with shape static(own class) or instance(); invoke is the
+  # non-static one-argument Object-returning method on that same class.
   - name: CheckNeedForceUpdateUseCaseInvokeFingerprint
-    definingClass: Lru/wearemad/i_app_update/use_case/CheckNeedForceUpdateUseCase;
-    method: invoke
-    returnType: Ljava/lang/Object;
-    parameters: [Lkotlin/coroutines/Continuation;]
+    definingClass: "Lt43;"
+    method: "W"
+    returnType: "Ljava/lang/Object;"
+    parameters: ["Ld84;"]
+    note: >-
+      Suspend entry of the force-update gate. Error fallback is Ls43 case 0 =
+      Ljcf;(Boolean.FALSE), i.e. the Result.Success(false) the patch returns.
 
-  # Secondary: the app's own version-code reader, matched by shape (class + I + no params)
-  # rather than by name, since R8 may rename a private method.
   - name: CurrentAppVersionCodeFingerprint
-    definingClass: Lru/wearemad/i_app_update/use_case/CheckNeedForceUpdateUseCase;
-    returnType: I
-    parameters: []
+    definingClass: "Lt43;"
+    method: "V"
+    returnType: "I"
+    parameters: ["Lt43;"]
+    note: >-
+      Static in 2.42.0 (instance, zero-arg in 2.41.0); the predicate accepts both.

@@ -3,7 +3,7 @@ package app.franticg33k.patches.byair.update
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.bytecodePatch
-import app.franticg33k.patches.byair.shared.Constants.COMPATIBILITY_BYAIR
+import app.franticg33k.patches.byair.shared.Constants.COMPATIBILITY_BYAIR_UPDATE
 import app.franticg33k.patches.byair.shared.KotlinResultBox
 
 /**
@@ -61,7 +61,7 @@ val removeByAirUpdatePromptPatch = bytecodePatch(
     description = "Removes byAir's forced-update screen (\"Pack up for Update! 🚀\" / \"Update Now\") by pinning its version gate to \"no update required\". byAir fetches a server-side minimum version code on launch and, if your build is older, blocks the whole app behind a non-dismissible screen whose only action opens Google Play. With the gate closed a patched older build keeps running and never calls the min-version endpoint, so you no longer have to re-patch every time byAir ships a release.",
     default = true
 ) {
-    compatibleWith(COMPATIBILITY_BYAIR)
+    compatibleWith(COMPATIBILITY_BYAIR_UPDATE)
 
     execute {
         // Layer 1: no-op the gate entry. `Result.success(false)` is exactly what

@@ -1,3 +1,49 @@
+## [1.7.0-dev.5](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.4...v1.7.0-dev.5) (2026-10-31)
+
+### ✨ New Features
+
+* **prismatica:** unlock Pro by pinning the Dart isPro flag at its single writer ([4affd16](https://github.com/franticg33k/morphe-patches/commit/4affd168d70dc9b626d0e2c31668e1acc5eaf3ca)), closes [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30) [#0x20](https://github.com/franticg33k/morphe-patches/issues/0x20) [#0x30](https://github.com/franticg33k/morphe-patches/issues/0x30)
+
+## [1.7.0-dev.4](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.3...v1.7.0-dev.4) (2026-10-31)
+
+### ✨ New Features
+
+* **creatorsapp:** connect the ZV-E10 by scanning the camera's Wi-Fi QR ([c13e14d](https://github.com/franticg33k/morphe-patches/commit/c13e14d087aa80841b205ebeaca481b5decfbad8))
+
+## [1.7.0-dev.3](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.2...v1.7.0-dev.3) (2026-10-31)
+
+### 🐛 Bug Fixes
+
+* **creatorsapp:** repair broken string literal in the Wi-Fi patch description ([f77c168](https://github.com/franticg33k/morphe-patches/commit/f77c16867b3beba729c70275f92f1e5dd99154f1))
+
+## [1.7.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.1...v1.7.0-dev.2) (2026-10-31)
+
+### 🐛 Bug Fixes
+
+* **prismatica:** make the watermark patch version-aware and add an appdata mirror ([cb71611](https://github.com/franticg33k/morphe-patches/commit/cb71611525b37ad6a4c693caaea148ce663dea0f)), closes [#0x1ac](https://github.com/franticg33k/morphe-patches/issues/0x1ac)
+
+### ✨ New Features
+
+* **creatorsapp:** add ZV-E10 support and skip-mandatory-sign-in patches ([a535ef8](https://github.com/franticg33k/morphe-patches/commit/a535ef80cb271a472d0043d6bd94097e35fadb69))
+
+## [1.7.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.6.1-dev.2...v1.7.0-dev.1) (2026-10-30)
+
+### ✨ New Features
+
+* **marriage:** add interstitial and rewarded ad removal patches ([45ba8eb](https://github.com/franticg33k/morphe-patches/commit/45ba8eb1f1b88cdeff18f3b908df5b958bb51ad2))
+
+## [1.6.1-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.6.1-dev.1...v1.6.1-dev.2) (2026-10-30)
+
+### 🐛 Bug Fixes
+
+* **byair:** re-aim Remove Update Prompt at 2.42.0 with name-free fingerprints ([0cf8a60](https://github.com/franticg33k/morphe-patches/commit/0cf8a60eb5714d6356c262e135fc39fdfa341295))
+
+## [1.6.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.6.0...v1.6.1-dev.1) (2026-10-29)
+
+### 🚀 Updated App Support
+
+* byAir 2.42.0, Atlas Photo 2.8.2, Fricam 1.7.4, Native Camera 1.4.5 ([3a5974d](https://github.com/franticg33k/morphe-patches/commit/3a5974daed7b3ec25324902c9912d196fba90f22))
+
 ## [1.6.0](https://github.com/franticg33k/morphe-patches/compare/v1.5.1...v1.6.0) (2026-10-21)
 
 ### ✨ New Features

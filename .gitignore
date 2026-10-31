@@ -140,3 +140,8 @@ __pycache__/
 # Downloaded Morphe Desktop CLI (see tools/desktop.py); *.jar is ignored anyway, this
 # keeps the directory (and any state file) out of `git status` too.
 tools/.morphe/
+
+# Per-machine agent scratch (playbook.md stays tracked)
+.guard/
+.agents/*.ps1
+.agents/jdk17.txt

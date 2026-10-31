@@ -1,7 +1,10 @@
 # Fricam (com.tgezginis.fricam) - fingerprint set.
 #
 # Mirrors patches/src/main/kotlin/app/franticg33k/patches/fricam/premium/Fingerprints.kt
-# Verified against 1.6.5; re-verified against 1.7.0 (see docs/fricam-security-audit.md).
+# Verified against 1.6.5; re-verified against 1.7.0 and 1.7.4 (see docs/fricam-security-audit.md).
+# 1.7.4 needed no fingerprint change: all four still resolve exactly once (Lua0;->b/a for the
+# RevenueCat entitlement + persist writer, Lt19;->j for the master gate) and the methodShape
+# assertions below still hold.
 #
 # Fricam's billing classes are R8-obfuscated and BOTH the class and method names drift between
 # versions (w70 -> z70 = PurchaseManager, az4 -> uk8 = entitlement gate; gate method K -> c,
@@ -11,8 +14,8 @@
 
 package: com.tgezginis.fricam
 appName: Fricam
-version: "1.7.0"
-pinnedVersions: ["1.6.5", "1.7.0"]
+version: "1.7.4"
+pinnedVersions: ["1.6.5", "1.7.0", "1.7.4"]
 extracted: apks/extracted/fricam
 
 fingerprints:

@@ -1,0 +1,61 @@
+# Prismatica Pro (com.harwin.prismatica) - fingerprint set.
+#
+# Mirrors patches/src/main/kotlin/app/franticg33k/patches/prismatica/premium/Fingerprints.kt
+# See docs/prismatica-premium-analysis-1.5.8.md.
+#
+# =====================================================================================
+# STATE ON 1.5.8 (versionCode 80): 4 of 4 resolve. The watermark is NOT a fingerprint.
+# =====================================================================================
+# Prismatica has no Java/Kotlin premium model to fingerprint. The entitlement is a Dart
+# boolean that reaches Java only as a `setIsPro` method-channel argument, and the one native
+# consumer of it is a single `cset` in nativeSetIsPro (see the analysis doc). So the only
+# fingerprints that make sense here are the PairIP licence-check methods, which the two
+# PairIP patches neutralise. All four still resolve to exactly one method on 1.5.8.
+#
+# Neither native patch is a fingerprint, and both are deliberately absent from the list below:
+#
+#  - "Remove Watermark" edits one byte of an embedded GLSL string in libharwin_native.so,
+#    located by an exactly-once literal (`uniform int uIsPro;` + `if (uIsPro == `).
+#  - "Unlock Pro" edits 12 bytes of the Dart AOT snapshot (lib/arm64-v8a/libapp.so) at the
+#    single startup writer of PurchaseService.field_27, located by a 20-byte and a 28-byte
+#    instruction anchor that must each match exactly once. Offsets are pinned to this
+#    snapshot; an app update fails the patch loudly instead of editing something else.
+#
+# See docs/prismatica-premium-analysis-1.5.8.md sections 7 and 8.
+
+package: com.harwin.prismatica
+appName: Prismatica Pro
+version: "1.5.8"
+pinnedVersions: []
+extracted: apks/extracted/prismatica
+
+fingerprints:
+  # PairIP Play Store licensing. attachBaseContext calls checkLicense on every launch, so a
+  # non-Play install is what drives the licence dialog / kill switch.
+  - name: PairipCheckLicenseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: checkLicense
+    returnType: V
+    parameters: [Landroid/content/Context;]
+
+  - name: PairipProcessResponseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: processResponse
+    returnType: V
+    parameters: [I, Landroid/os/Bundle;]
+
+  - name: PairipValidateResponseFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseResponseHelper;
+    method: validateResponse
+    returnType: V
+    parameters: [Landroid/os/Bundle;, Ljava/lang/String;]
+
+  - name: PairipHandleErrorFingerprint
+    definingClass: Lcom/pairip/licensecheck/LicenseClient;
+    method: handleError
+    returnType: V
+    parameters: [Lcom/pairip/licensecheck/LicenseCheckException;]
+
+compiledLiterals:
+  - fingerprint: PairipCheckLicenseFingerprint
+    literals: [Lcom/pairip/licensecheck/LicenseClient;]
