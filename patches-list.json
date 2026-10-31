@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.7.0-dev.3",
+  "version": "1.7.0-dev.4",
   "patches": [
     {
       "name": "Block Ad Server",
@@ -948,6 +948,32 @@
           "description": null,
           "apkFileType": "APK",
           "appIconColor": "#1E88E5",
+          "signatures": null,
+          "targets": [
+            {
+              "version": null,
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
+      "options": []
+    },
+    {
+      "name": "Unlock Pro",
+      "description": "Unlocks Prismatica Pro by pinning PurchaseService._pro at its single startup writer in the Dart AOT snapshot (libapp.so). The pro flag is a plain bool with no receipt or signature check; `initialize` restores it from one SharedPreferences bool and every paywall reads one bit of it. The patch retargets the null-coalesce branch and rewrites the false literal to the exact value a real purchase writes (NULL+0x20), and does the same in the async catch handler, so no Pro feature can fall back to the paywall. Covered: Batch Export, cross-project grade copy/paste. Grading tools are free and unchanged. Statically and packaging verified on 1.5.8; not yet exercised on a device.",
+      "default": true,
+      "dependencies": [],
+      "compatiblePackages": [
+        {
+          "packageName": "com.harwin.prismatica",
+          "name": "Prismatica Pro",
+          "description": null,
+          "apkFileType": "APK",
+          "appIconColor": "#8B5CF6",
           "signatures": null,
           "targets": [
             {

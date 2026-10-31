@@ -12,8 +12,16 @@
 # fingerprints that make sense here are the PairIP licence-check methods, which the two
 # PairIP patches neutralise. All four still resolve to exactly one method on 1.5.8.
 #
-# The watermark patch is deliberately absent: it is a byte edit on an embedded GLSL string in
-# libharwin_native.so, located by an exactly-once literal, not by a dex fingerprint.
+# Neither native patch is a fingerprint, and both are deliberately absent from the list below:
+#
+#  - "Remove Watermark" edits one byte of an embedded GLSL string in libharwin_native.so,
+#    located by an exactly-once literal (`uniform int uIsPro;` + `if (uIsPro == `).
+#  - "Unlock Pro" edits 12 bytes of the Dart AOT snapshot (lib/arm64-v8a/libapp.so) at the
+#    single startup writer of PurchaseService.field_27, located by a 20-byte and a 28-byte
+#    instruction anchor that must each match exactly once. Offsets are pinned to this
+#    snapshot; an app update fails the patch loudly instead of editing something else.
+#
+# See docs/prismatica-premium-analysis-1.5.8.md sections 7 and 8.
 
 package: com.harwin.prismatica
 appName: Prismatica Pro
