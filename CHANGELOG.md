@@ -1,3 +1,13 @@
+## [1.7.0-dev.2](https://github.com/franticg33k/morphe-patches/compare/v1.7.0-dev.1...v1.7.0-dev.2) (2026-10-31)
+
+### 🐛 Bug Fixes
+
+* **prismatica:** make the watermark patch version-aware and add an appdata mirror ([cb71611](https://github.com/franticg33k/morphe-patches/commit/cb71611525b37ad6a4c693caaea148ce663dea0f)), closes [#0x1ac](https://github.com/franticg33k/morphe-patches/issues/0x1ac)
+
+### ✨ New Features
+
+* **creatorsapp:** add ZV-E10 support and skip-mandatory-sign-in patches ([a535ef8](https://github.com/franticg33k/morphe-patches/commit/a535ef80cb271a472d0043d6bd94097e35fadb69))
+
 ## [1.7.0-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.6.1-dev.2...v1.7.0-dev.1) (2026-10-30)
 
 ### ✨ New Features

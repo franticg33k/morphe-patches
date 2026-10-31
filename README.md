@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.7.0-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.0-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;31 patches total
+> **[v1.7.0-dev.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.0-dev.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;35 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -179,6 +179,24 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 |----------|----------------|-----------|
 | [Reward when the ad fails to load](#reward-when-the-ad-fails-to-load) | The reward for a rewarded ad is granted by one branch of the ad listener, and the redemption call it makes (a/redeemAdReward) never checks that an ad was actually shown. This routes the ad-load-failure branch into that same reward call, so pressing "Watch ad" with no ad available pays out instead of showing "Ad Error". |  |
 | [Skip hourly gift cooldown](#skip-hourly-gift-cooldown) | Removes the one-hour countdown gate on the lobby gift button, so the gift screen opens on every press instead of after the timer. The window is computed on the device (account.giftTimeStamp + 1 h) - this only removes that gate; whether the server accepts a claim inside the hour is up to the server. |  |
+
+</details>
+
+<details open>
+<summary>📦 Creators' App&nbsp;&nbsp;•&nbsp;&nbsp;4 patches</summary>
+<br>
+
+**🎯 Supported versions:**
+
+| 🧪&nbsp;3.5.0 | 3.6.0 |
+| :---: | :---: |
+
+| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
+|----------|----------------|-----------|
+| [Skip mandatory sign-in](#skip-mandatory-sign-in) | Creators' App forces a Creators' Cloud sign-in before connecting a first camera when the region is mainland China, or when a Sony server flag turns it on for other regions. This makes that check always answer "not required", so no region workaround is needed. Sign-in stays available and optional.<br><br>SUPPORTED: connecting a first camera without signing in, on any region. First-launch sign-in was already skippable.<br>NOT SUPPORTED: Creators' Cloud features (cloud upload, cloud registration) still need an account. Not tested on a device. |  |
+| [ZV-E10 USB support](#zv-e10-usb-support) | Lets Creators' App use the original ZV-E10 over USB (PC Remote): adds it to the supported-camera list and forces USB sessions into remote-control mode. NOTE: this applies to every camera on USB, so other cameras lose USB contents transfer with it (the app cannot know the model before it connects).<br><br>SUPPORTED over USB (camera set to PC Remote: On, Cnct Method: USB): connection, live view and exposure controls, photo capture, automatic copy of photos to the phone, movie recording.<br>NOT SUPPORTED over USB: Send to Smartphone and Import / browsing the card (the camera exposes no storage in PC Remote mode); automatic copy of movies.<br>Support list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has not been re-tested on 3.6.0. |  |
+| [ZV-E10 Wi-Fi support](#zv-e10-wi-fi-support) | Lets Creators' App list, connect to and use the original ZV-E10 over Wi-Fi (PC Remote and Smartphone Connect): accepts its protocol version, keeps a PC Remote session in remote-control mode, and enables Import / camera-initiated transfer.<br><br>SUPPORTED over Wi-Fi: connection, live view and exposure controls, photo capture, automatic copy of photos to the phone, movie recording. With Smartphone Connect (PC Remote OFF on the camera) also: Send to Smartphone from the camera, and Import (browse the card from the phone).<br>NOT SUPPORTED: Send to Smartphone and Import while PC Remote is ON (the camera exposes no storage then); automatic copy of movies (stills only); Smartphone Connect over an access point (Wi-Fi Direct only).<br>Support list is from the upstream project (ZV-E10 firmware 2.03, app 3.5.0); it has not been re-tested on 3.6.0. |  |
+| [ZV-E10 core](#zv-e10-core) | Shared fixes for using the original ZV-E10 with Creators' App: skips the SDIO_GetDeviceLog request the camera rejects (which poisons the session), keeps a remote-control session out of contents-transfer mode, and starts live view when it is already running. Enabled automatically by the Wi-Fi and USB patches; does nothing on its own. |  |
 
 </details>
 
