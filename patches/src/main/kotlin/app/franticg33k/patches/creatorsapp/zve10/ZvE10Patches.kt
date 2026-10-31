@@ -91,9 +91,7 @@ val zvE10WifiPatch = bytecodePatch(
         "NOT SUPPORTED: Send to Smartphone and Import while PC Remote is ON (the camera exposes " +
         "no storage then); automatic copy of movies (stills only); Smartphone Connect over an " +
         "access point (Wi-Fi Direct only); Bluetooth pairing / adding the camera over Bluetooth " +
-        "(the app stops right after bonding, so use the Wi-Fi search list instead).
-
-" +
+        "(the app stops right after bonding, so use the Wi-Fi search list instead).\n\n" +
         "SETUP (from upstream's testing on 3.5.0): for remote control set the camera's Network > " +
         "PC Remote Function to PC Remote: On, with Cnct Method Wi-Fi Access Point or Wi-Fi " +
         "Direct; in the app use Cameras > gear icon > Connect only via Wi-Fi. For transfer / " +
@@ -184,7 +182,8 @@ val zvE10UsbPatch = bytecodePatch(
         "view and exposure controls, photo capture, automatic copy of photos to the phone, " +
         "movie recording.\n" +
         "NOT SUPPORTED over USB: Send to Smartphone and Import / browsing the card (the camera " +
-        "exposes no storage in PC Remote mode); automatic copy of movies.\n\n" +
+        "exposes no storage in PC Remote mode); automatic copy of movies; Bluetooth pairing " +
+        "(the camera appears on its own over USB, there is no Add camera step).\n\n" +
         "SETUP (from upstream's testing on 3.5.0): on the camera set Network > PC Remote " +
         "Function to PC Remote: On and PC Remote Cnct Method: USB. Connect the cable, allow USB " +
         "access for Creators' App, then open Remote Shooting from the Cameras tab. If another " +
