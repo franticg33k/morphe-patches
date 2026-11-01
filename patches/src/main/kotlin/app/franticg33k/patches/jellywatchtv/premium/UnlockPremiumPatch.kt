@@ -5,7 +5,9 @@ import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.franticg33k.patches.jellywatchtv.shared.Constants.COMPATIBILITY_JELLYWATCH_TV
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction22c
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.StringReference
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 
 @Suppress("unused")
@@ -21,34 +23,54 @@ val unlockJellyWatchTvPremiumPatch = bytecodePatch(
 
     execute {
         // Every premium gate (SettingsViewModel.isPremium, SideNavViewModel.isPremium, promo UI)
-        // reads the PremiumStatus boolean field. The Kotlin data class constructor writes the
-        // boolean argument into the field, so forcing it true at the tail of <init> makes every
-        // instance premium regardless of the server response.
+        // reads the PremiumStatus boolean field, and every instance is built by a constructor, so
+        // forcing that field true right after each constructor writes it makes every instance
+        // premium regardless of the server response.
+        //
+        // The field and the constructor shape are NOT pinned: 0570 had <init>(I,String,String,Z),
+        // 0845 has <init>(Z,String,I,String) and renamed the class. The field is whichever boolean
+        // the generated toString() reads right after its "PremiumStatus(isPremium=" literal.
         val premiumClass = PremiumStatusIsPremiumFingerprint.classDef
-        val init = premiumClass.methods.firstOrNull { method ->
-            method.name == "<init>" &&
-                method.parameterTypes == listOf("I", "Ljava/lang/String;", "Ljava/lang/String;", "Z")
-        } ?: throw PatchException(
-            "JellyWatch TV: could not find PremiumStatus constructor (I, String, String, Z)"
-        )
-        val implementation = checkNotNull(init.implementation) {
-            "JellyWatch TV: PremiumStatus constructor has no implementation"
-        }
         val classType = premiumClass.type
-        val iputBooleanIndex = implementation.instructions.indexOfFirst { instruction ->
-            instruction.opcode == Opcode.IPUT_BOOLEAN &&
-                (instruction as? BuilderInstruction22c)?.reference is FieldReference &&
-                (instruction.reference as FieldReference).name == "a" &&
-                (instruction.reference as FieldReference).definingClass == classType
+
+        val toStringInstructions = PremiumStatusIsPremiumFingerprint.method
+            .implementation!!.instructions.toList()
+        val literal = toStringInstructions.indexOfFirst {
+            it is ReferenceInstruction &&
+                (it.reference as? StringReference)?.string == "PremiumStatus(isPremium="
         }
-        check(iputBooleanIndex >= 0) {
-            "JellyWatch TV: could not find iput-boolean isPremium field write in PremiumStatus constructor"
+        val getter = if (literal < 0) null else toStringInstructions.drop(literal)
+            .firstOrNull { it.opcode == Opcode.IGET_BOOLEAN }
+        val field = (getter as? ReferenceInstruction)?.reference as? FieldReference
+        if (field == null || field.definingClass != classType) {
+            throw PatchException(
+                "JellyWatch TV: could not read the isPremium field out of $classType.toString " +
+                    "(expected an iget-boolean after the \"PremiumStatus(isPremium=\" literal). " +
+                    "toString was reshaped - re-read it and re-aim this edit."
+            )
         }
-        init.addInstructions(
-            iputBooleanIndex + 1,
-            "const/4 p4, 0x1\n" +
-                "iput-boolean p4, p0, $classType->a:Z",
-        )
+
+        var writes = 0
+        for (init in premiumClass.methods.filter { it.name == "<init>" }) {
+            val instructions = init.implementation?.instructions?.toList() ?: continue
+            // Highest index first, so earlier insertions do not move the later ones.
+            for (i in instructions.indices.reversed()) {
+                val instruction = instructions[i]
+                if (instruction.opcode != Opcode.IPUT_BOOLEAN) continue
+                val ref = (instruction as ReferenceInstruction).reference as? FieldReference ?: continue
+                if (ref.definingClass != classType || ref.name != field.name) continue
+                val register = (instruction as OneRegisterInstruction).registerA
+                init.addInstructions(
+                    i + 1,
+                    "const/16 v$register, 0x1\n" +
+                        "iput-boolean v$register, p0, $classType->${field.name}:Z",
+                )
+                writes++
+            }
+        }
+        check(writes > 0) {
+            "JellyWatch TV: no iput-boolean of $classType->${field.name} in any constructor"
+        }
 
         // Neutralize the PairIP Play Store license check that would otherwise shut the app down.
         PairipCheckLicenseFingerprint.method.addInstructions(0, "return-void")
