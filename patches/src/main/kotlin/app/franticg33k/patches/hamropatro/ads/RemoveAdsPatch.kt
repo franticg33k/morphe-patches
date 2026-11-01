@@ -30,6 +30,12 @@ import com.android.tools.smali.dexlib2.iface.reference.StringReference
  * Side effect, by design: this gate also covers REWARDED, so the opt-in "watch an ad" flows
  * (ad-free minutes, games coins) can no longer start. Those exist only to remove ads / earn
  * coins the server must credit, so there is nothing for a client-only patch to keep.
+ *
+ * Not verifiable on device for 11.1.2: that build ships Google Play's PairIP wrapper, whose
+ * native startup VM SIGSEGVs in libpairipcore.so on any APK it was not delivered for, so a
+ * re-signed build dies before Flutter draws anything - patch or no patch, ad edit or no ad edit.
+ * The base APK installed untouched from the mirror crashes at the same fault address. See
+ * docs/hamropatro-ads-analysis.md section 0.5; nothing a dex/resources patch can express fixes it.
  */
 @Suppress("unused")
 val removeHamroPatroAdsPatch = bytecodePatch(
@@ -38,7 +44,10 @@ val removeHamroPatroAdsPatch = bytecodePatch(
         "gate to its \"ads_disabled\" verdict. Every banner, native, interstitial, app-open and " +
         "rewarded request across the bundled MAX, AdMob, Pangle, ironSource, Facebook, Unity " +
         "and Vungle stacks asks that gate first, so none is ever built. Works on its own, and " +
-        "combines cleanly with Nai64's universal No Ads patch.",
+        "combines cleanly with Nai64's universal No Ads patch. Note for 11.1.2: that build also " +
+        "ships Google Play's PairIP wrapper, which kills any re-signed APK (SIGSEGV in " +
+        "libpairipcore.so) before Flutter starts - the unpatched download crashes the same way, " +
+        "so no patched build of that version can be observed to work yet.",
     default = true,
 ) {
     compatibleWith(COMPATIBILITY_HAMROPATRO)
