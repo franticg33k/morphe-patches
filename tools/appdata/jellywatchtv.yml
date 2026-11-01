@@ -1,12 +1,12 @@
 # JellyWatch TV / player (com.jellywatch.tv) - fingerprint set.
 #
 # Mirrors patches/src/main/kotlin/app/franticg33k/patches/jellywatchtv/premium/Fingerprints.kt
-# Verified against 1.0.REV-0570. See docs/jellywatchtv-premium-implementation.md.
+# Verified against 1.0.REV-0845 (package-name-only, rule 14). See docs/jellywatchtv-premium-implementation.md.
 
 package: com.jellywatch.tv
 appName: JellyWatch TV
-version: "1.0.REV-0570"
-pinnedVersions: ["1.0.REV-0570"]
+version: "1.0.REV-0845"
+pinnedVersions: []
 extracted: apks/extracted/jellywatchtv
 
 fingerprints:

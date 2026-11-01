@@ -22,6 +22,7 @@ manager APK, patcher 1.14.1 - the version the manager actually runs):
   * accessFlags EXACT int equality, not a mask (so never pinned in this repo)
   * parameters  omitted means unconstrained; otherwise exact ordered list
   * requireBody mirrors `custom { method.implementation != null }`
+  * instanceOnly    mirrors `custom { !AccessFlags.STATIC.isSet(method.accessFlags) }`
 
 What this CANNOT check: that a patch fixes anything. It proves a fingerprint resolves.
 Whether the resolved method is the right one is engineering, and only the device answers
@@ -76,6 +77,7 @@ class Fingerprint:
     defining_class: str | None
     require_body: bool
     note: str = ""
+    instance_only: bool = False
     class_level: bool = False
     class_fingerprint: str | None = None
 
@@ -95,6 +97,8 @@ class Fingerprint:
         if self.parameters is not None and m.params != self.parameters:
             return False
         if self.require_body and not m.has_body:
+            return False
+        if self.instance_only and m.access_flags & 0x8:  # ACC_STATIC
             return False
         if self.strings:
             # Supplying strings also forces a non-empty body, per morphe.
@@ -202,6 +206,7 @@ def load_spec(key: str) -> AppSpec:
                 strings=entry.get("strings"),
                 defining_class=entry.get("definingClass"),
                 require_body=bool(entry.get("requireBody")),
+                instance_only=bool(entry.get("instanceOnly")),
                 note=(entry.get("note") or "").strip(),
                 class_level=bool(entry.get("classLevel")),
                 class_fingerprint=entry.get("classFingerprint"),

@@ -1,4 +1,4 @@
-# Nepali Patro 6.11.5 - fingerprint set.
+# Nepali Patro 6.11.6 - fingerprint set.
 #
 # Mirrors patches/src/main/kotlin/app/franticg33k/patches/nepalipatro/ads/Fingerprints.kt
 # Keeping the two in sync is the point of this file: the YAML is what the harness checks,
@@ -15,7 +15,7 @@
 
 package: np.com.nepalipatro
 appName: Nepali Patro
-version: "6.11.5"
+version: "6.11.6"
 # Nepali Patro's compatibility is package-name-only on purpose (see Constants.kt), so there is
 # no AppTarget list to cross-check. Recorded explicitly so the harness reports that as a
 # deliberate choice rather than as missing data.
