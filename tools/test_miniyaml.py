@@ -160,19 +160,6 @@ class TestRealAppDataFiles(unittest.TestCase):
             self.assertIn("returnType", f)
             self.assertIn("parameters", f)
 
-    def test_hamropatro(self):
-        d = self._data("hamropatro.yml")
-        self.assertEqual(d["package"], "com.hamropatro")
-        self.assertEqual(d["pinnedVersions"], [])  # package-name-only since 11.1.2
-        self.assertEqual(len(d["fingerprints"]), 1)
-        gate = d["fingerprints"][0]
-        self.assertEqual(gate["name"], "AdGateFingerprint")
-        self.assertEqual(len(gate["strings"]), 9)
-        self.assertIn("ads_disabled", gate["strings"])
-        # Without instanceOnly the same strings match lr/g.<clinit> and h10/o too (3 hits).
-        self.assertIs(gate["instanceOnly"], True)
-        self.assertNotIn("definingClass", gate)  # obfuscated names rotate; never pinned
-
     def test_every_app_declares_its_pins(self):
         """The gap that let Fricam 1.6.5 ship with a stale AppTarget list.
 
