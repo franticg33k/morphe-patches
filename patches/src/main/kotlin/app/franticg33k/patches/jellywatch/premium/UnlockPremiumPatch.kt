@@ -2,6 +2,10 @@ package app.franticg33k.patches.jellywatch.premium
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.PatchException
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.util.ReferenceUtil
 import app.franticg33k.patches.jellywatch.shared.Constants.COMPATIBILITY_JELLYWATCH
 
 private const val TRUE_RETURN = """
@@ -9,103 +13,32 @@ private const val TRUE_RETURN = """
     return v0
 """
 
-// The purchase manager's instance fields (a: SharedPreferences, b: owned-items state) and the
-// state holder's getValue()/p() methods are structurally stable, but their class names are
-// obfuscated and change between versions. Build the smali at patch time from the types resolved
-// by the string-anchored class fingerprint so a rename doesn't break the injection.
-// The resolved descriptors already carry a trailing ';' (definingClass and field type both do),
-// so normalize them here before embedding.
-private fun shopMergeSmali(purchaseManager: String, stateHolder: String): String {
-    val pm = purchaseManager.trimEnd(';') + ";"
-    val st = stateHolder.trimEnd(';') + ";"
-    return """
-    iget-object v0, p0, $pm->b:$st
-    invoke-virtual {v0}, $st->getValue()Ljava/lang/Object;
-    move-result-object v1
-    check-cast v1, Ljava/util/Set;
-    new-instance v2, Ljava/util/HashSet;
-    invoke-direct {v2}, Ljava/util/HashSet;-><init>()V
-    invoke-interface {v2, v1}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
-    invoke-interface {v2, p1}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
-    iget-object p1, p0, $pm->a:Landroid/content/SharedPreferences;
-    invoke-interface {p1}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences${'$'}Editor;
-    move-result-object p1
-    const-string v1, "owned_items"
-    invoke-interface {p1, v1, v2}, Landroid/content/SharedPreferences${'$'}Editor;->putStringSet(Ljava/lang/String;Ljava/util/Set;)Landroid/content/SharedPreferences${'$'}Editor;
-    invoke-interface {p1}, Landroid/content/SharedPreferences${'$'}Editor;->apply()V
-    const/4 v1, 0x0
-    invoke-virtual {v0, v1, v2}, $st->p(Ljava/lang/Object;Ljava/lang/Object;)Z
-    return-void
-"""
+// Every shop item id the app sells. Ownership is "id is in the owned-items StateFlow", so
+// pre-owning all of them unlocks the shop. Unchanged between 2.0.REV-1744 and 1758.
+private val OWNED_IDS = listOf(
+    "avatar_frame_red_neon", "avatar_frame_blue_neon", "avatar_frame_steampunk",
+    "avatar_frame_cyberpunk", "avatar_frame_dark_energy", "avatar_frame_aurora_borealis",
+    "avatar_frame_dragon_flame",
+    "space", "fluid", "steampunk", "cyberpunk", "dark_energy", "aurora_borealis", "dragon_flame",
+    "app_icon_multicolor", "app_icon_black", "app_icon_space", "app_icon_crystal",
+    "app_icon_steampunk", "app_icon_default",
+)
+
+// `set` must hold a HashSet; `tmp` is any free register (clobbered).
+private fun addOwnedIds(set: String, tmp: String) = OWNED_IDS.joinToString("\n") {
+    "const-string $tmp, \"$it\"\n" +
+        "invoke-virtual {$set, $tmp}, Ljava/util/HashSet;->add(Ljava/lang/Object;)Z"
 }
 
-private fun prepopulateOwnedSmali(
-    shopViewModel: String,
-    purchaseManager: String,
-    stateHolder: String,
-): String {
-    val vm = shopViewModel.trimEnd(';') + ";"
-    val pm = purchaseManager.trimEnd(';') + ";"
-    val st = stateHolder.trimEnd(';') + ";"
-    return """
-    iget-object v0, p0, $vm->purchaseManager:$pm
-    iget-object v1, v0, $pm->b:$st
-    invoke-virtual {v1}, $st->getValue()Ljava/lang/Object;
-    move-result-object v2
-    check-cast v2, Ljava/util/Set;
-    new-instance v3, Ljava/util/HashSet;
-    invoke-direct {v3}, Ljava/util/HashSet;-><init>()V
-    invoke-interface {v3, v2}, Ljava/util/Set;->addAll(Ljava/util/Collection;)Z
-    const-string v2, "avatar_frame_red_neon"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "avatar_frame_blue_neon"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "avatar_frame_steampunk"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "avatar_frame_cyberpunk"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "avatar_frame_dark_energy"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "avatar_frame_aurora_borealis"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "avatar_frame_dragon_flame"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "space"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "fluid"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "steampunk"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "cyberpunk"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "dark_energy"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "aurora_borealis"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "dragon_flame"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "app_icon_multicolor"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "app_icon_black"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "app_icon_space"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "app_icon_crystal"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "app_icon_steampunk"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const-string v2, "app_icon_default"
-    invoke-interface {v3, v2}, Ljava/util/Set;->add(Ljava/lang/Object;)Z
-    const/4 v2, 0x0
-    invoke-virtual {v1, v2, v3}, $st->p(Ljava/lang/Object;Ljava/lang/Object;)Z
-    iget-object v0, v0, $pm->a:Landroid/content/SharedPreferences;
-    invoke-interface {v0}, Landroid/content/SharedPreferences;->edit()Landroid/content/SharedPreferences${'$'}Editor;
-    move-result-object v0
-    const-string v1, "owned_items"
-    invoke-interface {v0, v1, v3}, Landroid/content/SharedPreferences${'$'}Editor;->putStringSet(Ljava/lang/String;Ljava/util/Set;)Landroid/content/SharedPreferences${'$'}Editor;
-    invoke-interface {v0}, Landroid/content/SharedPreferences${'$'}Editor;->apply()V
+// ponytail: in both injection sites only v0/v1 are free, so the merge is done with exactly those
+// two (copy the incoming set into a HashSet in v0, reuse v1 for each id string). No new
+// register, so no .locals bump and no parameter-register shift.
+private fun mergeOwnedSmali(source: String, result: String) = """
+    new-instance v0, Ljava/util/HashSet;
+    invoke-direct {v0, $source}, Ljava/util/HashSet;-><init>(Ljava/util/Collection;)V
+    ${addOwnedIds("v0", "v1")}
+    move-object $result, v0
 """
-}
 
 @Suppress("unused")
 val unlockJellyWatchPremiumPatch = bytecodePatch(
@@ -120,20 +53,44 @@ val unlockJellyWatchPremiumPatch = bytecodePatch(
         PremiumStatusHasFeatureFingerprint.method.addInstructions(0, TRUE_RETURN)
         PremiumStatusIsSubscriptionActiveFingerprint.method.addInstructions(0, TRUE_RETURN)
         BillingRepositoryIsPremiumFeatureAvailableFingerprint.method.addInstructions(0, TRUE_RETURN)
+
         PairipCheckLicenseFingerprint.method.addInstructions(0, "return-void")
         PairipProcessResponseFingerprint.method.addInstructions(0, "return-void")
         PairipValidateResponseFingerprint.method.addInstructions(0, "return-void")
         PairipHandleErrorFingerprint.method.addInstructions(0, "return-void")
 
-        // Resolve the obfuscated purchase-manager and state-holder types at patch time from the
-        // string-anchored class fingerprint, so the injected smali survives class renames.
-        val purchaseManager = ShopPurchaseManagerIsOwnedFingerprint.method.definingClass
-        val stateHolder = ShopPurchaseManagerIsOwnedFingerprint.originalClassDef
-            .fields.first { it.name == "b" }.type
-        val shopViewModel = ShopViewModelInitializeBillingOnceFingerprint.method.definingClass
+        // Shop: (1) every later replaceOwned(Set) - a server sync or restore - keeps the full set.
+        ShopPurchaseManagerReplaceOwnedFingerprint.method.addInstructions(
+            0,
+            mergeOwnedSmali(source = "p1", result = "p1"),
+        )
 
-        ShopPurchaseManagerIsOwnedFingerprint.method.addInstructions(0, TRUE_RETURN)
-        ShopPurchaseManagerReplaceOwnedFingerprint.method.addInstructions(0, shopMergeSmali(purchaseManager, stateHolder))
-        ShopViewModelInitializeBillingOnceFingerprint.method.addInstructions(0, prepopulateOwnedSmali(shopViewModel, purchaseManager, stateHolder))
+        // (2) The set's first value, built in <init>(Context): it reads SharedPreferences
+        // "owned_items" (v1 = that set, or an empty default) and hands v1 to the StateFlow
+        // factory, the first invoke-static after getStringSet. Merge the ids in right before it.
+        // Known gap, read off the patched smali: addInstructions leaves the `:goto_0` label on the
+        // original invoke-static, so the injected block sits AFTER it and the `goto :goto_0` taken
+        // when getStringSet returns null skips the merge. That branch is dead in practice - the
+        // call passes a non-null default (an empty set), so SharedPreferences never returns null -
+        // and if it ever ran the failure is "no pre-owned items", not a crash. (b) above still
+        // merges on every later replaceOwned.
+        PurchaseManagerClassFingerprint.method.apply {
+            check(name == "<init>") { "JellyWatch shop: expected the purchase manager <init>, got $name" }
+            val instructions = implementation!!.instructions.toList()
+            val read = instructions.indexOfFirst {
+                it is ReferenceInstruction &&
+                    ReferenceUtil.getReferenceString(it.reference)?.contains("->getStringSet(") == true
+            }
+            val build = if (read < 0) -1 else (read + 1 until instructions.size)
+                .firstOrNull { instructions[it].opcode == Opcode.INVOKE_STATIC } ?: -1
+            if (build < 0) {
+                throw PatchException(
+                    "JellyWatch shop: no getStringSet -> invoke-static in the purchase manager " +
+                        "<init>. The owned-set construction was reshaped - re-read $this and " +
+                        "re-aim this edit (docs/jellywatch-premium-implementation.md)."
+                )
+            }
+            addInstructions(build, mergeOwnedSmali(source = "v1", result = "v1"))
+        }
     }
 }

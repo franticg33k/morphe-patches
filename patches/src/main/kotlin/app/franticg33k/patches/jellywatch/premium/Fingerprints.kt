@@ -28,9 +28,11 @@ object PremiumStatusIsSubscriptionActiveFingerprint : Fingerprint(
     returnType = "Z",
 )
 
+// R8 renamed this from `isPremiumFeatureAvailable` to `p` between 1744 and 1758. The class is
+// in a stable package and (PremiumFeature)Z is the only method of that shape in it, so the
+// shape - not the name - is the anchor.
 object BillingRepositoryIsPremiumFeatureAvailableFingerprint : Fingerprint(
     definingClass = "Lcom/jellywatch/app/billing/BillingRepository;",
-    name = "isPremiumFeatureAvailable",
     returnType = "Z",
     parameters = listOf("Lcom/jellywatch/app/billing/model/PremiumFeature;"),
 )
@@ -63,22 +65,12 @@ object PairipHandleErrorFingerprint : Fingerprint(
     parameters = listOf("Lcom/pairip/licensecheck/LicenseCheckException;"),
 )
 
-object ShopPurchaseManagerIsOwnedFingerprint : Fingerprint(
-    classFingerprint = PurchaseManagerClassFingerprint,
-    name = "a",
-    returnType = "Z",
-    parameters = listOf("Ljava/lang/String;"),
-)
-
+// 1758 merged the purchase manager into one R8 class (`xyb`) whose `isOwned(String)` is gone -
+// the shop reads the owned-set StateFlow directly. What is left is `replaceOwned(Set)V` (the
+// only (Set)V in the class; renamed d -> e) and the `<init>(Context)V` that PurchaseManagerClass
+// resolves (it holds the two SharedPreferences keys), which is where the owned set is first built.
 object ShopPurchaseManagerReplaceOwnedFingerprint : Fingerprint(
     classFingerprint = PurchaseManagerClassFingerprint,
-    name = "d",
     returnType = "V",
     parameters = listOf("Ljava/util/Set;"),
-)
-
-object ShopViewModelInitializeBillingOnceFingerprint : Fingerprint(
-    definingClass = "Lcom/jellywatch/app/shop/ShopViewModel;",
-    name = "initializeBillingOnce",
-    returnType = "V",
 )
