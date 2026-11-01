@@ -1,66 +1,40 @@
 package app.franticg33k.patches.hamropatro.ads
 
 import app.morphe.patcher.Fingerprint
-
-private const val PLACEMENTS_CLASS = "Lcom/hamropatro/library/nativeads/HamroAdsPlacements;"
+import com.android.tools.smali.dexlib2.AccessFlags
 
 /*
- * The single native chokepoint that resolves every ad placement. All the public
- * getBannerAds / getNativeAd overloads funnel into these leaf builders, so returning an empty
- * list starves banner, native, interstitial, fullscreen and roadblock placements at the source.
+ * Hamro Patro 11.1.2 replaced the 10.7.x ad stack. `HamroAdsPlacements` (and the whole
+ * `com.hamropatro.library.nativeads` package) is gone; placements now come from the bundled
+ * `assets/adplacements.json` plus remote config (`new_ad_config_android`,
+ * `new_ad_placements_android`), and every request - banner, native, interstitial, app-open,
+ * rewarded, MAX or AdMob - first asks ONE policy method whether the placement may serve:
  *
- * Why this layer rather than the SDKs underneath: Hamro bundles MAX, Facebook, Unity,
- * ironSource, Vungle, Pangle, InMobi, Chartboost and an `ads_mobile_sdk` Google Ads build behind
- * a mediation waterfall. No-oping a per-SDK `show()` leaves the mediator's state machine waiting
- * on a show callback that never arrives, and no-oping Pangle's `show()` is impossible anyway -
- * those methods are `public abstract` and have no body. Killing the placement resolver instead
- * means no request is ever built, so no mediation cycle starts and no callback is missed.
+ *     Lmr/b2;->a(Llr/v;)Llr/f;      // Allow (Llr/d) | Skip(reason) (Llr/e)
  *
- * Obfuscated helper types rotate every build - these three went Lyq7/Lzq7/Lar7 (10.7.30) to
- * Lp05/Lq05/Lr05 (10.7.33). Nothing else moved: the class, method names, return types and arity
- * are unchanged, and each signature below is defined exactly once across all 15 dex files.
- * Expect to re-pin them on the next app update; that is the cost of anchoring on the resolver,
- * and it is why every target is byte-checked rather than assumed.
+ * It has ten verdicts, each a string: debug_ads_off, debug_subscribed, debug_format_off,
+ * ads_disabled, subscribed, rewarded_ad_free, ad_free_service, no_consent, format_gated,
+ * placement_disabled. Ten call sites in `mr/`, `or/` and `bz/` consult it, so it is the callee
+ * to patch, not any of them.
+ *
+ * Every class name above is R8 output and WILL rotate. The verdict strings are the app's own
+ * telemetry vocabulary and will not, so the fingerprint is those ten strings and nothing else.
+ *
+ * Two other methods hold the same strings - `lr/g.<clinit>` (it builds the set of verdicts) and a
+ * static helper in `h10/o` (it maps a verdict to a user-facing message) - which is why the
+ * fingerprint also requires an instance method. Without that it matches three times.
  */
-
-private const val BANNER_ARG = "Lp05;"
-private const val FULLSCREEN_ARG = "Lq05;"
-private const val NATIVE_ARG = "Lr05;"
-
-object GetBannerAdsFingerprint : Fingerprint(
-    definingClass = PLACEMENTS_CLASS,
-    name = "getBannerAds",
-    returnType = "Ljava/util/List;",
-    parameters = listOf(BANNER_ARG, "Ljava/lang/String;", "Z"),
-)
-
-object GetFullScreenAdsFingerprint : Fingerprint(
-    definingClass = PLACEMENTS_CLASS,
-    name = "getFullScreenAds",
-    returnType = "Ljava/util/List;",
-    parameters = listOf(FULLSCREEN_ARG, "Z"),
-)
-
-object GetRoadblockAdsFingerprint : Fingerprint(
-    definingClass = PLACEMENTS_CLASS,
-    name = "getRoadblockAds",
-    returnType = "Ljava/util/List;",
-    parameters = listOf(FULLSCREEN_ARG, "Z"),
-)
-
-object GetNativeAdFingerprint : Fingerprint(
-    definingClass = PLACEMENTS_CLASS,
-    name = "getNativeAd",
-    returnType = "Ljava/util/List;",
-    parameters = listOf(NATIVE_ARG, "Ljava/lang/String;"),
-)
-
-object GetNativeAdByPlacementFingerprint : Fingerprint(
-    definingClass = PLACEMENTS_CLASS,
-    name = "getNativeAd",
-    returnType = "Ljava/util/List;",
-    parameters = listOf(
-        "Lcom/hamropatro/library/nativeads/model/AdPlacementName;",
-        "Ljava/lang/String;",
+object AdGateFingerprint : Fingerprint(
+    strings = listOf(
+        "debug_ads_off",
+        "debug_subscribed",
+        "debug_format_off",
+        "ads_disabled",
+        "rewarded_ad_free",
+        "ad_free_service",
+        "no_consent",
+        "format_gated",
+        "placement_disabled",
     ),
+    custom = { method, _ -> !AccessFlags.STATIC.isSet(method.accessFlags) },
 )

@@ -1,78 +1,30 @@
-# Hamro Patro 10.7.33 - fingerprint set.
+# Hamro Patro 11.1.2 - fingerprint set.
 #
 # Mirrors patches/src/main/kotlin/app/franticg33k/patches/hamropatro/ads/Fingerprints.kt
 #
-# This app anchors on three OBFUSCATED PARAMETER TYPES that rotate every build. They were
-# Lyq7;/Lzq7;/Lar7; at v10.7.30 and are Lp05;/Lq05;/Lr05; at v10.7.33. That is why
-# compatibility is pinned to a single AppTarget rather than package-name-only: the failure
-# is a hard Fingerprint exception on the first miss, not a graceful skip.
-#
-# Upgrade path when the app updates: re-pin these three names, re-run
-#   python tools/fingerprints.py --app hamropatro
-# then append an AppTarget to Constants.kt.
+# 11.1.2 dropped HamroAdsPlacements (the 10.7.x anchor, which needed three obfuscated parameter
+# types re-pinned every build). The new anchor is the ad policy gate's own verdict strings, so
+# compatibility is package-name-only (AGENTS.md rule 14).
 
 package: com.hamropatro
 appName: Hamro Patro
-version: "10.7.33"
-pinnedVersions: ["10.7.33"]
+version: "11.1.2"
+pinnedVersions: []
 extracted: apks/extracted/hamropatro
 
 fingerprints:
-  - name: GetBannerAdsFingerprint
-    definingClass: Lcom/hamropatro/library/nativeads/HamroAdsPlacements;
-    method: getBannerAds
-    returnType: Ljava/util/List;
-    parameters: [Lp05;, Ljava/lang/String;, Z]
-
-  - name: GetFullScreenAdsFingerprint
-    definingClass: Lcom/hamropatro/library/nativeads/HamroAdsPlacements;
-    method: getFullScreenAds
-    returnType: Ljava/util/List;
-    parameters: [Lq05;, Z]
-
-  - name: GetRoadblockAdsFingerprint
-    definingClass: Lcom/hamropatro/library/nativeads/HamroAdsPlacements;
-    method: getRoadblockAds
-    returnType: Ljava/util/List;
-    parameters: [Lq05;, Z]
-
-  - name: GetNativeAdFingerprint
-    definingClass: Lcom/hamropatro/library/nativeads/HamroAdsPlacements;
-    method: getNativeAd
-    returnType: Ljava/util/List;
-    parameters: [Lr05;, Ljava/lang/String;]
-
-  - name: GetNativeAdByPlacementFingerprint
-    definingClass: Lcom/hamropatro/library/nativeads/HamroAdsPlacements;
-    method: getNativeAd
-    returnType: Ljava/util/List;
-    parameters:
-      - Lcom/hamropatro/library/nativeads/model/AdPlacementName;
-      - Ljava/lang/String;
+  - name: AdGateFingerprint
+    strings:
+      - debug_ads_off
+      - debug_subscribed
+      - debug_format_off
+      - ads_disabled
+      - rewarded_ad_free
+      - ad_free_service
+      - no_consent
+      - format_gated
+      - placement_disabled
+    instanceOnly: true
     note: >-
-      The only fingerprint here whose parameters are not obfuscated, which is why it kept
-      matching across the 10.7.30 -> 10.7.33 rename while the other four did not.
-
-# All five must resolve to exactly one method. Any change here should be justified by a
-# fresh `fingerprints.py --app hamropatro` run, not by reading the smali and assuming.
-compiledLiterals:
-  - fingerprint: GetBannerAdsFingerprint
-    literals: [HamroAdsPlacements, "Lp05;", "Lq05;", "Lr05;"]
-  - fingerprint: GetFullScreenAdsFingerprint
-    literals: [HamroAdsPlacements, "Lp05;", "Lq05;", "Lr05;"]
-  - fingerprint: GetRoadblockAdsFingerprint
-    literals: [HamroAdsPlacements, "Lp05;", "Lq05;", "Lr05;"]
-  - fingerprint: GetNativeAdFingerprint
-    literals: [HamroAdsPlacements, "Lp05;", "Lq05;", "Lr05;"]
-  - fingerprint: GetNativeAdByPlacementFingerprint
-    literals: [HamroAdsPlacements, "Lp05;", "Lq05;", "Lr05;"]
-
-# Literals that must NOT be in the bundle. Catches a half-finished rename: if the old
-# obfuscated names are still compiled in, the re-pin is incomplete.
-forbiddenLiterals:
-  - Lyq7;
-  - Lzq7;
-  - Lar7;
-
-
-
+      Resolves to mr/b2.a(Llr/v;)Llr/f; in 11.1.2. lr/g.<clinit> and h10/o's static
+      message mapper hold the same strings, hence instanceOnly.
