@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.7.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;38 patches total
+> **[v1.7.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -31,16 +31,6 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 | [Enable Online Pro](#enable-online-pro) | Experimental companion patch that keeps byAir's online Pro status from being downgraded: forces the pro-status sync to always persist isSubscriber = true into the local user table, so a later RevenueCat refresh or a failed network round-trip cannot turn Pro back off. |  |
 | [Enable Pro](#enable-pro) | Unlocks byAir Pro: forces the RevenueCat entitlement to "subscriber" and marks the local user as a subscriber, which is what the pro banner, flight-details and flight-time gates read. |  |
 | [Remove Update Prompt](#remove-update-prompt) | Removes byAir's forced-update screen ("Pack up for Update! 🚀" / "Update Now") by pinning its version gate to "no update required". byAir fetches a server-side minimum version code on launch and, if your build is older, blocks the whole app behind a non-dismissible screen whose only action opens Google Play. With the gate closed a patched older build keeps running and never calls the min-version endpoint, so you no longer have to re-patch every time byAir ships a release. |  |
-
-</details>
-
-<details open>
-<summary>📦 Hamropatro&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
-<br>
-
-| 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
-|----------|----------------|-----------|
-| [Remove Ads](#remove-ads) | Disables all ad serving in Hamro Patro by forcing the app's own ad policy gate to its "ads_disabled" verdict. Every banner, native, interstitial, app-open and rewarded request across the bundled MAX, AdMob, Pangle, ironSource, Facebook, Unity and Vungle stacks asks that gate first, so none is ever built. Works on its own, and combines cleanly with Nai64's universal No Ads patch. |  |
 
 </details>
 

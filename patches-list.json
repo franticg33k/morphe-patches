@@ -98,32 +98,6 @@
     },
     {
       "name": "Remove Ads",
-      "description": "Disables all ad serving in Hamro Patro by forcing the app's own ad policy gate to its \"ads_disabled\" verdict. Every banner, native, interstitial, app-open and rewarded request across the bundled MAX, AdMob, Pangle, ironSource, Facebook, Unity and Vungle stacks asks that gate first, so none is ever built. Works on its own, and combines cleanly with Nai64's universal No Ads patch.",
-      "default": true,
-      "dependencies": [],
-      "compatiblePackages": [
-        {
-          "packageName": "com.hamropatro",
-          "name": "Hamropatro",
-          "description": null,
-          "apkFileType": null,
-          "appIconColor": "#E2231A",
-          "signatures": null,
-          "targets": [
-            {
-              "version": null,
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    },
-    {
-      "name": "Remove Ads",
       "description": "Disables both ad stacks in Nepali Patro: Google Mobile Ads (AdMob) and the first-party flutter_adserver HTML ad server. AdMob's method-channel entry point is short-circuited for every load and show call so no ad is ever created, and the WebView loaders the ad server uses are neutralised - loadData and loadDataWithBaseUrl become no-ops, while loadUrl only refuses the ads-delivery.nepalipatro.com.np host and data: URLs so normal in-app browsing keeps working.",
       "default": true,
       "dependencies": [],
