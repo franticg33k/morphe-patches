@@ -1,3 +1,12 @@
+## [1.7.1-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.7.0...v1.7.1-dev.1) (2026-11-01)
+
+### 🐛 Bug Fixes
+
+* **hamropatro:** block ads at the app's ad policy gate for 11.1.2 ([6f036b6](https://github.com/franticg33k/morphe-patches/commit/6f036b697edd585ec4ecc8fe42e5852f028d6827))
+* **jellywatch:** re-anchor Unlock Premium on 2.0.REV-1758 ([38f78d9](https://github.com/franticg33k/morphe-patches/commit/38f78d9ef65ed9998e8b5599f947284df79b64eb))
+* **jellywatchtv:** force PremiumStatus.isPremium across constructor shapes ([8468688](https://github.com/franticg33k/morphe-patches/commit/8468688d50e92f1ce875fcb09c58bef8a1f78d89))
+* **nepalipatro:** re-aim libapp.so ad-block offsets for 6.11.6 ([a90baf0](https://github.com/franticg33k/morphe-patches/commit/a90baf016502b3c5be710eaa46fcaa4fb1ac0507))
+
 ## [1.7.0](https://github.com/franticg33k/morphe-patches/compare/v1.6.0...v1.7.0) (2026-10-31)
 
 ### 🐛 Bug Fixes

@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.7.0](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.0)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;38 patches total
+> **[v1.7.1-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.1-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;38 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -38,14 +38,9 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <summary>📦 Hamropatro&nbsp;&nbsp;•&nbsp;&nbsp;1 patch</summary>
 <br>
 
-**🎯 Supported versions:**
-
-| 10.7.33 |
-| :---: |
-
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Remove Ads](#remove-ads) | Disables all ad serving in Hamro Patro by no-oping the native ad-placement resolver (HamroAdsPlacements). Every banner, native, interstitial, fullscreen and roadblock placement funnels through these leaf builders, so returning an empty list means no ad request is ever built for the bundled MAX, Pangle, ironSource, Facebook Audience, Unity, Vungle and Google Ads SDKs, and no mediation cycle ever starts. Re-verified on v10.7.33. Works on its own, and combines cleanly with Nai64's universal No Ads patch if you have it enabled - the two act on different layers, so together they also cover the Google ads_mobile_sdk layer that no SDK-level patch reaches. |  |
+| [Remove Ads](#remove-ads) | Disables all ad serving in Hamro Patro by forcing the app's own ad policy gate to its "ads_disabled" verdict. Every banner, native, interstitial, app-open and rewarded request across the bundled MAX, AdMob, Pangle, ironSource, Facebook, Unity and Vungle stacks asks that gate first, so none is ever built. Works on its own, and combines cleanly with Nai64's universal No Ads patch. |  |
 
 </details>
 
@@ -110,11 +105,6 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <summary>📦 JellyWatch&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
 
-**🎯 Supported versions:**
-
-| 2.0.REV-1712 |
-| :---: |
-
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
 | [Remove License Activity](#remove-license-activity) | Removes the PairIP LicenseActivity from AndroidManifest.xml. |  |
@@ -125,11 +115,6 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 <details open>
 <summary>📦 JellyWatch TV&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
-
-**🎯 Supported versions:**
-
-| 1.0.REV-0570 |
-| :---: |
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
