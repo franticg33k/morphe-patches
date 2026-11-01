@@ -1,3 +1,10 @@
+## [1.7.2-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.7.1...v1.7.2-dev.1) (2026-11-01)
+
+### 🐛 Bug Fixes
+
+* **hamropatro:** drop the app, PairIP blocks every re-signed build ([417db55](https://github.com/franticg33k/morphe-patches/commit/417db55421f36fae242f4fd103fb744ac31609ca)), closes [#00](https://github.com/franticg33k/morphe-patches/issues/00)
+* **hamropatro:** state that PairIP blocks every re-signed 11.1.2 build ([2977497](https://github.com/franticg33k/morphe-patches/commit/297749726eca96eea86ce2376668d844e1cc66c3)), closes [#00](https://github.com/franticg33k/morphe-patches/issues/00)
+
 ## [1.7.1](https://github.com/franticg33k/morphe-patches/compare/v1.7.0...v1.7.1) (2026-11-01)
 
 ### 🐛 Bug Fixes
