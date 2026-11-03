@@ -18,12 +18,12 @@ Requires `adb` and a JVM on `PATH`, plus apktool — either an `apktool` on `PAT
 python tools/pipeline.py doctor --fix
 
 # 1. pull + decompile + census (needs a device)
-python tools/intake.py --package com.hamropatro
+python tools/intake.py --package com.nepalipatro
 
 # 2. stage natives for blutter, write the handoff note
-python tools/blutter_stage.py --package com.hamropatro
+python tools/blutter_stage.py --package com.nepalipatro
 #    ... run blutter yourself, then:
-python tools/blutter_stage.py --package com.hamropatro --check   # see layout again
+python tools/blutter_stage.py --package com.nepalipatro --check   # see layout again
 
 # 3. do the reverse engineering (this is the part with no script)
 
@@ -33,7 +33,7 @@ python tools/blutter_stage.py --package com.hamropatro --check   # see layout ag
 python tools/verify.py --app <key> --no-build --no-clean
 
 # 6. apply it for real: merge/patch/graft/align/sign into an installable split set
-python tools/patch.py --package com.hamropatro
+python tools/patch.py --package com.nepalipatro
 
 # 7. install it and prove it changed the symptom (stock vs patched, marker diff)
 python tools/device.py ab --plan <key> --stock apks/<key> --patched apks/<key>-patched
@@ -42,7 +42,7 @@ python tools/device.py ab --plan <key> --stock apks/<key> --patched apks/<key>-p
 Steps 5-7 in one command, plus the build:
 
 ```bash
-python tools/pipeline.py loop --package com.hamropatro --install --ab
+python tools/pipeline.py loop --package com.nepalipatro --install --ab
 ```
 
 ## Commands
@@ -72,7 +72,7 @@ python tools/pipeline.py loop --package com.hamropatro --install --ab
 
 App keys (`--app`) are the stems of `tools/appdata/*.yml`; `intake.py` and
 `blutter_stage.py` take `--package` and resolve the key from there, so `--package
-com.hamropatro` lands in `apks/hamropatro/` and lines up with the existing analysis dirs.
+com.nepalipatro` lands in `apks/nepalipatro/` and lines up with the existing analysis dirs.
 
 ## Platform support
 

@@ -1,7 +1,7 @@
 """Pre-commit gate. Everything that must be true before pushing a patch change.
 
     python tools/verify.py --all
-    python tools/verify.py --app hamropatro
+    python tools/verify.py --app nepalipatro
     python tools/verify.py --all --no-build     # skip the gradle step
 
 Each check below exists because it bit us at least once:

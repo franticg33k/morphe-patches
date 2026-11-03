@@ -8,7 +8,7 @@ tool with app data pasted in - and one of which shipped a descriptor parser that
 
     python tools/fingerprints.py --list
     python tools/fingerprints.py --app nepalipatro
-    python tools/fingerprints.py --app hamropatro --bundle patches/build/libs/x.mpp
+    python tools/fingerprints.py --app nepalipatro --bundle patches/build/libs/x.mpp
     python tools/fingerprints.py --all
 
 Exit code 0 if every check passes, 1 otherwise.
