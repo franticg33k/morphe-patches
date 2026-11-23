@@ -1,3 +1,9 @@
+## [1.7.3-dev.1](https://github.com/franticg33k/morphe-patches/compare/v1.7.2...v1.7.3-dev.1) (2026-11-23)
+
+### 🐛 Bug Fixes
+
+* **karobar:** re-anchor premium unlock on 7.9.0 ([513f41d](https://github.com/franticg33k/morphe-patches/commit/513f41d57859978280e890913ec7d31c2cc8d9b3))
+
 ## [1.7.2](https://github.com/franticg33k/morphe-patches/compare/v1.7.1...v1.7.2) (2026-11-03)
 
 ### 🐛 Bug Fixes
