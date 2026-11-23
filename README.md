@@ -5,7 +5,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 ## Patches
 
 <!-- PATCHES_START EXPANDED -->
-> **[v1.7.2](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.2)**&nbsp;&nbsp;•&nbsp;&nbsp;`main`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
+> **[v1.7.3-dev.1](https://github.com/franticg33k/morphe-patches/releases/tag/v1.7.3-dev.1)**&nbsp;&nbsp;•&nbsp;&nbsp;`dev`&nbsp;&nbsp;•&nbsp;&nbsp;37 patches total
 <details open>
 <summary>📦 Nepalipatro&nbsp;&nbsp;•&nbsp;&nbsp;2 patches</summary>
 <br>
@@ -184,7 +184,7 @@ A collection of [Morphe](https://morphe.software) patches for apps I use.
 
 | 💊&nbsp;Patch | 📜&nbsp;Description | ⚙️&nbsp;Options |
 |----------|----------------|-----------|
-| [Unlock Premium](#unlock-premium) | Patches Dart AOT-compiled libapp.so to unlock all premium features. Forces hasPremiumAccess and isPaidUser to always return true by NOPing their ARM64 conditional branch instructions. |  |
+| [Unlock Premium](#unlock-premium) | Unlocks Karobar's premium features by editing the Dart AOT snapshot (lib/arm64-v8a/libapp.so). Forces UserModelExtension.hasPremiumAccess and UserModelExtension.isPaidUser to return true, and keeps the post-login "subscription expired" sheet from firing on an expired account. Client-side only: features the backend enforces still hit their server-side limits. |  |
 
 </details>
 

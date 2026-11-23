@@ -1,0 +1,32 @@
+# Karobar 7.9.0 - app data for the pre-commit gate.
+#
+# Karobar's premium patch is a rawResourcePatch: it edits the Dart AOT snapshot
+# (lib/arm64-v8a/libapp.so), not dex. There is therefore no fingerprint set to mirror here -
+# the equivalent "does the anchor still resolve" check lives in EnablePremiumPatch.kt itself,
+# as a byte assertion on every offset it writes (see the file header for the table).
+#
+# What this file still gives the gate:
+#   * the package name, so `verify.py --app karobar` has a spec to load at all;
+#   * the verified version, cross-checked against Constants.kt's AppTarget list when there is
+#     one (Karobar is package-name-only on purpose - see the note on pinnedVersions below);
+#   * the extracted tree, so a future dex-side fingerprint (if one is ever added) has a target.
+#
+# When a native patch stops applying, the recovery path is NOT a fingerprint re-pin here: it is
+# `python tools/blutter_stage.py`, a fresh blutter run, and re-locating the function addresses
+# before updating both the offset and its byte assertion in the Kotlin source.
+
+package: com.bytecaretech.merokarobar
+appName: Karobar
+version: "7.9.0"
+# Karobar's compatibility is package-name-only on purpose (AGENTS.md §3 rule 14: version pins
+# stop a patch being offered on builds it would still work on). Recorded explicitly so the
+# harness reports that as a deliberate choice rather than as missing data.
+pinnedVersions: []
+extracted: apks/extracted/karobar
+
+# No dex fingerprints: the premium patch is native-only. See the header.
+fingerprints: []
+
+# No compiled literals to check: EnablePremiumPatch.kt compiles to code with no string literals
+# that a bad Kotlin template could mangle.
+compiledLiterals: []
